@@ -8,239 +8,161 @@ import re
 from .parse import parse_code_block, add_code_block
 
 PY_SIMPLE_COMPLETION_INSTRUCTION = "# Write the body of this function only."
-PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a Python writing assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation (restate the function signature).\n\n-----"
-PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a Python writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
-USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Python code block to write your response. For example:\n```python\nprint('Hello world!')\n```"
+PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a Ruby writing assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation (restate the function signature).\n\n-----"
+PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a Ruby writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
+USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby code block to write your response. For example:\n```Ruby\nprint('Hello world!\n')```"
 
-PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with python code, NOT ENGLISH. You will be given a function signature and its docstring by the user. Write your full implementation (restate the function signature)."
-PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only python code. You will be given a function signature and its docstring by the user. Write your full implementation (restate the function signature)."
-PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Python assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation (restate the function signature)."
-PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Python assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation (restate the function signature)."
+PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby code, NOT ENGLISH. You will be given a function implementation and one or more test cases by the user. Write the correct full implementation (restate the function signature)."
+PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby code. You will be given a function implementation and one or more test cases by the user. Write the correct full implementation (restate the function signature)."
+PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation (restate the function signature)."
+PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation (restate the function signature)."
 PY_REFLEXION_FEW_SHOT_ADD = '''Example 1:
 [previous impl]:
-```python
-def add(a: int, b: int) -> int:
-    """
-    Given integers a and b, return the total value of a and b.
-    """
-    return a - b
+```ruby
+def matrix_multiply\n  n,m = gets.chomp.split(\" \").map { |e| e.to_i }\n\n  a = Array.new(n){Array.new(m,0)}\n  b = Array.new(m)\n  c = Array.new(n,0)\n\n  k = 0\n  while k <= n-1\n    a[k] = gets.chomp.split.map { |e| e.to_i }\n    k += 1\n  end\n\n  t = 0\n  while t <= m-1\n    b[t] = gets.to_i\n    t += 1\n  end\n\n  for i in 0..(n-1)\n    for e in 0..(m-1)\n      c[i] += a[i][e] * b[e]\n    end\n  end\n\n  result = \"\"\n  for i in 0..(n-1)\n    result += c[i].to_s + \"\\n\"\n  end\n  result\nend\n
 ```
 
 [unit test results from previous impl]:
 Tested passed:
 
 Tests failed:
-assert add(1, 2) == 3 # output: -1
-assert add(1, 2) == 4 # output: -1
+matrix_multiply.call.must_equal("15\n7\n7\n") # output: "13\n6\n14\n"
 
 [reflection on previous impl]:
-The implementation failed the test cases where the input integers are 1 and 2. The issue arises because the code does not add the two integers together, but instead subtracts the second integer from the first. To fix this issue, we should change the operator from `-` to `+` in the return statement. This will ensure that the function returns the correct output for the given input.
+The implementation failed to produce the expected output "15\n7\n7\n", instead outputting "13\n6\n14\n". Since there's no clear operator misuse or logic error visible in the code, we should add debug prints to verify that arrays A and B are being populated correctly from the input before multiplication occurs.
 
 [improved impl]:
-```python
-def add(a: int, b: int) -> int:
-    """
-    Given integers a and b, return the total value of a and b.
-    """
-    return a + b
+```ruby
+def matrix_multiply\n n,m = gets.chomp.split(\" \").map { |e| e.to_i }\n\na = Array.new(n){Array.new(m,0)}\nb = Array.new(m)\nc = Array.new(n,0)\n\nk = 0\nwhile k <= n-1\na[k] = gets.chomp.split.map { |e| e.to_i }\nk += 1\nend\nt = 0\nwhile t <= m-1\nb[t] = gets.to_i\nt += 1\nend\n\nfor i in 0..(n-1)\n  for e in 0..(m-1)\n    c[i] += a[i][e] * b[e]\n  end\nend\nfor i in 0..(n-1)\n  puts c[i]\nend
 ```
 '''
 
 PY_REFLEXION_FEW_SHOT = '''Example 1:
 [previous impl]:
-```python
-from typing import *
-def fullJustify(words: List[str], maxWidth: int) -> List[str]:
-    """
-    Given an array of words and a width maxWidth, format the text such that each line has exactly maxWidth characters and is fully (left and right) justified.
-    You should pack your words in a greedy approach; that is, pack as many words as you can in each line. Pad extra spaces `' '` when necessary so that each line has exactly maxWidth characters.
-    Extra spaces between words should be distributed as evenly as possible. If the number of spaces on a line do not divide evenly between words, the empty slots on the left will be assigned more spaces than the slots on the right.
-    For the last line of text, it should be left justified and no extra space is inserted between words.
-    Note:
-    A word is defined as a character sequence consisting of non-space characters only.
-    Each word's length is guaranteed to be greater than 0 and not exceed maxWidth.
-    The input array `words` contains at least one word.
-    """
-    res = []
-    cur_line = []
-    cur_len = 0
+```ruby
+def apartment_building
+ xs = Array.new(4) {
+   Array.new(3) {
+     Array.new(10) { 0 }
+   }
+ }
 
-    for word in words:
-        if cur_len + len(word) + len(cur_line) > maxWidth:
-            if len(cur_line) == 1:
-                res.append(cur_line[0] + ' ' * (maxWidth - cur_len))
-            else:
-                spaces = maxWidth - cur_len
-                space_between = spaces // (len(cur_line) - 1)
-                extra_spaces = spaces % (len(cur_line) - 1)
-                line = ''
-                for i, w in enumerate(cur_line[:-1]):
-                    line += w + ' ' * (space_between + (i < extra_spaces))
-                line += cur_line[-1]
-                res.append(line)
-            cur_line = []
-            cur_len = 0
-        cur_line.append(word)
-        cur_len += len(word)
+ gets.to_i.times do 
+   b,f,r,v = gets.split(" ").map(&:to_i)
+   xs[b - 1][f - 1][r - 1] += v
+ end
 
-    last_line = ' '.join(cur_line)
-    last_line += ' ' * (maxWidth - len(last_line))
-    res.append(last_line)
-
-    return res
+ puts xs.map {|building| 
+   building.map {|floor| floor.join(" ") }.join("\n")
+ }.join("\n" + "#" * 19 + "\n")
+end
 ```
 
 [unit test results from previous impl]:
 Tested passed:
 
 Tests failed:
-assert fullJustify([], 10) == [] # output: ['          ']
-assert fullJustify([], 0) == [] # output: ['']
+apartment_building.call("3\n1 1 3 1\n3 2 4 7\n4 3 8 1").must_equal "0 0 1 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 7 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 1 0 0\n"
 
 [reflection on previous impl]:
-The implementation failed the test cases where the input list of words is empty. The issue arises because the code does not handle the case where there are no words to process. As a result, it still appends a line with spaces to the result list, even when there are no words. To fix this issue, we should add a condition at the beginning of the function to check if the input list is empty, and return an empty list if it is. This will ensure that the function returns the correct output for empty input lists.
+The implementation failed to match the expected output format. The core logic for building the 3D apartment array and updating values works correctly, but there are two formatting issues: 1.Missing leading spaces before each line of numbers in the output 2.Using 19 '#' characters for the separator lines instead of the required 20
 
 [improved impl]:
-```python
-from typing import *
-def fullJustify(words: List[str], maxWidth: int) -> List[str]:
-    """
-    Given an array of words and a width maxWidth, format the text such that each line has exactly maxWidth characters and is fully (left and right) justified.
-    You should pack your words in a greedy approach; that is, pack as many words as you can in each line. Pad extra spaces `' '` when necessary so that each line has exactly maxWidth characters.
-    Extra spaces between words should be distributed as evenly as possible. If the number of spaces on a line do not divide evenly between words, the empty slots on the left will be assigned more spaces than the slots on the right.
-    For the last line of text, it should be left justified and no extra space is inserted between words.
-    Note:
-    A word is defined as a character sequence consisting of non-space characters only.
-    Each word's length is guaranteed to be greater than 0 and not exceed maxWidth.
-    The input array `words` contains at least one word.
-    """
-    if not words:
-        return []
-
-    res = []
-    cur_line = []
-    cur_len = 0
-
-    for word in words:
-        if cur_len + len(word) + len(cur_line) > maxWidth:
-            if len(cur_line) == 1:
-                res.append(cur_line[0] + ' ' * (maxWidth - cur_len))
-            else:
-                spaces = maxWidth - cur_len
-                space_between = spaces // (len(cur_line) - 1)
-                extra_spaces = spaces % (len(cur_line) - 1)
-                line = ''
-                for i, w in enumerate(cur_line[:-1]):
-                    line += w + ' ' * (space_between + (i < extra_spaces))
-                line += cur_line[-1]
-                res.append(line)
-            cur_line = []
-            cur_len = 0
-        cur_line.append(word)
-        cur_len += len(word)
-
-    last_line = ' '.join(cur_line)
-    last_line += ' ' * (maxWidth - len(last_line))
-    res.append(last_line)
-
-    return res
+```ruby
+def apartment_building
+ xs = Array.new(4) {
+   Array.new(3) {
+     Array.new(10) { 0 }
+   }
+ }
+ n = gets.to_i
+ n.times do 
+   b,f,r,v = gets.split(" ").map(&:to_i)
+   xs[b - 1][f - 1][r - 1] += v
+ end
+ 
+ result = xs.map {|building| 
+   building.map {|floor| " " + floor.join(" ") }.join("\n")
+ }.join("\n" + "#" * 20 + "\n")
+ 
+ result + "\n"
+end
 ```
 END EXAMPLES
 
 '''
-PY_SELF_REFLECTION_CHAT_INSTRUCTION = "You are a Python programming assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
-PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Python programming assistant. You will be given a function implementation and a series of unit test results. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as guidance when you try again later. Only provide the few sentence description in your answer, not the implementation. You will be given a few examples by the user."
+PY_SELF_REFLECTION_CHAT_INSTRUCTION = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
+PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit test results. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as guidance when you try again later. Only provide the few sentence description in your answer, not the implementation. You will be given a few examples by the user."
 PY_SELF_REFLECTION_FEW_SHOT = """Example 1:
 [function impl]:
-```python
-def longest_subarray_with_sum_limit(nums: List[int], target: int) -> List[int]:
-    n = len(nums)
-    left, right = 0, 0
-    max_length = 0
-    current_sum = 0
-    result = []
-    while right < n:
-        current_sum += nums[right]
-        while current_sum > target:
-            current_sum -= nums[left]
-            left += 1
-        if right - left + 1 >= max_length:
-            max_length = right - left + 1
-            result = nums[left:right+1]
-        right += 1
-    return result
-```
-[unit test results]:
-Tests passing:
-assert longest_subarray_with_sum_limit([1, 2, 3, 4, 5], 8) == [1, 2, 3]
-assert longest_subarray_with_sum_limit([1, 2, 3, 4, 5], 15) == [1, 2, 3, 4, 5]
-assert longest_subarray_with_sum_limit([1, -1, 2, -2, 3, -3], 2) == [1, -1, 2, -2, 3]
-assert longest_subarray_with_sum_limit([], 10) == []
-assert longest_subarray_with_sum_limit([], 0) == []
-assert longest_subarray_with_sum_limit([], -5) == []  
-Tests failing:
-assert longest_subarray_with_sum_limit([5, 6, 7, 8, 9], 4) == [] # output: [5]
-[self-reflection]:
-The implementation failed the where no subarray fulfills the condition. The issue in the implementation is due to the use of >= instead of > in the condition to update the result. Because of this, it returns a subarray even when the sum is greater than the target, as it still updates the result when the current subarray length is equal to the previous longest subarray length. To overcome this error, we should change the condition to only update the result when the current subarray length is strictly greater than the previous longest subarray length. This can be done by replacing >= with > in the condition.
+```ruby
+def three_d_array
+ xs = Array.new(4) {
+   Array.new(3) {
+     Array.new(10) { 0 }
+   }
+ }
 
-Example 2:
-[function impl]:
-```python
-def longest_subarray_with_sum_limit(nums: List[int], target: int) -> List[int]:
-    n = len(nums)
-    left, right = 0, 0
-    max_length = 0
-    current_sum = 0
-    result = []
-    while current_sum + nums[right] <= target:
-        current_sum += nums[right]
-        right += 1
-    while right < n:
-        current_sum += nums[right]
-        while current_sum > target:
-            current_sum -= nums[left]
-            left += 1
-        if right - left + 1 > max_length:
-            max_length = right - left + 1
-            result = nums[left:right+1]
-        right += 1
-    return result
+ gets.to_i.times do 
+   b,f,r,v = gets.split(" ").map(&:to_i)
+   xs[b - 1][f - 1][r - 1] += v
+ end
+
+ result = xs.map {|building| 
+   building.map {|floor| floor.join(" ") }.join("\n")
+ }.join("\n" + "#" * 19 + "\n")
+ 
+ result + "\n"
+end
 ```
+
 [unit test results]:
 Tests passing:
-assert longest_subarray_with_sum_limit([], 10) == []
-assert longest_subarray_with_sum_limit([], 0) == []
-assert longest_subarray_with_sum_limit([], -5) == []
+
 Tests failing:
-assert longest_subarray_with_sum_limit([1, 2, 3, 4, 5], 8) == [1, 2, 3] # output: list index out of range
-assert longest_subarray_with_sum_limit([1, 2, 3, 4, 5], 15) == [1, 2, 3, 4, 5] # output: list index out of range
-assert longest_subarray_with_sum_limit([5, 6, 7, 8, 9], 4) == [] # output: list index out of range
-assert longest_subarray_with_sum_limit([1, -1, 2, -2, 3, -3], 2) == [1, -1, 2, -2, 3] # output: list index out of range
+apartment_building.call("3\n1 1 3 1\n3 2 4 7\n4 3 8 1").must_equal "0 0 1 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 7 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 1 0 0\n"
+
 [self-reflection]:
-The implementation failed 4 out of the 7 test cases due to an IndexError. The issue stems from the while loop while current_sum + nums[right] <= target:, which directly accesses nums[right] without checking if right is within the bounds of the list. This results in a runtime error when right goes beyond the list length. To overcome this error, we need to add a bounds check for the right variable in the mentioned while loop. We can modify the loop condition to while right < len(nums) and current_sum + nums[right] <= target:. This change will ensure that we only access elements within the bounds of the list, thus avoiding the IndexError.
+The implementation failed to match the expected output format. The core logic for building the 3D apartment array and updating values works correctly, but there are two formatting issues: 1.Missing leading spaces before each line of numbers in the output 2.Using 19 '#' characters for the separator lines instead of the required 20
+
 END OF EXAMPLES
 """
 
 PY_TEST_GENERATION_FEW_SHOT = """Examples:
 func signature:
-def add3Numbers(x, y, z):
-    \"\"\" Add three numbers together.
-    This function takes three numbers as input and returns the sum of the three numbers.
-    \"\"\"
+def find_divsby3_and_has3
+  n = gets.to_i
+  for i in 1..n
+    x = i
+    if x % 3 == 0
+      print " #{i}"
+    else
+      while x > 0
+        if x % 10 == 3
+          print " #{i}"
+          break  
+        end
+        x /= 10
+      end
+    end
+  end
+  puts
+end
+
 unit tests:
-assert add3Numbers(1, 2, 3) == 6
-assert add3Numbers(-1, 2, 3) == 4
-assert add3Numbers(1, -2, 3) == 2
-assert add3Numbers(1, 2, -3) == 0
-assert add3Numbers(-3, -2, -1) == -6
-assert add3Numbers(0, 0, 0) == 0
+find_divsby3_and_has3.call("94").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93\n"
+find_divsby3_and_has3.call("90").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90\n"
+find_divsby3_and_has3.call("206").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93 96 99 102 103 105 108 111 113 114 117 120 123 126 129 130 131 132 133 134 135 136 137 138 139 141 143 144 147 150 153 156 159 162 163 165 168 171 173 174 177 180 183 186 189 192 193 195 198 201 203 204\n"
+find_divsby3_and_has3.call("128").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93 96 99 102 103 105 108 111 113 114 117 120 123 126\n"
+find_divsby3_and_has3.call("166").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93 96 99 102 103 105 108 111 113 114 117 120 123 126 129 130 131 132 133 134 135 136 137 138 139 141 143 144 147 150 153 156 159 162 163 165\n"
+find_divsby3_and_has3.call("154").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93 96 99 102 103 105 108 111 113 114 117 120 123 126 129 130 131 132 133 134 135 136 137 138 139 141 143 144 147 150 153\n"
 """
 
-PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring.
+PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for the given functions.
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
 
-PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring."""
+PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for the given functions."""
 
 
 class PyGenerator(Generator):
@@ -251,7 +173,7 @@ class PyGenerator(Generator):
             model=model,
             self_reflection_chat_instruction=PY_SELF_REFLECTION_CHAT_INSTRUCTION,
             self_reflection_completion_instruction=PY_SELF_REFLECTION_COMPLETION_INSTRUCTION,
-            add_code_block=lambda x: add_code_block(x, "python"),
+            add_code_block=lambda x: add_code_block(x, "ruby"),
             self_reflection_few_shot=PY_SELF_REFLECTION_FEW_SHOT
         )
 
@@ -281,13 +203,13 @@ class PyGenerator(Generator):
             reflexion_completion_instruction=PY_REFLEXION_COMPLETION_INSTRUCTION,
             simple_completion_instruction=PY_SIMPLE_COMPLETION_INSTRUCTION,
             code_block_instruction=USE_PYTHON_CODEBLOCK_INSTRUCTION,
-            parse_code_block=lambda x: parse_code_block(x, "python"),
-            add_code_block=lambda x: add_code_block(x, "python"),
+            parse_code_block=lambda x: parse_code_block(x, "ruby"),
+            add_code_block=lambda x: add_code_block(x, "ruby"),
         )
 
     def internal_tests(self, func_sig: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
         def parse_tests(tests: str) -> List[str]:
-            return [test.strip() for test in tests.splitlines() if "assert" in test]
+            return [test.strip() for test in tests.splitlines() if ".must_equal" in test]
         """
         Generates tests for a function.
         """
@@ -303,8 +225,8 @@ class PyGenerator(Generator):
         )
 
 
-DUMMY_FUNC_SIG = "def func():"
-DUMMY_FUNC_CALL = "func()"
+DUMMY_FUNC_SIG = "def func\nend"
+DUMMY_FUNC_CALL = "func"
 
 
 def handle_first_line_indent(func_body: str) -> str:
