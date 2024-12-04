@@ -4,7 +4,7 @@ from .executor_types import Executor
 from .leet_executor import LeetExecutor
 
 def executor_factory(lang: str, is_leet: bool = False) -> Executor:
-    if lang == "py" or lang == "python":
+    if lang == "py" or lang == "python" or lang == "rb" or lang == "ruby":
         if is_leet:
             print("Using LeetCode Python executor")
             from .leetcode_env.leetcode_env.leetcode_types import ProgrammingLanguage

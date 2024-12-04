@@ -3,7 +3,7 @@ CUDA_VISIBLE_DEVICES=$1 python main.py \
   --root_dir "root" \
   --dataset_path ./benchmarks/humaneval-py.jsonl \
   --strategy "reflexion" \
-  --language "py" \
+  --language "rb" \
   --model "codellama-7B" \
   --model_path "" \
   --pass_at_k "1" \

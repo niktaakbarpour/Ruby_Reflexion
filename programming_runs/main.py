@@ -19,7 +19,7 @@ def get_args():
                         help="The path to the benchmark dataset", default="root")
     parser.add_argument("--strategy", type=str,
                         help="Strategy: `simple`, `reflexion`")
-    parser.add_argument("--language", type=str, help="Strategy: `py` or `rs`")
+    parser.add_argument("--language", type=str, help="Strategy: `py` or `rs` or `rb`")
     parser.add_argument(
         "--model", type=str, help="OpenAI models only for now. For best results, use GPT-4")
     parser.add_argument("--pass_at_k", type=int,

@@ -6,10 +6,16 @@ from .model import CodeLlama, ModelBase, GPT4, GPT35, StarChat, GPTDavinci
 
 def generator_factory(lang: str) -> Generator:
     if lang == "py" or lang == "python":
+        print('python here')
+        return PyGenerator()
+    elif lang == "rb" or lang == "ruby":
+        print('ruby here')
         return PyGenerator()
     elif lang == "rs" or lang == "rust":
+        print('rust here')
         return RsGenerator()
     else:
+        print('nowhere here')
         raise ValueError(f"Invalid language for generator: {lang}")
 
 
