@@ -23,7 +23,7 @@ def model_factory(model_name: str, model_path:str = None) -> ModelBase:
     elif model_name == "starchat":
         return StarChat()
     elif model_name.startswith("codellama"):
-        # if it has `-` in the name, version was specified
+        # if it has `-` in the name, version was specified heh
         kwargs = {}
         if "-" in model_name:
             kwargs["version"] = model_name.split("-")[1]
