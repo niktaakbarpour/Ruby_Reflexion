@@ -5,7 +5,9 @@ from .generator_utils import generic_generate_func_impl, generic_generate_intern
 from typing import Optional, List, Union
 import ast
 import re
-from .parse import parse_code_block, add_code_block
+# from .parse import parse_code_block, add_code_block
+from .rb_parse import parse_code_block, add_code_block
+
 
 PY_SIMPLE_COMPLETION_INSTRUCTION = "# Write the body of this function only."
 PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a Ruby writing assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation (restate the function signature).\n\n-----"
@@ -221,12 +223,15 @@ class PyGenerator(Generator):
             test_generation_chat_instruction=PY_TEST_GENERATION_CHAT_INSTRUCTION,
             test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
             parse_tests=parse_tests,
-            is_syntax_valid=py_is_syntax_valid,
+            # is_syntax_valid=py_is_syntax_valid,
+            is_syntax_valid=rb_is_syntax_valid,
         )
 
+DUMMY_FUNC_SIG = "def dummy_func\n"  # Ruby style function declaration
+DUMMY_FUNC_CALL = "dummy_func\nend"  # Added end keyword for Ruby function
 
-DUMMY_FUNC_SIG = "def func\nend"
-DUMMY_FUNC_CALL = "func"
+# DUMMY_FUNC_SIG = "def func\nend"
+# DUMMY_FUNC_CALL = "func"
 
 
 def handle_first_line_indent(func_body: str) -> str:
@@ -271,29 +276,143 @@ def remove_unindented_signatures(code: str) -> str:
 
     return "\n".join(before_signature + after_signature)
 
-
 def py_fix_indentation(func_body: str) -> str:
+    """
+    Fix indentation for Ruby code. Ruby typically uses 2 spaces for indentation,
+    and doesn't rely on indentation for syntax like Python does.
+    """
     func_body = fix_turbo_response(func_body)
+    
+    def convert_indentation_to_ruby(code: str) -> str:
+        lines = code.splitlines()
+        result_lines = []
+        indent_level = 0
+        
+        for line in lines:
+            stripped_line = line.lstrip()
+            
+            # Decrease indent level for 'end', 'else', 'elsif' keywords
+            if stripped_line.startswith(('end', 'else', 'elsif')):
+                indent_level = max(0, indent_level - 1)
+            
+            # Add proper indentation
+            if stripped_line:  # Only indent non-empty lines
+                result_lines.append('  ' * indent_level + stripped_line)
+            else:
+                result_lines.append('')
+            
+            # Increase indent level after certain keywords
+            if stripped_line.startswith(('def ', 'class ', 'module ', 'if ', 'unless ',
+                                       'case ', 'while ', 'until ', 'begin ', 'do ',
+                                       'else', 'elsif')) and not stripped_line.endswith('end'):
+                indent_level += 1
+            
+            # Handle one-line blocks with do
+            if 'do |' in stripped_line or 'do' == stripped_line.rstrip()[-2:]:
+                indent_level += 1
+            
+            # Decrease indent level for each 'end' keyword in the line
+            if stripped_line.count('end') > 0:
+                # Only count 'end' keywords that are not part of other words
+                ends = sum(1 for word in stripped_line.split() if word == 'end')
+                indent_level = max(0, indent_level - ends)
+        
+        return '\n'.join(result_lines)
+
+    # First, fix any markdown code block syntax
+    func_body = fix_markdown(func_body)
+    
+    # Then apply Ruby-style indentation
+    properly_indented = convert_indentation_to_ruby(func_body)
+    
+    # Verify the syntax is valid with our Ruby syntax checker
+    if rb_is_syntax_valid(f"{DUMMY_FUNC_SIG}{properly_indented}\n{DUMMY_FUNC_CALL}"):
+        return properly_indented
+        
+    # If syntax check fails, return original with basic 2-space indentation
+    return func_body.strip()
+
+# def py_fix_indentation(func_body: str) -> str:
+#     func_body = fix_turbo_response(func_body)
+#     """
+#     3 cases:
+#         1. good syntax
+#         2. first line not good
+#         3. entire body not good
+#     """
+#     def parse_indent_rec(f_body: str, cur_state: int) -> str:
+#         f_body = fix_markdown(f_body)
+#         if cur_state > 1:
+#             return f_body
+#         code = f'{DUMMY_FUNC_SIG}\n{f_body}\n{DUMMY_FUNC_CALL}'
+#         try:
+#             exec(code)
+#             return f_body
+#         except (IndentationError, SyntaxError):
+#             p_func = handle_first_line_indent if cur_state == 0 else handle_entire_body_indent
+#             return parse_indent_rec(p_func(func_body), cur_state + 1)
+#         except Exception:
+#             return f_body
+#     return parse_indent_rec(func_body, 0)
+
+def rb_is_syntax_valid(code: str) -> bool:
     """
-    3 cases:
-        1. good syntax
-        2. first line not good
-        3. entire body not good
+    A basic Ruby syntax checker implemented in pure Python.
+    This checks for basic syntax rules like matching keywords and brackets.
     """
-    def parse_indent_rec(f_body: str, cur_state: int) -> str:
-        f_body = fix_markdown(f_body)
-        if cur_state > 1:
-            return f_body
-        code = f'{DUMMY_FUNC_SIG}\n{f_body}\n{DUMMY_FUNC_CALL}'
-        try:
-            exec(code)
-            return f_body
-        except (IndentationError, SyntaxError):
-            p_func = handle_first_line_indent if cur_state == 0 else handle_entire_body_indent
-            return parse_indent_rec(p_func(func_body), cur_state + 1)
-        except Exception:
-            return f_body
-    return parse_indent_rec(func_body, 0)
+    code = code.strip()
+    
+    # Check for matching 'def' and 'end' keywords
+    def_count = 0
+    end_count = 0
+    in_string = False
+    string_char = None
+    brackets = []  # Stack for (), [], {}
+    
+    lines = code.split('\n')
+    for line in lines:
+        line = line.strip()
+        
+        # Skip comments
+        if line.startswith('#'):
+            continue
+            
+        for i, char in enumerate(line):
+            # Handle string literals
+            if char in ['"', "'"] and (i == 0 or line[i-1] != '\\'):
+                if not in_string:
+                    in_string = True
+                    string_char = char
+                elif char == string_char:
+                    in_string = False
+                    string_char = None
+                continue
+                
+            if in_string:
+                continue
+                
+            # Count keywords outside of strings
+            if line[i:].startswith('def '):
+                def_count += 1
+            elif char == 'e' and line[i:].startswith('end') and (i+3 >= len(line) or not line[i+3].isalnum()):
+                end_count += 1
+                
+            # Check brackets
+            if char in '([{':
+                brackets.append(char)
+            elif char in ')]}':
+                if not brackets:
+                    return False
+                last_open = brackets.pop()
+                if (char == ')' and last_open != '(' or 
+                    char == ']' and last_open != '[' or 
+                    char == '}' and last_open != '{'):
+                    return False
+    
+    # Final checks
+    return (def_count == end_count and  # All 'def' have matching 'end'
+            not brackets and             # All brackets are closed
+            not in_string)               # No unclosed strings
 
 
 def py_is_syntax_valid(code: str) -> bool:
