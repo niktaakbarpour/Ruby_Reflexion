@@ -71,7 +71,8 @@ def run_reflexion(
                     self_reflection=reflection,
                 )
                 implementations.append(cur_func_impl)
-                print(cur_func_impl)
+                print(f"Type of cur_func_impl: {type(cur_func_impl)}")
+                print(f"Value of cur_func_impl: {cur_func_impl}")
                 assert isinstance(cur_func_impl, str)
 
                 # check if all internal unit tests pass
