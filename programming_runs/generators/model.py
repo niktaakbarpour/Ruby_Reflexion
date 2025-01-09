@@ -196,6 +196,82 @@ class StarChat(HFModelBase):
 
         return out
 
+class DeepSeekCoder(HFModelBase):
+    import torch
+    def __init__(self, model_path = None):
+        from typing import List, Union
+        from transformers import AutoTokenizer, AutoModelForCausalLM
+        import torch
+        """
+        Initialize the DeepseekCoder model.
+
+        :param model_path: local path to the model if you have downloaded it locally.
+        """
+        # Load the model and tokenizer
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
+            trust_remote_code=True,
+            torch_dtype=torch.bfloat16
+        ).cuda()  # Assuming CUDA is available for this model.
+
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
+            trust_remote_code=True
+        )
+
+        super().__init__("deepseek-ai/deepseek-coder-6.7b-instruct", model, tokenizer)
+
+    def prepare_prompt(self, input_text: str):
+        """
+        Prepare the input text for the model by tokenizing it.
+
+        :param input_text: The input code that needs to be repaired or completed.
+        :return: Tokenized input ready for the model.
+        """
+        # Tokenizing input text for the model
+        inputs = self.tokenizer(input_text, return_tensors="pt").to(self.model.device)
+        return inputs
+
+    def extract_output(self, output: torch.Tensor) -> str:
+        """
+        Extract the decoded output from the model.
+
+        :param output: The raw output tensor from the model.
+        :return: The decoded text as a string.
+        """
+        return self.tokenizer.decode(output, skip_special_tokens=True)
+
+    def generate_repair(self, input_text: str, max_tokens: int = 128, temperature: float = 0.2, num_comps: int = 1) -> Union[List[str], str]:
+        """
+        Generate code repairs or completions for the input code.
+
+        :param input_text: The broken code (e.g., with missing parts) that needs to be repaired.
+        :param max_tokens: The maximum number of tokens to generate.
+        :param temperature: Sampling temperature for randomness in the output.
+        :param num_comps: Number of code completions to generate.
+        :return: The repaired code.
+        """
+        # Prepare the input prompt
+        inputs = self.prepare_prompt(input_text)
+
+        # Generate the output using the model
+        outputs = self.model.generate(
+            inputs['input_ids'],
+            max_new_tokens=max_tokens,
+            do_sample=False,  # Turn off sampling for deterministic outputs
+            top_k=50,
+            top_p=0.95,
+            num_return_sequences=num_comps,
+            eos_token_id=self.tokenizer.eos_token_id
+        )
+
+        # Decode and extract the outputs
+        decoded_outputs = [self.extract_output(output) for output in outputs]
+        
+        # If only one completion, return the result as a string
+        if num_comps == 1:
+            return decoded_outputs[0]
+        return decoded_outputs
 
 class CodeLlama(HFModelBase):
     B_INST, E_INST = "[INST]", "[/INST]"
