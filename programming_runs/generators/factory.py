@@ -23,6 +23,7 @@ def model_factory(model_name: str, model_path:str = None) -> ModelBase:
     elif model_name == "starchat":
         return StarChat()
     elif model_name == "deepseek-ai/deepseek-coder-6.7b-instruct":
+        kwargs = {}
         if model_path is not None:
             kwargs["model_path"] = model_path
         return DeepSeekCoder(**kwargs)

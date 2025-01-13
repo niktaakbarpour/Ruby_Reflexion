@@ -208,11 +208,12 @@ class DeepSeekCoder(HFModelBase):
         :param model_path: local path to the model if you have downloaded it locally.
         """
         # Load the model and tokenizer
+        print(model_path)
         model = AutoModelForCausalLM.from_pretrained(
             model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
             trust_remote_code=True,
             torch_dtype=torch.bfloat16
-        ).cuda()  # Assuming CUDA is available for this model.
+        )
 
         tokenizer = AutoTokenizer.from_pretrained(
             model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
@@ -228,6 +229,7 @@ class DeepSeekCoder(HFModelBase):
         :param input_text: The input code that needs to be repaired or completed.
         :return: Tokenized input ready for the model.
         """
+        print(f"Input type: {type(input_text)}, value: {input_text}")
         # Tokenizing input text for the model
         inputs = self.tokenizer(input_text, return_tensors="pt").to(self.model.device)
         return inputs
