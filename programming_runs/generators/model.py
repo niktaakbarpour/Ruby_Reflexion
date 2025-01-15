@@ -209,20 +209,33 @@ class DeepSeekCoder(HFModelBase):
         """
         # Load the model and tokenizer
         print(model_path)
+        print(torch.cuda.is_available())
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
         model = AutoModelForCausalLM.from_pretrained(
             model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
             trust_remote_code=True,
-            torch_dtype=torch.bfloat16
+            torch_dtype=torch.bfloat16,
+            device_map={"": device}
         )
+
+        model = torch.quantization.quantize_dynamic(
+            model, 
+            {torch.nn.Linear},  # Apply quantization to Linear layers
+            dtype=torch.qint8    # Quantize weights to int8
+        )
+
+        print(model.device)
 
         tokenizer = AutoTokenizer.from_pretrained(
             model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
             trust_remote_code=True
         )
-
+        
         super().__init__("deepseek-ai/deepseek-coder-6.7b-instruct", model, tokenizer)
 
-    def prepare_prompt(self, input_text: str):
+    def prepare_prompt(self, input_text: list):
         """
         Prepare the input text for the model by tokenizing it.
 
@@ -230,9 +243,14 @@ class DeepSeekCoder(HFModelBase):
         :return: Tokenized input ready for the model.
         """
         print(f"Input type: {type(input_text)}, value: {input_text}")
+
+        if isinstance(input_text, list):
+            # Extract the 'content' from each Message and join them into a single string
+            input_text = " ".join([msg.content for msg in input_text if hasattr(msg, 'content')])
+
         # Tokenizing input text for the model
         inputs = self.tokenizer(input_text, return_tensors="pt").to(self.model.device)
-        return inputs
+        return inputs["input_ids"].to(self.model.device)
 
     def extract_output(self, output: torch.Tensor) -> str:
         """
@@ -254,17 +272,17 @@ class DeepSeekCoder(HFModelBase):
         :return: The repaired code.
         """
         # Prepare the input prompt
-        inputs = self.prepare_prompt(input_text)
+        input_ids = self.prepare_prompt(input_text)
 
         # Generate the output using the model
         outputs = self.model.generate(
-            inputs['input_ids'],
+            input_ids,
             max_new_tokens=max_tokens,
-            do_sample=False,  # Turn off sampling for deterministic outputs
+            do_sample=False,  # Deterministic outputs
             top_k=50,
             top_p=0.95,
             num_return_sequences=num_comps,
-            eos_token_id=self.tokenizer.eos_token_id
+            eos_token_id=self.tokenizer.eos_token_id,
         )
 
         # Decode and extract the outputs
