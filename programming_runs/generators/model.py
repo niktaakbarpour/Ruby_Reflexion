@@ -198,42 +198,68 @@ class StarChat(HFModelBase):
 
 class DeepSeekCoder(HFModelBase):
     import torch
-    def __init__(self, model_path = None):
+    def __init__(self, model_path=None):
         from typing import List, Union
         from transformers import AutoTokenizer, AutoModelForCausalLM
+        from accelerate import init_empty_weights, infer_auto_device_map
         import torch
+        
         """
         Initialize the DeepseekCoder model.
 
         :param model_path: local path to the model if you have downloaded it locally.
         """
-        # Load the model and tokenizer
-        print(model_path)
+        # Print CUDA availability
         print(torch.cuda.is_available())
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        print("I'm Here")
 
+        # Initialize the model with empty weights to avoid memory overload
+        with init_empty_weights():
+            model = AutoModelForCausalLM.from_pretrained(
+                model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
+                trust_remote_code=True
+            )
+
+        print("I'm Here 1")
+
+        # Infer a device map to offload layers as needed
+        device_map = infer_auto_device_map(model, no_split_module_classes=["CausalLM"])
+
+        print("I'm Here 2")
+
+        # Load the model using the device map and float32 precision
         model = AutoModelForCausalLM.from_pretrained(
             model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
-            trust_remote_code=True,
-            torch_dtype=torch.bfloat16,
-            device_map={"": device}
+            device_map=device_map,
+            torch_dtype=torch.float32
         )
 
+        print("I'm Here 3")
+
+        # Apply dynamic quantization to reduce memory usage
         model = torch.quantization.quantize_dynamic(
-            model, 
+            model,
             {torch.nn.Linear},  # Apply quantization to Linear layers
             dtype=torch.qint8    # Quantize weights to int8
         )
 
-        print(model.device)
+        print("I'm Here 4")
 
+        # Load the tokenizer
         tokenizer = AutoTokenizer.from_pretrained(
             model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
             trust_remote_code=True
         )
-        
+
+        print("I'm Here 5")
+
+        # Print the model's device map for debugging
+        print("Device map:", device_map)
+
+        # Initialize the base class
         super().__init__("deepseek-ai/deepseek-coder-6.7b-instruct", model, tokenizer)
+
 
     def prepare_prompt(self, input_text: list):
         """
