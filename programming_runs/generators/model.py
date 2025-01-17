@@ -232,7 +232,8 @@ class DeepSeekCoder(HFModelBase):
         model = AutoModelForCausalLM.from_pretrained(
             model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
             device_map=device_map,
-            torch_dtype=torch.float32,
+            torch_dtype=torch.float16,
+            load_in_8bit=True,
             trust_remote_code=True
         )
 
