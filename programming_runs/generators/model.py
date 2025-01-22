@@ -200,7 +200,7 @@ class DeepSeekCoder(HFModelBase):
     import torch
     def __init__(self, model_path=None):
         from typing import List, Union
-        from transformers import AutoTokenizer, AutoModelForCausalLM
+        from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
         from accelerate import init_empty_weights, infer_auto_device_map
         import torch
         
@@ -215,36 +215,51 @@ class DeepSeekCoder(HFModelBase):
         print("I'm Here")
 
         # Initialize the model with empty weights to avoid memory overload
-        with init_empty_weights():
-            model = AutoModelForCausalLM.from_pretrained(
-                model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
-                trust_remote_code=True
-            )
+        # with init_empty_weights():
+        #     model = AutoModelForCausalLM.from_pretrained(
+        #         model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
+        #         trust_remote_code=True
+        #     )
 
         print("I'm Here 1")
 
         # Infer a device map to offload layers as needed
-        device_map = infer_auto_device_map(model, no_split_module_classes=["CausalLM"])
+        # device_map = infer_auto_device_map(model, no_split_module_classes=["CausalLM"])
 
         print("I'm Here 2")
 
-        # Load the model using the device map and float32 precision
-        model = AutoModelForCausalLM.from_pretrained(
-            model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
-            device_map=device_map,
-            torch_dtype=torch.float16,
-            load_in_8bit=True,
-            trust_remote_code=True
+        nf4_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
         )
 
         print("I'm Here 3")
 
-        # Apply dynamic quantization to reduce memory usage
-        model = torch.quantization.quantize_dynamic(
-            model,
-            {torch.nn.Linear},  # Apply quantization to Linear layers
-            dtype=torch.qint8    # Quantize weights to int8
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
+            # device_map=device_map,
+            torch_dtype="auto",
+            quantization_config=nf4_config,
+            trust_remote_code=True
         )
+
+        # Load the model using the device map and float32 precision
+        # model = AutoModelForCausalLM.from_pretrained(
+        #     model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
+        #     device_map=device_map,
+        #     torch_dtype=torch.float16,
+        #     load_in_8bit=True,
+        #     trust_remote_code=True
+        # )
+
+        
+
+        # Apply dynamic quantization to reduce memory usage
+        # model = torch.quantization.quantize_dynamic(
+        #     model,
+        #     {torch.nn.Linear},  # Apply quantization to Linear layers
+        #     dtype=torch.qint8    # Quantize weights to int8
+        # )
 
         print("I'm Here 4")
 
@@ -257,7 +272,7 @@ class DeepSeekCoder(HFModelBase):
         print("I'm Here 5")
 
         # Print the model's device map for debugging
-        print("Device map:", device_map)
+        # print("Device map:", device_map)
 
         # Initialize the base class
         super().__init__("deepseek-ai/deepseek-coder-6.7b-instruct", model, tokenizer)
