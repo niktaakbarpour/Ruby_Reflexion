@@ -16,6 +16,7 @@ def run_reflexion(
     is_leetcode: bool = False,
     model_path:str = None
 ) -> None:
+    print(f"Value of log_path: {log_path}")
     exe = executor_factory(language, is_leet=is_leetcode)
     gen = generator_factory(language)
     model = model_factory(model_name, model_path)
@@ -37,6 +38,8 @@ def run_reflexion(
             else:
                 tests_i = gen.internal_tests(item["prompt"], model, 1)
 
+            print("I'm here.1")
+
             # first attempt
             cur_func_impl = gen.func_impl(item["prompt"], model, "simple")
             implementations.append(cur_func_impl)
@@ -46,6 +49,7 @@ def run_reflexion(
 
             # if solved, exit early
             if is_passing:
+                print("I'm here.2")
                 is_passing = exe.evaluate(
                     item["entry_point"], cur_func_impl, item["test"], timeout=10)
                 is_solved = is_passing
@@ -55,11 +59,14 @@ def run_reflexion(
             # use self-reflection to iteratively improve
             cur_iter = 1
             cur_feedback = feedback
+            print("I'm here.3")
             while cur_iter < max_iters:
                 # get self-reflection
                 reflection = gen.self_reflection(
                     cur_func_impl, cur_feedback, model)
                 reflections += [reflection]
+
+                print("I'm here.4")
 
                 # apply self-reflection in the next attempt
                 cur_func_impl = gen.func_impl(
@@ -82,22 +89,31 @@ def run_reflexion(
 
                 # if solved, check if it passes the real tests, exit early
                 if is_passing or cur_iter == max_iters - 1:
+                    print("I'm here.5")
                     is_passing = exe.evaluate(
                         item["entry_point"], cur_func_impl, item["test"], timeout=10)
                     if is_passing:
+                        print("I'm here.6")
                         item["solution"] = cur_func_impl
                         is_solved = True
                         num_success += 1
                     break
-
+                print("I'm here.7")
                 cur_iter += 1
+            print("I'm here.8")
             cur_pass += 1
+
+        print("I'm here.9")
 
         item["is_solved"] = is_solved
         item["reflections"] = reflections
         item["implementations"] = implementations
         item["test_feedback"] = test_feedback
         item["solution"] = cur_func_impl
+
+        print(f"Value of log_path2: {log_path}")
+        print(f"Value of item: {[item]}")
+
         write_jsonl(log_path, [item], append=True)
 
         print_v(

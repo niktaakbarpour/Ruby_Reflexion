@@ -130,6 +130,7 @@ class HFModelBase(ModelBase):
         self.is_chat = True
 
     def generate_chat(self, messages: List[Message], max_tokens: int = 1024, temperature: float = 0.2, num_comps: int = 1) -> Union[List[str], str]:
+        import torch
         # NOTE: HF does not like temp of 0.0.
         if temperature < 0.0001:
             temperature = 0.0001
@@ -148,16 +149,26 @@ class HFModelBase(ModelBase):
             num_return_sequences=num_comps,
         )
 
-        outs = self.tokenizer.batch_decode(outputs, skip_special_tokens=False)
-        assert isinstance(outs, list)
-        for i, out in enumerate(outs):
-            assert isinstance(out, str)
-            outs[i] = self.extract_output(out)
+        if isinstance(outputs, torch.Tensor):
+            outputs = outputs.tolist()  # Convert tensor to list of token IDs
 
+        # Decode outputs
+        outs = self.tokenizer.batch_decode(outputs, skip_special_tokens=False)
+
+        # Ensure `outs` is a list of strings
+        assert isinstance(outs, list), f"Expected outs to be a list, got {type(outs)}"
+        for i, out in enumerate(outs):
+            assert isinstance(out, str), f"Expected out to be a string, got {type(out)}"
+
+        # If you need additional processing, call extract_output only if necessary
+        # Assuming extract_output applies further processing on decoded strings:
+        outs = [self.extract_output(out) for out in outs]
+
+        # Return the decoded output(s)
         if len(outs) == 1:
-            return outs[0]  # type: ignore
+            return outs[0]  # Return a single string
         else:
-            return outs  # type: ignore
+            return outs  # Return a list of strings
 
     def prepare_prompt(self, messages: List[Message]):
         raise NotImplementedError
@@ -201,7 +212,6 @@ class DeepSeekCoder(HFModelBase):
     def __init__(self, model_path=None):
         from typing import List, Union
         from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
-        from accelerate import init_empty_weights, infer_auto_device_map
         import torch
         
         """
@@ -209,59 +219,18 @@ class DeepSeekCoder(HFModelBase):
 
         :param model_path: local path to the model if you have downloaded it locally.
         """
-        # Print CUDA availability
-        print(torch.cuda.is_available())
-
-        print("I'm Here")
-
-        # Initialize the model with empty weights to avoid memory overload
-        # with init_empty_weights():
-        #     model = AutoModelForCausalLM.from_pretrained(
-        #         model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
-        #         trust_remote_code=True
-        #     )
-
-        print("I'm Here 1")
-
-        # Infer a device map to offload layers as needed
-        # device_map = infer_auto_device_map(model, no_split_module_classes=["CausalLM"])
-
-        print("I'm Here 2")
 
         nf4_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
         )
 
-        print("I'm Here 3")
-
         model = AutoModelForCausalLM.from_pretrained(
             model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
-            # device_map=device_map,
             torch_dtype="auto",
             quantization_config=nf4_config,
             trust_remote_code=True
         )
-
-        # Load the model using the device map and float32 precision
-        # model = AutoModelForCausalLM.from_pretrained(
-        #     model_path if model_path is not None else f"deepseek-ai/deepseek-coder-6.7b-instruct",
-        #     device_map=device_map,
-        #     torch_dtype=torch.float16,
-        #     load_in_8bit=True,
-        #     trust_remote_code=True
-        # )
-
-        
-
-        # Apply dynamic quantization to reduce memory usage
-        # model = torch.quantization.quantize_dynamic(
-        #     model,
-        #     {torch.nn.Linear},  # Apply quantization to Linear layers
-        #     dtype=torch.qint8    # Quantize weights to int8
-        # )
-
-        print("I'm Here 4")
 
         # Load the tokenizer
         tokenizer = AutoTokenizer.from_pretrained(
@@ -269,12 +238,6 @@ class DeepSeekCoder(HFModelBase):
             trust_remote_code=True
         )
 
-        print("I'm Here 5")
-
-        # Print the model's device map for debugging
-        # print("Device map:", device_map)
-
-        # Initialize the base class
         super().__init__("deepseek-ai/deepseek-coder-6.7b-instruct", model, tokenizer)
 
 
@@ -285,24 +248,35 @@ class DeepSeekCoder(HFModelBase):
         :param input_text: The input code that needs to be repaired or completed.
         :return: Tokenized input ready for the model.
         """
-        print(f"Input type: {type(input_text)}, value: {input_text}")
 
         if isinstance(input_text, list):
-            # Extract the 'content' from each Message and join them into a single string
             input_text = " ".join([msg.content for msg in input_text if hasattr(msg, 'content')])
 
-        # Tokenizing input text for the model
         inputs = self.tokenizer(input_text, return_tensors="pt").to(self.model.device)
         return inputs["input_ids"].to(self.model.device)
 
     def extract_output(self, output: torch.Tensor) -> str:
+        import torch
         """
         Extract the decoded output from the model.
 
         :param output: The raw output tensor from the model.
         :return: The decoded text as a string.
         """
-        return self.tokenizer.decode(output, skip_special_tokens=True)
+
+        if isinstance(output, str):
+            return output
+
+        # If the output is a tensor, convert to a list and decode
+        if isinstance(output, torch.Tensor):
+            output_ids = output.tolist()
+        elif isinstance(output, list):  # Handle a list of token IDs
+            output_ids = output
+        else:
+            raise TypeError(f"Expected torch.Tensor, list, or str, but got {type(output)}")
+
+
+        return self.tokenizer.decode(output_ids, skip_special_tokens=True)
 
     def generate_repair(self, input_text: str, max_tokens: int = 128, temperature: float = 0.2, num_comps: int = 1) -> Union[List[str], str]:
         """

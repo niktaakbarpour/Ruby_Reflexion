@@ -75,9 +75,11 @@ def main(args):
     dataset_name = os.path.basename(args.dataset_path).replace("jsonl", "")
 
     # check if log path already exists
+    # log_dir = os.path.join(args.root_dir, args.run_name)
     log_dir = os.path.join(args.root_dir, args.run_name)
-    log_path = os.path.join(
-        log_dir, f"{dataset_name}_{args.strategy}_{args.max_iters}_{args.model}_pass_at_k_{args.pass_at_k}_{args.language}.jsonl")
+    log_path = os.path.join(log_dir, f"{args.language}.jsonl")
+    # log_path = os.path.join(
+    #     log_dir, f"{dataset_name}_{args.strategy}_{args.max_iters}_{args.model}_pass_at_k_{args.pass_at_k}_{args.language}.jsonl")
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
@@ -126,3 +128,5 @@ pass@k: {args.pass_at_k}
 if __name__ == "__main__":
     args = get_args()
     main(args)
+
+# 'root/reflexion_deepseek_/rbugr-tiny._reflexion_3_deepseek-ai/deepseek-coder-6.7b-instruct_pass_at_k_3_rb.jsonl'
