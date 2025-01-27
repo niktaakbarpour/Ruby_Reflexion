@@ -111,7 +111,7 @@ Tested passed: puts (->(arr, limit) { longest_subarray_with_sum_limit(arr, limit
 
 Tests failed: puts (->(arr, limit) { longest_subarray_with_sum_limit(arr, limit) }).call([10, 5, 2, 7], 15) == 4 # output: 3
 
-[reflection on previous impl]: I realized that the implementation of longest_subarray_with_sum_limit was incorrect because I was using each_with_index.max_by to find the longest subarray, which didn't properly calculate the maximum subarray length under the sum limit constraint. My plan for improving the result is to change the approach to use a sliding window technique, which will efficiently find the longest subarray with the sum constraint and handle the edge cases properly.
+[reflection on previous impl]: I realized that the implementation of longest_subarray_with_sum_limit was incorrect because I was using each_with_index.max_by to find the longest subarray, which did not properly calculate the maximum subarray length under the sum limit constraint. My plan for improving the result is to change the approach to use a sliding window technique, which will efficiently find the longest subarray with the sum constraint and handle the edge cases properly.
 END OF EXAMPLES
 """
 
@@ -250,7 +250,7 @@ def remove_unindented_signatures(code: str) -> str:
 def py_fix_indentation(func_body: str) -> str:
     """
     Fix indentation for Ruby code. Ruby typically uses 2 spaces for indentation,
-    and doesn't rely on indentation for syntax like Python does.
+    and does not rely on indentation for syntax like Python does.
     """
     func_body = fix_turbo_response(func_body)
     
@@ -327,12 +327,13 @@ def py_fix_indentation(func_body: str) -> str:
 #     return parse_indent_rec(func_body, 0)
 
 def rb_is_syntax_valid(code: str) -> bool:
+    print(f"in syntax checker: {code}")
     """
     A basic Ruby syntax checker implemented in pure Python.
     This checks for basic syntax rules like matching keywords and brackets.
     """
     code = code.strip()
-    
+    print(f"code: {code}")
     # Check for matching 'def' and 'end' keywords
     def_count = 0
     end_count = 0
@@ -343,23 +344,28 @@ def rb_is_syntax_valid(code: str) -> bool:
     lines = code.split('\n')
     for line in lines:
         line = line.strip()
-        
+        print(f"line: {line}")
+
         # Skip comments
         if line.startswith('#'):
             continue
             
         for i, char in enumerate(line):
+            print(f"i: {i}, char: {char}")
             # Handle string literals
             if char in ['"', "'"] and (i == 0 or line[i-1] != '\\'):
                 if not in_string:
+                    print("lole")
                     in_string = True
                     string_char = char
                 elif char == string_char:
+                    print("lolelole")
                     in_string = False
                     string_char = None
                 continue
                 
             if in_string:
+                print("lolelolelole")
                 continue
                 
             # Count keywords outside of strings

@@ -5,6 +5,7 @@ from .leet_executor import LeetExecutor
 
 def executor_factory(lang: str, is_leet: bool = False) -> Executor:
     if lang == "py" or lang == "python" or lang == "rb" or lang == "ruby":
+        print("I am here 1.4")
         if is_leet:
             print("Using LeetCode Python executor")
             from .leetcode_env.leetcode_env.leetcode_types import ProgrammingLanguage
@@ -13,6 +14,7 @@ def executor_factory(lang: str, is_leet: bool = False) -> Executor:
                                 PyExecutor(),
                                 PySubmissionFormatter)
         else:
+            print("I am here 1.5")
             return PyExecutor()
     elif lang == "rs" or lang == "rust":
         if is_leet:

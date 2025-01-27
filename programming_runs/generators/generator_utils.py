@@ -109,6 +109,16 @@ def generic_generate_internal_tests(
         is_syntax_valid: Callable[[str], bool],
         is_react: bool = False
 ) -> List[str]:
+    print("Hello????")
+    print(f"func_sig: {func_sig},
+          model: {model},
+          max_num_tests: {max_num_tests},
+          test_generation_few_shot: {test_generation_few_shot},
+          test_generation_chat_instruction: {test_generation_chat_instruction},
+          test_generation_completion_instruction: {test_generation_completion_instruction},
+          parse_tests: {parse_tests},
+          is_syntax_valid: {is_syntax_valid},
+          is_react: {is_react}")
     """Generates tests for a function."""
     if model.is_chat:
         if is_react:
@@ -139,8 +149,11 @@ def generic_generate_internal_tests(
     else:
         prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func_sig}\nunit tests:'
         output = model.generate(prompt, max_tokens=1024)
+    print(f"output: {output}")
     all_tests = parse_tests(output)  # type: ignore
+    print(f"all_tests: {all_tests}")
     valid_tests = [test for test in all_tests if is_syntax_valid(test)]
+    print(f"valid_tests: {valid_tests}")
 
     return sample_n_random(valid_tests, max_num_tests)
 
