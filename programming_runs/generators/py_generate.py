@@ -12,83 +12,71 @@ from .rb_parse import parse_code_block, add_code_block
 PY_SIMPLE_COMPLETION_INSTRUCTION = "# Write the body of this function only."
 PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a Ruby writing assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation (restate the function signature).\n\n-----"
 PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a Ruby writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
-USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby code block to write your response. For example:\n```Ruby\nprint('Hello world!')```"
+USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby code block to write your response. For example:\n```ruby\nprint('Hello world!')\n```"
 
-PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby code, NOT ENGLISH. You will be given a function implementation and one or more test cases by the user. Write the correct full implementation (restate the function signature)."
-PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby code. You will be given a function implementation and one or more test cases by the user. Write the correct full implementation (restate the function signature)."
+PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with ruby code, NOT ENGLISH. You will be given a function signature and its docstring by the user. Write your full implementation (restate the function signature)."
+PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only ruby code. You will be given a function signature and its docstring by the user. Write your full implementation (restate the function signature)."
 PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation (restate the function signature)."
 PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation (restate the function signature)."
 PY_REFLEXION_FEW_SHOT_ADD = '''Example 1:
 [previous impl]:
 ```ruby
-def matrix_multiply\n  n,m = gets.chomp.split(\" \").map { |e| e.to_i }\n\n  a = Array.new(n){Array.new(m,0)}\n  b = Array.new(m)\n  c = Array.new(n,0)\n\n  k = 0\n  while k <= n-1\n    a[k] = gets.chomp.split.map { |e| e.to_i }\n    k += 1\n  end\n\n  t = 0\n  while t <= m-1\n    b[t] = gets.to_i\n    t += 1\n  end\n\n  for i in 0..(n-1)\n    for e in 0..(m-1)\n      c[i] += a[i][e] * b[e]\n    end\n  end\n\n  result = \"\"\n  for i in 0..(n-1)\n    result += c[i].to_s + \"\\n\"\n  end\n  result\nend\n
+def strlen(string)\n
+    """
+    Return length of given string\n
+    """
+    string.chars.map(&:ord).sum
 ```
 
 [unit test results from previous impl]:
 Tested passed:
+puts (->(string) { strlen(string) }).call("") == 0
 
 Tests failed:
-matrix_multiply.call.must_equal("3 4\n1 7 -1 1\n0 3 0 1\n3 1 2 -1\n2\n2\n3\n0") # output: "13\n6\n14\n"
+puts (->(string) { strlen(string) }).call("abc") == 294 # output: 3
 
 [reflection on previous impl]:
-The implementation failed to produce the expected output "13\n6\n14\n", instead outputting "[[1, 7, -1, 1], [0, 3, 0, 1], [3, 1, 2, -1]]\n[2, 2, 3, 0]\n13\n6\n14\n". The buggy code includes debug print statements (p a and p b) that output the intermediate arrays in the middle of execution, causing additional unwanted output in the result string that doesn't match the expected format "13\n6\n14\n".
+I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string, which caused the test failures. My plan for improving the result is to modify the strlen function to return the length of the string using string.length, which will pass the test cases that expect the correct character count.
 
 [improved impl]:
 ```ruby
-def matrix_multiply\n n,m = gets.chomp.split(\" \").map { |e| e.to_i }\n\n a = Array.new(n){Array.new(m,0)}\nb = Array.new(m)\nc = Array.new(n,0)\n\nk = 0\nwhile k <= n-1\na[k] = gets.chomp.split.map { |e| e.to_i }\nk += 1\nend\nt = 0\nwhile t <= m-1\nb[t] = gets.to_i\nt += 1\nend\n\nfor i in 0..(n-1)\n  for e in 0..(m-1)\n    c[i] += a[i][e] * b[e]\n  end\nend\nfor i in 0..(n-1)\n  puts c[i]\nend
+def strlen(string)\n
+    """
+    Return length of given string\n
+    """
+    string.length
 ```
+END EXAMPLES
+
 '''
 
 PY_REFLEXION_FEW_SHOT = '''Example 1:
 [previous impl]:
 ```ruby
-def apartment_building
- xs = Array.new(4) {
-   Array.new(3) {
-     Array.new(10) { 0 }
-   }
- }
-
- gets.to_i.times do 
-   b,f,r,v = gets.split(" ").map(&:to_i)
-   xs[b - 1][f - 1][r - 1] += v
- end
-
- puts xs.map {|building| 
-   building.map {|floor| floor.join(" ") }.join("\n")
- }.join("\n" + "#" * 19 + "\n")
-end
+def strlen(string)\n
+    """
+    Return length of given string\n
+    """
+    string.chars.map(&:ord).sum
 ```
 
 [unit test results from previous impl]:
 Tested passed:
+puts (->(string) { strlen(string) }).call("") == 0
 
 Tests failed:
-apartment_building.call("3\n1 1 3 1\n3 2 4 7\n4 3 8 1").must_equal("0 0 1 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 7 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 1 0 0\n")
+puts (->(string) { strlen(string) }).call("abc") == 294 # output: 3
 
 [reflection on previous impl]:
-The implementation failed to match the expected output format. The core logic for building the 3D apartment array and updating values works correctly, but there are two formatting issues: 1.Missing leading spaces before each line of numbers in the output 2.Using 19 '#' characters for the separator lines instead of the required 20
+I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string, which caused the test failures. My plan for improving the result is to modify the strlen function to return the length of the string using string.length, which will pass the test cases that expect the correct character count.
 
 [improved impl]:
 ```ruby
-def apartment_building
- xs = Array.new(4) {
-   Array.new(3) {
-     Array.new(10) { 0 }
-   }
- }
- n = gets.to_i
- n.times do 
-   b,f,r,v = gets.split(" ").map(&:to_i)
-   xs[b - 1][f - 1][r - 1] += v
- end
- 
- result = xs.map {|building| 
-   building.map {|floor| " " + floor.join(" ") }.join("\n")
- }.join("\n" + "#" * 20 + "\n")
- 
- result + "\n"
-end
+def strlen(string)\n
+    """
+    Return length of given string\n
+    """
+    return string.length
 ```
 END EXAMPLES
 
@@ -98,73 +86,56 @@ PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Ruby programming assistant. 
 PY_SELF_REFLECTION_FEW_SHOT = """Example 1:
 [function impl]:
 ```ruby
-def three_d_array
- xs = Array.new(4) {
-   Array.new(3) {
-     Array.new(10) { 0 }
-   }
- }
-
- gets.to_i.times do 
-   b,f,r,v = gets.split(" ").map(&:to_i)
-   xs[b - 1][f - 1][r - 1] += v
- end
-
- result = xs.map {|building| 
-   building.map {|floor| floor.join(" ") }.join("\n")
- }.join("\n" + "#" * 19 + "\n")
- 
- result + "\n"
-end
+def palindrome?(string)
+    return string.downcase == string.downcase.reverse
 ```
+[unit test results from previous impl]:
 
-[unit test results]:
-Tests passing:
+Tested passed: puts (->(string) { palindrome?(string) }).call("madam") == true puts (->(string) { palindrome?(string) }).call("abcba") == true
 
-Tests failing:
-apartment_building.call("3\n1 1 3 1\n3 2 4 7\n4 3 8 1").must_equal("0 0 1 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 7 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n###################\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 1 0 0\n")
+Tests failed: puts (->(string) { palindrome?(string) }).call("hello") == false # output: true
 
-[self-reflection]:
-The implementation failed to match the expected output format. The core logic for building the 3D apartment array and updating values works correctly, but there are two formatting issues: 1.Missing leading spaces before each line of numbers in the output 2.Using 19 '#' characters for the separator lines instead of the required 20
+[reflection on previous impl]: I realized that the implementation of palindrome? was incorrect because it was comparing the string directly to its reversed version without checking for case sensitivity or non-alphabetic characters, which caused the test failures. My plan for improving the result is to ensure that both the string and its reversed version are checked after removing non-alphabetic characters and converting to lowercase, which will pass the test cases that expect the correct palindrome check.
 
+Example 2:
+[function impl]:
+```ruby
+def longest_subarray_with_sum_limit(arr, limit)
+    return arr.each_with_index.max_by { |_, idx| arr[0..idx].sum <= limit ? idx + 1 : 0 }&.last || 0
+end
+
+```
+[unit test results from previous impl]:
+
+Tested passed: puts (->(arr, limit) { longest_subarray_with_sum_limit(arr, limit) }).call([1, 2, 3, 4], 5) == 2 puts (->(arr, limit) { longest_subarray_with_sum_limit(arr, limit) }).call([1, 1, 1, 1, 1], 3) == 3
+
+Tests failed: puts (->(arr, limit) { longest_subarray_with_sum_limit(arr, limit) }).call([10, 5, 2, 7], 15) == 4 # output: 3
+
+[reflection on previous impl]: I realized that the implementation of longest_subarray_with_sum_limit was incorrect because I was using each_with_index.max_by to find the longest subarray, which didn't properly calculate the maximum subarray length under the sum limit constraint. My plan for improving the result is to change the approach to use a sliding window technique, which will efficiently find the longest subarray with the sum constraint and handle the edge cases properly.
 END OF EXAMPLES
 """
 
 PY_TEST_GENERATION_FEW_SHOT = """Examples:
 func signature:
-def find_divsby3_and_has3
-  n = gets.to_i
-  for i in 1..n
-    x = i
-    if x % 3 == 0
-      print " #{i}"
-    else
-      while x > 0
-        if x % 10 == 3
-          print " #{i}"
-          break  
-        end
-        x /= 10
-      end
-    end
-  end
-  puts
-end
-
+def strlen(string)
+    \"\"\" Return length of given string
+    This function takes a string as input and returns the number of characters in the string.
+    \"\"\"
 unit tests:
-find_divsby3_and_has3.call("94").must_equal(" 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93\n"
-find_divsby3_and_has3.call("90").must_equal(" 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90\n"
-find_divsby3_and_has3.call("206").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93 96 99 102 103 105 108 111 113 114 117 120 123 126 129 130 131 132 133 134 135 136 137 138 139 141 143 144 147 150 153 156 159 162 163 165 168 171 173 174 177 180 183 186 189 192 193 195 198 201 203 204\n"
-find_divsby3_and_has3.call("128").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93 96 99 102 103 105 108 111 113 114 117 120 123 126\n"
-find_divsby3_and_has3.call("166").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93 96 99 102 103 105 108 111 113 114 117 120 123 126 129 130 131 132 133 134 135 136 137 138 139 141 143 144 147 150 153 156 159 162 163 165\n"
-find_divsby3_and_has3.call("154").must_equal " 3 6 9 12 13 15 18 21 23 24 27 30 31 32 33 34 35 36 37 38 39 42 43 45 48 51 53 54 57 60 63 66 69 72 73 75 78 81 83 84 87 90 93 96 99 102 103 105 108 111 113 114 117 120 123 126 129 130 131 132 133 134 135 136 137 138 139 141 143 144 147 150 153\n"
+puts strlen("") == 0
+puts strlen("abc") == 3
+puts strlen("hello world") == 11
+puts strlen("ruby") == 4
+puts strlen("12345") == 5
+puts strlen("   ") == 3
 """
 
-PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for the given functions.
+PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring.
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
 
-PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for the given functions."""
+PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring."""
+
 
 
 class PyGenerator(Generator):

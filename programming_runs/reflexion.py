@@ -111,9 +111,6 @@ def run_reflexion(
         item["test_feedback"] = test_feedback
         item["solution"] = cur_func_impl
 
-        print(f"Value of log_path2: {log_path}")
-        print(f"Value of item: {[item]}")
-
         write_jsonl(log_path, [item], append=True)
 
         print_v(
