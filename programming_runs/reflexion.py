@@ -42,7 +42,7 @@ def run_reflexion(
                 tests_i = item['visible_tests']
             else:
                 print("I am here 4.")
-                print(f"item_prompt: {item["prompt"]}")
+                print(f"item_prompt: {item['prompt']}")
                 tests_i = gen.internal_tests(item["prompt"], model, 1)
 
             print("I'm here.5")
@@ -54,6 +54,8 @@ def run_reflexion(
             is_passing, feedback, _ = exe.execute(cur_func_impl, tests_i)
             test_feedback.append(feedback)
 
+
+            print(f"passing: {is_passing}")
             # if solved, exit early
             if is_passing:
                 print("I'm here.6")

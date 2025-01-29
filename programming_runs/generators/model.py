@@ -137,6 +137,13 @@ class HFModelBase(ModelBase):
 
         prompt = self.prepare_prompt(messages)
 
+        print(f"PROMPT: {prompt}")
+
+        # eos_token_id = self.tokenizer.eos_token_id
+        print(f"eos_token_id: {self.eos_token_id}")
+        print(f"eos_token_id2: {self.tokenizer.eos_token_id}")
+        print(f"pad_token_id: {self.tokenizer.pad_token_id}")
+
         outputs = self.model.generate(
             prompt,
             max_new_tokens=min(
@@ -149,11 +156,15 @@ class HFModelBase(ModelBase):
             num_return_sequences=num_comps,
         )
 
+        print(f"OUTPUTS: {outputs}")
+
         if isinstance(outputs, torch.Tensor):
             outputs = outputs.tolist()  # Convert tensor to list of token IDs
 
         # Decode outputs
         outs = self.tokenizer.batch_decode(outputs, skip_special_tokens=False)
+
+        print(f"OUTS: {outs}")
 
         # Ensure `outs` is a list of strings
         assert isinstance(outs, list), f"Expected outs to be a list, got {type(outs)}"
@@ -240,29 +251,22 @@ class DeepSeekCoder(HFModelBase):
 
         super().__init__("deepseek-ai/deepseek-coder-6.7b-instruct", model, tokenizer)
 
+    print("DeepSeekCoder")
 
     def prepare_prompt(self, input_text: list):
-        """
-        Prepare the input text for the model by tokenizing it.
 
-        :param input_text: The input code that needs to be repaired or completed.
-        :return: Tokenized input ready for the model.
-        """
+        print("DeepSeekCoder prepare_prompt")
 
         if isinstance(input_text, list):
-            input_text = " ".join([msg.content for msg in input_text if hasattr(msg, 'content')])
+            input_text = " ".join([f"{msg.role}: {msg.content}" for msg in input_text if hasattr(msg, 'content')])
 
         inputs = self.tokenizer(input_text, return_tensors="pt").to(self.model.device)
         return inputs["input_ids"].to(self.model.device)
 
     def extract_output(self, output: torch.Tensor) -> str:
         import torch
-        """
-        Extract the decoded output from the model.
 
-        :param output: The raw output tensor from the model.
-        :return: The decoded text as a string.
-        """
+        print("DeepSeekCoder extract_output")
 
         if isinstance(output, str):
             return output
@@ -274,41 +278,43 @@ class DeepSeekCoder(HFModelBase):
             output_ids = output
         else:
             raise TypeError(f"Expected torch.Tensor, list, or str, but got {type(output)}")
+        output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
+        return output.strip()
 
 
-        return self.tokenizer.decode(output_ids, skip_special_tokens=True)
+    # def generate_repair(self, input_text: str, max_tokens: int = 128, temperature: float = 0.2, num_comps: int = 1) -> Union[List[str], str]:
+    #     """
+    #     Generate code repairs or completions for the input code.
+    #     """
+    #     print("DeepSeekCoder generate_repair")
 
-    def generate_repair(self, input_text: str, max_tokens: int = 128, temperature: float = 0.2, num_comps: int = 1) -> Union[List[str], str]:
-        """
-        Generate code repairs or completions for the input code.
+    #     input_ids = self.prepare_prompt(input_text)
 
-        :param input_text: The broken code (e.g., with missing parts) that needs to be repaired.
-        :param max_tokens: The maximum number of tokens to generate.
-        :param temperature: Sampling temperature for randomness in the output.
-        :param num_comps: Number of code completions to generate.
-        :return: The repaired code.
-        """
-        # Prepare the input prompt
-        input_ids = self.prepare_prompt(input_text)
+    #     eos_token_id = self.tokenizer.eos_token_id
+    #     print(f"eos_token_id: {eos_token_id}")
 
-        # Generate the output using the model
-        outputs = self.model.generate(
-            input_ids,
-            max_new_tokens=max_tokens,
-            do_sample=False,  # Deterministic outputs
-            top_k=50,
-            top_p=0.95,
-            num_return_sequences=num_comps,
-            eos_token_id=self.tokenizer.eos_token_id,
-        )
+    #     print(f"pad_token_id: {self.tokenizer.pad_token_id}")
+    #     attention_mask = (input_ids != self.tokenizer.pad_token_id).to(self.model.device)
+    #     # Generate the output using the model
+    #     outputs = self.model.generate(
+    #         input_ids,
+    #         max_new_tokens=max_tokens,
+    #         do_sample=False,  # Deterministic outputs
+    #         top_k=50,
+    #         top_p=0.95,
+    #         num_return_sequences=num_comps,
+    #         eos_token_id=eos_token_id,
+    #         pad_token_id=eos_token_id,
+    #         attention_mask=attention_mask
+    #     )
 
-        # Decode and extract the outputs
-        decoded_outputs = [self.extract_output(output) for output in outputs]
+    #     # Decode and extract the outputs
+    #     decoded_outputs = [self.extract_output(output) for output in outputs]
         
-        # If only one completion, return the result as a string
-        if num_comps == 1:
-            return decoded_outputs[0]
-        return decoded_outputs
+    #     # If only one completion, return the result as a string
+    #     if num_comps == 1:
+    #         return decoded_outputs[0]
+    #     return decoded_outputs
 
 class CodeLlama(HFModelBase):
     B_INST, E_INST = "[INST]", "[/INST]"
