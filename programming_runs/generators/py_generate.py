@@ -399,3 +399,4 @@ def py_is_syntax_valid(code: str) -> bool:
         return True
     except Exception:
         return False
+
