@@ -1,9 +1,15 @@
 import sys
 from datasets.load import load_dataset
-from utils import write_jsonl
+import jsonlines
+from typing import List
 
 assert len(sys.argv) == 2, "Usage: python generate_dataset.py <MultiPL-E huggingface dataset name>"
 DATASET_NAME = sys.argv[1]
+
+def write_jsonl(path: str, data: List[dict], append: bool = False):
+    with jsonlines.open(path, mode='a' if append else 'w') as writer:
+        for item in data:
+            writer.write(item)
 
 
 def download_dataset(dataset_name: str):
@@ -20,7 +26,7 @@ def download_dataset(dataset_name: str):
         del item["tests"]
         final.append(item)
 
-    output_path = f"./benchmarks/{dataset_name}.jsonl"
+    output_path = f"./programming_runs/benchmarks/{dataset_name}.jsonl"
     _output_file = open(output_path, "w").close()
 
     
