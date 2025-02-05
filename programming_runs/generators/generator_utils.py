@@ -34,7 +34,6 @@ def generic_generate_func_impl(
             message = f"{reflexion_few_shot}\n[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:\n{func_sig}"
             prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}"
             # func_bodies is a really bad name, as it can also be just 1 string
-            print_messages(f"prompt in generator utils: {prompt}, message in generator utils: {message}")
             messages = [
                 Message(
                     role="system",
@@ -109,11 +108,8 @@ def generic_generate_internal_tests(
         is_syntax_valid: Callable[[str], bool],
         is_react: bool = False
 ) -> List[str]:
-    print("Hello????")
-    print(f"func_sig: {func_sig}, model: {model}, max_num_tests: {max_num_tests}, test_generation_few_shot: {test_generation_few_shot}, test_generation_chat_instruction: {test_generation_chat_instruction}, test_generation_completion_instruction: {test_generation_completion_instruction}, parse_tests: {parse_tests}, is_syntax_valid: {is_syntax_valid}, is_react: {is_react}")
     """Generates tests for a function."""
     if model.is_chat:
-        print("MODEL IS CHAT")
         if is_react:
             messages = [
                 Message(
@@ -128,7 +124,6 @@ def generic_generate_internal_tests(
             output = model.generate_chat(messages=messages, max_tokens=1024)
             print(f'React test generation output: {output}')
         else:
-            print("MODEL NOT REACT")
             messages = [
                 Message(
                     role="system",
@@ -141,14 +136,10 @@ def generic_generate_internal_tests(
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
     else:
-        print("MODEL IS NOT CHAT")
         prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func_sig}\nunit tests:'
         output = model.generate(prompt, max_tokens=1024)
-    print(f"output: {output}")
     all_tests = parse_tests(output)  # type: ignore
-    print(f"all_tests: {all_tests}")
     valid_tests = [test for test in all_tests if is_syntax_valid(test)]
-    print(f"valid_tests: {valid_tests}")
 
     return sample_n_random(valid_tests, max_num_tests)
 

@@ -10,30 +10,29 @@ from .rb_parse import parse_code_block, add_code_block
 
 
 PY_SIMPLE_COMPLETION_INSTRUCTION = "# Write the body of this function only."
-PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a Ruby writing assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation (restate the function signature).\n\n-----"
-PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a Ruby writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
-USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby code block to write your response. For example:\n```ruby\nputs 'Hello world!'\n```"
+PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a Ruby programming language writing assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation in Ruby (restate the function signature).\n\n-----"
+PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a Ruby programming language writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
+USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby programming language code block to write your response. For example:\n```ruby\nputs 'Hello world!'\n```"
 
-PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby code, NOT ENGLISH. You will be given a function signature and its docstring by the user. Write your full implementation (restate the function signature)."
-PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby code. You will be given a function signature and its docstring by the user. Write your full implementation (restate the function signature)."
-PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation (restate the function signature)."
-PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation (restate the function signature)."
+PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a function signature and its docstring by the user. Write your full implementation in Ruby (restate the function signature)."
+PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby programming language code. You will be given a function signature and its docstring by the user. Write your full implementation in Ruby (restate the function signature)."
+PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation in Ruby (restate the function signature)."
+PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby (restate the function signature)."
 PY_REFLEXION_FEW_SHOT_ADD = '''Example 1:
 [previous impl]:
 ```ruby
 def strlen(string)\n
-    """
-    Return length of given string\n
-    """
-    string.chars.map(&:ord).sum
+    # Return length of given string\n
+    string.chars.map(&:ord).sum\n
+end
 ```
 
 [unit test results from previous impl]:
 Tested passed:
-puts (->(string) { strlen(string) }).call("") == 0
+assert_equal 0, (->(string) { strlen(string) }).call("")
 
 Tests failed:
-puts (->(string) { strlen(string) }).call("abc") == 294 # output: 3
+assert_equal 3, (->(string) { strlen(string) }).call("abc")
 
 [reflection on previous impl]:
 I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string, which caused the test failures. My plan for improving the result is to modify the strlen function to return the length of the string using string.length, which will pass the test cases that expect the correct character count.
@@ -41,10 +40,9 @@ I realized that the implementation of strlen was incorrect because it summed the
 [improved impl]:
 ```ruby
 def strlen(string)\n
-    """
-    Return length of given string\n
-    """
-    string.length
+    # Return length of given string\n
+    string.length\n
+end
 ```
 END EXAMPLES
 
@@ -54,18 +52,17 @@ PY_REFLEXION_FEW_SHOT = '''Example 1:
 [previous impl]:
 ```ruby
 def strlen(string)\n
-    """
-    Return length of given string\n
-    """
-    string.chars.map(&:ord).sum
+    # Return length of given string\n
+    string.chars.map(&:ord).sum\n
+end
 ```
 
 [unit test results from previous impl]:
 Tested passed:
-puts (->(string) { strlen(string) }).call("") == 0
+assert_equal 0, (->(string) { strlen(string) }).call("")
 
 Tests failed:
-puts (->(string) { strlen(string) }).call("abc") == 294 # output: 3
+assert_equal 3, (->(string) { strlen(string) }).call("abc")
 
 [reflection on previous impl]:
 I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string, which caused the test failures. My plan for improving the result is to modify the strlen function to return the length of the string using string.length, which will pass the test cases that expect the correct character count.
@@ -73,10 +70,9 @@ I realized that the implementation of strlen was incorrect because it summed the
 [improved impl]:
 ```ruby
 def strlen(string)\n
-    """
-    Return length of given string\n
-    """
-    return string.length
+    # Return length of given string\n
+    return string.length\n
+end
 ```
 END EXAMPLES
 
@@ -86,30 +82,37 @@ PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Ruby programming assistant. 
 PY_SELF_REFLECTION_FEW_SHOT = """Example 1:
 [function impl]:
 ```ruby
-def palindrome?(string)
-    return string.downcase == string.downcase.reverse
+def palindrome?(string)\n
+    return string.downcase == string.downcase.reverse\n
+end
 ```
 [unit test results from previous impl]:
 
-Tested passed: puts (->(string) { palindrome?(string) }).call("madam") == true puts (->(string) { palindrome?(string) }).call("abcba") == true
+Tested passed:
+assert_equal true, (->(string) { palindrome?(string) }).call("madam")
+assert_equal true, (->(string) { palindrome?(string) }).call("abcba")
 
-Tests failed: puts (->(string) { palindrome?(string) }).call("hello") == false # output: true
+Tests failed:
+assert_equal false, (->(string) { palindrome?(string) }).call("hello") # output: true
 
 [reflection on previous impl]: I realized that the implementation of palindrome? was incorrect because it was comparing the string directly to its reversed version without checking for case sensitivity or non-alphabetic characters, which caused the test failures. My plan for improving the result is to ensure that both the string and its reversed version are checked after removing non-alphabetic characters and converting to lowercase, which will pass the test cases that expect the correct palindrome check.
 
 Example 2:
 [function impl]:
 ```ruby
-def longest_subarray_with_sum_limit(arr, limit)
-    return arr.each_with_index.max_by { |_, idx| arr[0..idx].sum <= limit ? idx + 1 : 0 }&.last || 0
+def longest_subarray_with_sum_limit(arr, limit)\n
+    return arr.each_with_index.max_by { |_, idx| arr[0..idx].sum <= limit ? idx + 1 : 0 }&.last || 0\n
 end
 
 ```
 [unit test results from previous impl]:
 
-Tested passed: puts (->(arr, limit) { longest_subarray_with_sum_limit(arr, limit) }).call([1, 2, 3, 4], 5) == 2 puts (->(arr, limit) { longest_subarray_with_sum_limit(arr, limit) }).call([1, 1, 1, 1, 1], 3) == 3
+Tested passed:
+assert_equal true, (->(string) { palindrome?(string) }).call("madam")
+assert_equal true, (->(string) { palindrome?(string) }).call("abcba")
 
-Tests failed: puts (->(arr, limit) { longest_subarray_with_sum_limit(arr, limit) }).call([10, 5, 2, 7], 15) == 4 # output: 3
+Tests failed:
+assert_equal false, (->(string) { palindrome?(string) }).call("hello") # output: true
 
 [reflection on previous impl]: I realized that the implementation of longest_subarray_with_sum_limit was incorrect because I was using each_with_index.max_by to find the longest subarray, which did not properly calculate the maximum subarray length under the sum limit constraint. My plan for improving the result is to change the approach to use a sliding window technique, which will efficiently find the longest subarray with the sum constraint and handle the edge cases properly.
 END OF EXAMPLES
@@ -117,24 +120,23 @@ END OF EXAMPLES
 
 PY_TEST_GENERATION_FEW_SHOT = """Examples:
 func signature:
-def strlen(string)
-    \"\"\" Return length of given string
-    This function takes a string as input and returns the number of characters in the string.
-    \"\"\"
+def strlen(string)\n
+    # Return length of given string
+    # This function takes a string as input and returns the number of characters in the string.
 unit tests:
-puts strlen("") == 0
-puts strlen("abc") == 3
-puts strlen("hello world") == 11
-puts strlen("ruby") == 4
-puts strlen("12345") == 5
-puts strlen("   ") == 3
+assert_equal 0, strlen("")
+assert_equal 3, strlen("abc")
+assert_equal 11, strlen("hello world")
+assert_equal 4, strlen("ruby")
+assert_equal 5, strlen("12345")
+assert_equal 3, strlen("   ")
 """
 
-PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring.
+PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby unit tests for functions given the signature and docstring. In this step you should only generate unit tests not function implemention.
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
 
-PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring."""
+PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby unit tests for functions given the signature and docstring. In this step you should only generate unit tests not function implemention."""
 
 
 
@@ -182,8 +184,7 @@ class PyGenerator(Generator):
 
     def internal_tests(self, func_sig: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
         def parse_tests(tests: str) -> List[str]:
-            print(f"tests input of parse_tests: {tests}")
-            return [test.strip() for test in tests.splitlines() if ".must_equal" in test]
+            return [test.strip() for test in tests.splitlines() if "assert_equal" in test]
         """
         Generates tests for a function.
         """
@@ -248,61 +249,63 @@ def remove_unindented_signatures(code: str) -> str:
 
     return "\n".join(before_signature + after_signature)
 
-def py_fix_indentation(func_body: str) -> str:
-    """
-    Fix indentation for Ruby code. Ruby typically uses 2 spaces for indentation,
-    and does not rely on indentation for syntax like Python does.
-    """
-    func_body = fix_turbo_response(func_body)
+# def py_fix_indentation(func_body: str) -> str:
+#     """
+#     Fix indentation for Ruby code. Ruby typically uses 2 spaces for indentation,
+#     and does not rely on indentation for syntax like Ruby does.
+#     """
+#     func_body = fix_turbo_response(func_body)
     
-    def convert_indentation_to_ruby(code: str) -> str:
-        lines = code.splitlines()
-        result_lines = []
-        indent_level = 0
+#     def convert_indentation_to_ruby(code: str) -> str:
+#         lines = code.splitlines()
+#         result_lines = []
+#         indent_level = 0
         
-        for line in lines:
-            stripped_line = line.lstrip()
+#         for line in lines:
+#             stripped_line = line.lstrip()
             
-            # Decrease indent level for 'end', 'else', 'elsif' keywords
-            if stripped_line.startswith(('end', 'else', 'elsif')):
-                indent_level = max(0, indent_level - 1)
+#             # Decrease indent level for 'end', 'else', 'elsif' keywords
+#             if stripped_line.startswith(('end', 'else', 'elsif')):
+#                 indent_level = max(0, indent_level - 1)
             
-            # Add proper indentation
-            if stripped_line:  # Only indent non-empty lines
-                result_lines.append('  ' * indent_level + stripped_line)
-            else:
-                result_lines.append('')
+#             # Add proper indentation
+#             if stripped_line:  # Only indent non-empty lines
+#                 result_lines.append('  ' * indent_level + stripped_line)
+#             else:
+#                 result_lines.append('')
             
-            # Increase indent level after certain keywords
-            if stripped_line.startswith(('def ', 'class ', 'module ', 'if ', 'unless ',
-                                       'case ', 'while ', 'until ', 'begin ', 'do ',
-                                       'else', 'elsif')) and not stripped_line.endswith('end'):
-                indent_level += 1
+#             # Increase indent level after certain keywords
+#             if stripped_line.startswith(('def ', 'class ', 'module ', 'if ', 'unless ',
+#                                        'case ', 'while ', 'until ', 'begin ', 'do ',
+#                                        'else', 'elsif')) and not stripped_line.endswith('end'):
+#                 indent_level += 1
             
-            # Handle one-line blocks with do
-            if 'do |' in stripped_line or 'do' == stripped_line.rstrip()[-2:]:
-                indent_level += 1
+#             # Handle one-line blocks with do
+#             if 'do |' in stripped_line or 'do' == stripped_line.rstrip()[-2:]:
+#                 indent_level += 1
             
-            # Decrease indent level for each 'end' keyword in the line
-            if stripped_line.count('end') > 0:
-                # Only count 'end' keywords that are not part of other words
-                ends = sum(1 for word in stripped_line.split() if word == 'end')
-                indent_level = max(0, indent_level - ends)
+#             # Decrease indent level for each 'end' keyword in the line
+#             if stripped_line.count('end') > 0:
+#                 # Only count 'end' keywords that are not part of other words
+#                 ends = sum(1 for word in stripped_line.split() if word == 'end')
+#                 indent_level = max(0, indent_level - ends)
         
-        return '\n'.join(result_lines)
+#         return '\n'.join(result_lines)
 
-    # First, fix any markdown code block syntax
-    func_body = fix_markdown(func_body)
+#     # First, fix any markdown code block syntax
+#     func_body = fix_markdown(func_body)
     
-    # Then apply Ruby-style indentation
-    properly_indented = convert_indentation_to_ruby(func_body)
+#     # Then apply Ruby-style indentation
+#     properly_indented = convert_indentation_to_ruby(func_body)
     
-    # Verify the syntax is valid with our Ruby syntax checker
-    if rb_is_syntax_valid(f"{DUMMY_FUNC_SIG}{properly_indented}\n{DUMMY_FUNC_CALL}"):
-        return properly_indented
+#     # Verify the syntax is valid with our Ruby syntax checker
+#     if rb_is_syntax_valid(f"{DUMMY_FUNC_SIG}{properly_indented}\n{DUMMY_FUNC_CALL}"):
+#         return properly_indented
         
-    # If syntax check fails, return original with basic 2-space indentation
-    return func_body.strip()
+#     # If syntax check fails, return original with basic 2-space indentation
+#     return func_body.strip()
+
+
 
 # def py_fix_indentation(func_body: str) -> str:
 #     func_body = fix_turbo_response(func_body)
@@ -328,13 +331,11 @@ def py_fix_indentation(func_body: str) -> str:
 #     return parse_indent_rec(func_body, 0)
 
 def rb_is_syntax_valid(code: str) -> bool:
-    print(f"in syntax checker: {code}")
     """
-    A basic Ruby syntax checker implemented in pure Python.
+    A basic Ruby syntax checker implemented in pure Ruby.
     This checks for basic syntax rules like matching keywords and brackets.
     """
     code = code.strip()
-    print(f"code: {code}")
     # Check for matching 'def' and 'end' keywords
     def_count = 0
     end_count = 0
@@ -345,31 +346,35 @@ def rb_is_syntax_valid(code: str) -> bool:
     lines = code.split('\n')
     for line in lines:
         line = line.strip()
-        print(f"line: {line}")
 
         # Skip comments
         if line.startswith('#'):
             continue
             
         for i, char in enumerate(line):
-            print(f"i: {i}, char: {char}")
             # Handle string literals
             if char in ['"', "'"] and (i == 0 or line[i-1] != '\\'):
                 if not in_string:
-                    print("lole")
                     in_string = True
                     string_char = char
                 elif char == string_char:
-                    print("lolelole")
                     in_string = False
                     string_char = None
                 continue
                 
             if in_string:
-                print("lolelolelole")
                 continue
                 
-            # Count keywords outside of strings
+            # Check if the line contains a valid method call like 'assert_equal'
+            if line[i:].startswith('assert_equal'):
+                # Ensure the method has two arguments
+                if line.count(',') != 1:
+                    return False
+                # Ensure the structure is valid for the test
+                if not (line.strip().endswith(')')):
+                    return False
+                
+            # Check for 'def' and 'end' pairs
             if line[i:].startswith('def '):
                 def_count += 1
             elif char == 'e' and line[i:].startswith('end') and (i+3 >= len(line) or not line[i+3].isalnum()):

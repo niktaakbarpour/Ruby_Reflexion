@@ -5,17 +5,14 @@ from typing import Optional
 def parse_code_block(string: str, lang: str) -> Optional[str]:
     code_pattern = fr"```{lang}\n(.*?)\n```"
     match = re.search(code_pattern, string, re.DOTALL)
-    print(f"match: {match}")
 
     if match:
-        print(f"match2: {match}")
         return match.group(1)
 
     generic_code_pattern = r"```\n(.*?)\n```"
     match = re.search(generic_code_pattern, string, re.DOTALL)
 
     if match:
-        print(f"match3: {match}")
         return match.group(1)
 
     return parse_first_func(string, lang)

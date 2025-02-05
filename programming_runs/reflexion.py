@@ -42,7 +42,6 @@ def run_reflexion(
                 tests_i = item['visible_tests']
             else:
                 print("I am here 4.")
-                print(f"item_prompt: {item['prompt']}")
                 tests_i = gen.internal_tests(item["prompt"], model, 1)
 
             print("I'm here.5")
@@ -51,11 +50,12 @@ def run_reflexion(
             cur_func_impl = gen.func_impl(item["prompt"], model, "simple")
             implementations.append(cur_func_impl)
             assert isinstance(cur_func_impl, str)
+            print(f"tests_i: {tests_i}")
             is_passing, feedback, _ = exe.execute(cur_func_impl, tests_i)
+            print(f"is_passing: {is_passing}")
+            print(f"feedback: {feedback}")
             test_feedback.append(feedback)
 
-
-            print(f"passing: {is_passing}")
             # if solved, exit early
             if is_passing:
                 print("I'm here.6")
@@ -87,8 +87,6 @@ def run_reflexion(
                     self_reflection=reflection,
                 )
                 implementations.append(cur_func_impl)
-                print(f"Type of cur_func_impl: {type(cur_func_impl)}")
-                print(f"Value of cur_func_impl: {cur_func_impl}")
                 assert isinstance(cur_func_impl, str)
 
                 # check if all internal unit tests pass

@@ -9,14 +9,9 @@ from .executor_types import ExecuteResult, Executor
 
 class PyExecutor(Executor):
     def execute(self, func: str, tests: List[str], timeout: int = 5) -> ExecuteResult:
-        print(f"self: {self}")
-        print(f"func: {func}")
-        print(f"tests: {tests}")
-        print(f"timeout: {timeout}")
         # Combine function code and assert statement
         imports = 'from typing import *'
         func_test_list = [f'{imports}\n{func}\n{test}' for test in tests]
-        print(f"func_test_list: {func_test_list}")
 
         # Run the tests and collect the results
         success_tests = []
@@ -25,7 +20,6 @@ class PyExecutor(Executor):
         num_tests = len(func_test_list)
         for i in range(num_tests):
             try:
-                print("inside TRY")
                 function_with_timeout(exec, (func_test_list[i], globals()), timeout)
 
                 success_tests += [tests[i]]
