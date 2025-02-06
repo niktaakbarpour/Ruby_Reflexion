@@ -69,6 +69,9 @@ class RbExecutor:
         feedback = "Tests passed:\n" + "\n".join(success_tests) + "\n\n"
         feedback += "Tests failed:\n" + "\n".join(failed_tests)
 
+        print(f"is_passing: {is_passing}")
+        print(f"feedback: {feedback}")
+
         return {
             "is_passing": is_passing,
             "feedback": feedback,
@@ -110,4 +113,5 @@ if __name__ == "__main__":
     # Create executor and run tests
     executor = RbExecutor()
     result = executor.execute(ruby_func, ruby_tests, timeout=2)
+    print(f"**********result: {result}")
     print(result["feedback"])

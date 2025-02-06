@@ -16,20 +16,15 @@ def run_reflexion(
     is_leetcode: bool = False,
     model_path:str = None
 ) -> None:
-    print("I am here 1.")
     exe = executor_factory(language, is_leet=is_leetcode)
-    print("I am here 1.1")
     gen = generator_factory(language)
-    print("I am here 1.2")
     model = model_factory(model_name, model_path)
-    print("I am here 1.3")
 
     print_v = make_printv(verbose)
 
     num_items = len(dataset)
     num_success = resume_success_count(dataset)
     for i, item in enumerate_resume(dataset, log_path):
-        print("I am here 2.")
         cur_pass = 0
         is_solved = False
         reflections = []
@@ -37,11 +32,9 @@ def run_reflexion(
         test_feedback = []
         cur_func_impl = ""
         while cur_pass < pass_at_k and not is_solved:
-            print("I am here 3.")
             if is_leetcode:
                 tests_i = item['visible_tests']
             else:
-                print("I am here 4.")
                 tests_i = gen.internal_tests(item["prompt"], model, 1)
 
             print("I'm here.5")
@@ -50,10 +43,15 @@ def run_reflexion(
             cur_func_impl = gen.func_impl(item["prompt"], model, "simple")
             implementations.append(cur_func_impl)
             assert isinstance(cur_func_impl, str)
-            print(f"tests_i: {tests_i}")
             is_passing, feedback, _ = exe.execute(cur_func_impl, tests_i)
-            print(f"is_passing: {is_passing}")
-            print(f"feedback: {feedback}")
+            print(f"is_passing2: {is_passing}")
+            print(f"feedback2: {feedback}")
+            result = exe.execute(cur_func_impl, tests_i)
+            is_passing = result["is_passing"]
+            feedback = result["feedback"]
+            print(f"is_passing33333333333: {is_passing}")
+            print(f"feedback33333333333333: {feedback}")
+
             test_feedback.append(feedback)
 
             # if solved, exit early
