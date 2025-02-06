@@ -183,8 +183,8 @@ class PyGenerator(Generator):
         )
 
     def internal_tests(self, func_sig: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
-        def parse_tests(tests: str) -> List[str]:
-            return [test.strip() for test in tests.splitlines() if "assert_equal" in test]
+        def parse_tests(tests: List[str]) -> List[str]:
+            return [test.strip() for test in tests if "assert_equal" in test.strip()]
         """
         Generates tests for a function.
         """

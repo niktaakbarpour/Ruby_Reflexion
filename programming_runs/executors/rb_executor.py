@@ -23,29 +23,24 @@ class RbExecutor:
         failed_tests = []
         is_passing = True
 
-        # Extract the function name dynamically
+
         func_name = func.split()[1].split('(')[0]
-
-        print(f"func_name: {func_name}")
-
-        # Build the Ruby test script dynamically
         ruby_code = f"require 'test/unit'\n\n"
-        ruby_code += f"def {func_name}(...)\n  # function implementation\nend\n\n"
+        ruby_code += func + "\n\n"
         ruby_code += f"class TestHumanEval < Test::Unit::TestCase\n"
         ruby_code += f"  def test_{func_name}\n"
         ruby_code += f"    candidate = method(:{func_name})\n"
-        
-        # Add all the test cases inside the test method
         for test in tests:
-            ruby_code += f"    {test}\n"
-
+            # Ensure `candidate.call(...)` is used instead of the function name directly
+            modified_test = test.replace(f"{func_name}(", "candidate.call(")
+            ruby_code += f"    {modified_test}\n"
         ruby_code += "  end\n"
         ruby_code += "end\n"
+
 
         print(f"ruby_code4: {ruby_code}")
 
         try:
-            # Execute the Ruby code using `ruby` command
             result = subprocess.run(
                 ["/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby", "-e", ruby_code],
                 capture_output=True,

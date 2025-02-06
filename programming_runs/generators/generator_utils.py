@@ -33,6 +33,7 @@ def generic_generate_func_impl(
         if strategy == "reflexion":
             message = f"{reflexion_few_shot}\n[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:\n{func_sig}"
             prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}"
+            print_messages(prompt, message)
             # func_bodies is a really bad name, as it can also be just 1 string
             messages = [
                 Message(
@@ -135,11 +136,14 @@ def generic_generate_internal_tests(
                 )
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
+            print(f"OUTPUTTTTTTTTTT: {output}")
     else:
         prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func_sig}\nunit tests:'
         output = model.generate(prompt, max_tokens=1024)
-    all_tests = parse_tests(output)  # type: ignore
+    all_tests = parse_tests(output)
+    print(f"ALL TESTSSSSSSSSS: {all_tests}")
     valid_tests = [test for test in all_tests if is_syntax_valid(test)]
+    print(f"VALID TESTSSSSSSSSS: {valid_tests}")
 
     return sample_n_random(valid_tests, max_num_tests)
 
