@@ -14,7 +14,7 @@ PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a Ruby programming language writi
 PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a Ruby programming language writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
 USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby programming language code block to write your response. For example:\n```ruby\nputs 'Hello world!'\n```"
 
-PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a function signature and its docstring by the user. Write your full implementation in Ruby (restate the function signature)."
+PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a function signature and its docstring by the user. Write ONLY your full implementation in Ruby (restate the function signature but DO NOT write example usage)."
 PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby programming language code. You will be given a function signature and its docstring by the user. Write your full implementation in Ruby (restate the function signature)."
 PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation in Ruby (restate the function signature)."
 PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby (restate the function signature)."
@@ -342,7 +342,7 @@ def rb_is_syntax_valid(code: str) -> bool:
     in_string = False
     string_char = None
     brackets = []  # Stack for (), [], {}
-    
+
     lines = code.split('\n')
     for line in lines:
         line = line.strip()
@@ -350,7 +350,7 @@ def rb_is_syntax_valid(code: str) -> bool:
         # Skip comments
         if line.startswith('#'):
             continue
-            
+
         for i, char in enumerate(line):
             # Handle string literals
             if char in ['"', "'"] and (i == 0 or line[i-1] != '\\'):
@@ -361,25 +361,16 @@ def rb_is_syntax_valid(code: str) -> bool:
                     in_string = False
                     string_char = None
                 continue
-                
+
             if in_string:
                 continue
-                
-            # Check if the line contains a valid method call like 'assert_equal'
-            if line[i:].startswith('assert_equal'):
-                # Ensure the method has two arguments
-                if line.count(',') != 1:
-                    return False
-                # Ensure the structure is valid for the test
-                if not (line.strip().endswith(')')):
-                    return False
-                
+
             # Check for 'def' and 'end' pairs
             if line[i:].startswith('def '):
                 def_count += 1
             elif char == 'e' and line[i:].startswith('end') and (i+3 >= len(line) or not line[i+3].isalnum()):
                 end_count += 1
-                
+
             # Check brackets
             if char in '([{':
                 brackets.append(char)
@@ -391,7 +382,19 @@ def rb_is_syntax_valid(code: str) -> bool:
                     char == ']' and last_open != '[' or 
                     char == '}' and last_open != '{'):
                     return False
-    
+
+        # More flexible check for 'assert_equal'
+        if line.startswith('assert_equal'):
+            if '(' in line and ')' in line:
+                # Rough check for valid method call with arguments
+                inside_parens = line[line.index('(') + 1 : line.rindex(')')]
+                if not inside_parens.strip():
+                    return False  # Empty parentheses
+            else:
+                parts = line.split(None, 2)
+                if len(parts) < 3:
+                    return False  # Not enough parts in assert_equal
+
     # Final checks
     return (def_count == end_count and  # All 'def' have matching 'end'
             not brackets and             # All brackets are closed

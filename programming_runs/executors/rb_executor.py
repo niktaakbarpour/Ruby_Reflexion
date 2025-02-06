@@ -1,5 +1,5 @@
 import subprocess
-import ast
+import re
 import sys
 from typing import List, Tuple
 
@@ -24,15 +24,16 @@ class RbExecutor:
         is_passing = True
 
 
-        func_name = func.split()[1].split('(')[0]
+        func_name = func.split()[1].split('(')[0]  # Extract function name
         ruby_code = f"require 'test/unit'\n\n"
         ruby_code += func + "\n\n"
+
         ruby_code += f"class TestHumanEval < Test::Unit::TestCase\n"
         ruby_code += f"  def test_{func_name}\n"
         ruby_code += f"    candidate = method(:{func_name})\n"
         for test in tests:
-            # Ensure `candidate.call(...)` is used instead of the function name directly
-            modified_test = test.replace(f"{func_name}(", "candidate.call(")
+            # Replace only function calls in test cases
+            modified_test = re.sub(rf"(?<!\w){func_name}\s*\(", "candidate.call(", test)
             ruby_code += f"    {modified_test}\n"
         ruby_code += "  end\n"
         ruby_code += "end\n"
@@ -49,12 +50,6 @@ class RbExecutor:
             )
 
             print(f"RESULTSSSSS: {result}")
-
-            if result.stdout:
-                print(f"stdout: {result.stdout}")
-            if result.stderr:
-                print(f"stderr: {result.stderr}")
-
 
             # Parse results
             if result.returncode == 0:
@@ -79,47 +74,6 @@ class RbExecutor:
             "feedback": feedback,
             "state": [test in success_tests for test in tests],
         }
-
-
-        # for test in tests:
-        #     # Combine the function and test case
-        #     ruby_code = f"{func}\n{test}"
-        #     print(f"ruby_code: {ruby_code}")
-            
-        #     try:
-        #         # Execute the Ruby code using the `ruby` command
-        #         result = subprocess.run(
-        #             ["ruby", "-e", ruby_code],
-        #             capture_output=True,
-        #             text=True,
-        #             timeout=timeout,
-        #         )
-        #         print(f"result: {result}")
-        #         # Check if the test passed
-        #         if result.returncode == 0 and "true" in result.stdout.lower():
-        #             success_tests.append(test)
-        #         else:
-        #             failed_tests.append(f"{test} # output: {result.stdout.strip()}")
-        #             is_passing = False
-        #     except subprocess.TimeoutExpired:
-        #         failed_tests.append(f"{test} # output: TIMEOUT")
-        #         is_passing = False
-        #     except Exception as e:
-        #         failed_tests.append(f"{test} # output: {str(e)}")
-        #         is_passing = False
-
-        # # Generate feedback
-        # feedback = "Tests passed:\n"
-        # feedback += "\n".join(success_tests) + "\n\n"
-        # feedback += "Tests failed:\n"
-        # feedback += "\n".join(failed_tests)
-
-        # # Return results
-        # return {
-        #     "is_passing": is_passing,
-        #     "feedback": feedback,
-        #     "state": [test in success_tests for test in tests],
-        # }
 
     def evaluate(self, name: str, func: str, test: str, timeout: int = 5) -> bool:
         """
@@ -149,38 +103,9 @@ class RbExecutor:
 
 # Example usage
 if __name__ == "__main__":
-    # Ruby function to test
-    ruby_func = """
-def find_closest_elements(numbers)
-  if numbers.length < 2
-    raise ArgumentError, "The input list must contain at least two elements."
-  end
-
-  closest_pair = nil
-  min_diff = Float::INFINITY
-
-  numbers.each_with_index do |num1, i|
-    numbers[i+1..-1].each do |num2|
-      diff = (num1 - num2).abs
-      if diff < min_diff
-        min_diff = diff
-        closest_pair = [num1, num2].sort
-      end
-    end
-  end
-
-  closest_pair
-end
-"""
-
-    # Test cases
-    ruby_tests = [
-        'puts find_closest_elements([1.0, 2.0, 3.0, 4.0, 5.0, 2.2]) == [2.0, 2.2]',
-        'puts find_closest_elements([1.0, 2.0, 3.0, 4.0, 5.0, 2.0]) == [2.0, 2.0]',
-        'puts find_closest_elements([1.0, 2.0, 3.0, 4.0, 5.0]) == [1.0, 2.0]',
-        'puts find_closest_elements([5.0, 4.0, 3.0, 2.0, 1.0]) == [1.0, 2.0]',
-        'puts find_closest_elements([1.0, 3.0, 2.0, 4.0, 5.0]) == [1.0, 2.0]',
-    ]
+  
+    ruby_func = "def add(a, b); while true; x = 1; end; a + b; end"
+    ruby_tests = ["assert_equal 3, add(1, 2)", "assert_equal 4, add(1, 2)"]
 
     # Create executor and run tests
     executor = RbExecutor()

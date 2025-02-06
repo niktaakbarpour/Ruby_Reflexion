@@ -136,14 +136,12 @@ def generic_generate_internal_tests(
                 )
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
-            print(f"OUTPUTTTTTTTTTT: {output}")
     else:
         prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func_sig}\nunit tests:'
         output = model.generate(prompt, max_tokens=1024)
-    all_tests = parse_tests(output)
-    print(f"ALL TESTSSSSSSSSS: {all_tests}")
+    all_tests = parse_tests(output.split("\n"))
     valid_tests = [test for test in all_tests if is_syntax_valid(test)]
-    print(f"VALID TESTSSSSSSSSS: {valid_tests}")
+    print(f"VALID TESTS: {valid_tests}")
 
     return sample_n_random(valid_tests, max_num_tests)
 
