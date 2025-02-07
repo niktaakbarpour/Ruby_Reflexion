@@ -35,7 +35,7 @@ def run_reflexion(
             if is_leetcode:
                 tests_i = item['visible_tests']
             else:
-                tests_i = gen.internal_tests(item["prompt"], model, 1)
+                tests_i = gen.internal_tests(item["prompt"], model, 5)
 
             print("I'm here.5")
 
@@ -43,14 +43,9 @@ def run_reflexion(
             cur_func_impl = gen.func_impl(item["prompt"], model, "simple")
             implementations.append(cur_func_impl)
             assert isinstance(cur_func_impl, str)
-            is_passing, feedback, _ = exe.execute(cur_func_impl, tests_i)
-            print(f"is_passing2: {is_passing}")
-            print(f"feedback2: {feedback}")
             result = exe.execute(cur_func_impl, tests_i)
             is_passing = result["is_passing"]
             feedback = result["feedback"]
-            print(f"is_passing33333333333: {is_passing}")
-            print(f"feedback33333333333333: {feedback}")
 
             test_feedback.append(feedback)
 
@@ -59,8 +54,10 @@ def run_reflexion(
                 print("I'm here.6")
                 is_passing = exe.evaluate(
                     item["entry_point"], cur_func_impl, item["test"], timeout=10)
+                print(f"is_passing1: {is_passing}")
                 is_solved = is_passing
                 num_success += int(is_passing)
+                print(f"num_success1: {num_success}")
                 break
 
             # use self-reflection to iteratively improve
@@ -88,8 +85,11 @@ def run_reflexion(
                 assert isinstance(cur_func_impl, str)
 
                 # check if all internal unit tests pass
-                is_passing, cur_feedback, _ = exe.execute(
-                    cur_func_impl, tests_i)
+                result = exe.execute(cur_func_impl, tests_i)
+                # is_passing, cur_feedback, _ = exe.execute(
+                #     cur_func_impl, tests_i)
+                is_passing = result["is_passing"]
+                cur_feedback = result["feedback"]
                 test_feedback.append(cur_feedback)
 
                 # if solved, check if it passes the real tests, exit early
@@ -97,11 +97,13 @@ def run_reflexion(
                     print("I'm here.9")
                     is_passing = exe.evaluate(
                         item["entry_point"], cur_func_impl, item["test"], timeout=10)
+                    print(f"is_passing2: {is_passing}")
                     if is_passing:
                         print("I'm here.10")
                         item["solution"] = cur_func_impl
                         is_solved = True
                         num_success += 1
+                        print(f"num_success2: {num_success}")
                     break
                 print("I'm here.11")
                 cur_iter += 1

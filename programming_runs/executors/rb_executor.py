@@ -49,8 +49,6 @@ class RbExecutor:
                 timeout=timeout,
             )
 
-            print(f"RESULTSSSSS: {result}")
-
             # Parse results
             if result.returncode == 0:
                 success_tests = tests
@@ -68,9 +66,6 @@ class RbExecutor:
         # Generate feedback
         feedback = "Tests passed:\n" + "\n".join(success_tests) + "\n\n"
         feedback += "Tests failed:\n" + "\n".join(failed_tests)
-
-        print(f"is_passing: {is_passing}")
-        print(f"feedback: {feedback}")
 
         return {
             "is_passing": is_passing,
@@ -91,14 +86,18 @@ class RbExecutor:
         Returns:
             bool: True if the test passes, False otherwise.
         """
-        ruby_code = f"{func}\n{test}"
+        ruby_code = f"{func}\n{test if test.startswith('r') else 'r' + test}"
+        print(f"ruby_code5: {ruby_code}")
+
         try:
             result = subprocess.run(
-                ["ruby", "-e", ruby_code],
+                ["/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby", "-e", ruby_code],
                 capture_output=True,
                 text=True,
                 timeout=timeout,
             )
+
+            print(f"RESULTSSSSS: {result}")
             return result.returncode == 0 and "true" in result.stdout.lower()
         except:
             return False
@@ -113,5 +112,4 @@ if __name__ == "__main__":
     # Create executor and run tests
     executor = RbExecutor()
     result = executor.execute(ruby_func, ruby_tests, timeout=2)
-    print(f"**********result: {result}")
     print(result["feedback"])

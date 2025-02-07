@@ -16,7 +16,6 @@ def executor_factory(lang: str, is_leet: bool = False) -> Executor:
         else:
             return PyExecutor()
     elif lang == "rb" or lang == "ruby":
-        print("I am here 1.4")
         return RbExecutor()
     elif lang == "rs" or lang == "rust":
         if is_leet:
