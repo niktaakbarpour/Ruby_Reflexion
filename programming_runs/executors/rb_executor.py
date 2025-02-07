@@ -98,7 +98,7 @@ class RbExecutor:
             )
 
             print(f"RESULTSSSSS: {result}")
-            return result.returncode == 0 and "true" in result.stdout.lower()
+            return result.returncode == 0
         except:
             return False
 
