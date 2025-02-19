@@ -32,6 +32,7 @@ def run_reflexion(
         test_feedback = []
         cur_func_impl = ""
         while cur_pass < pass_at_k and not is_solved:
+            print(f"cur_pass: {cur_pass}")
             if is_leetcode:
                 tests_i = item['visible_tests']
             else:
@@ -64,6 +65,8 @@ def run_reflexion(
             cur_iter = 1
             cur_feedback = feedback
             print("I'm here.7")
+            print(f"cur_iter: {cur_iter}")
+            print(f"max_iter: {max_iters}")
             while cur_iter < max_iters:
                 # get self-reflection
                 reflection = gen.self_reflection(
