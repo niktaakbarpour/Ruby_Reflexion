@@ -14,10 +14,10 @@ PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a Ruby programming language writi
 PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a Ruby programming language writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
 USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby programming language code block to write your response. For example:\n```ruby\nputs 'Hello world!'\n```"
 
-PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a function signature and its docstring by the user. Write ONLY your full implementation in Ruby (restate the function signature but DO NOT write example usage)."
-PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby programming language code. You will be given a function signature and its docstring by the user. Write your full implementation in Ruby (restate the function signature)."
-PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation in Ruby (restate the function signature)."
-PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby (restate the function signature)."
+PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a buggy code implementation and its docstring by the user. Write ONLY your full correct implementation in Ruby (DO NOT write example usage)."
+PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby programming language code. You will be given a buggy code implementation and its docstring by the user. Write your full correct implementation in Ruby."
+PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation in Ruby."
+PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby."
 PY_REFLEXION_FEW_SHOT_ADD = '''Example 1:
 [previous impl]:
 ```ruby
@@ -28,7 +28,7 @@ end
 ```
 
 [unit test results from previous impl]:
-Tested passed:
+Tests passed:
 assert_equal 0, (->(string) { strlen(string) }).call("")
 
 Tests failed:
@@ -58,7 +58,7 @@ end
 ```
 
 [unit test results from previous impl]:
-Tested passed:
+Tests passed:
 assert_equal 0, (->(string) { strlen(string) }).call("")
 
 Tests failed:
@@ -88,7 +88,7 @@ end
 ```
 [unit test results from previous impl]:
 
-Tested passed:
+Tests passed:
 assert_equal true, (->(string) { palindrome?(string) }).call("madam")
 assert_equal true, (->(string) { palindrome?(string) }).call("abcba")
 
@@ -107,7 +107,7 @@ end
 ```
 [unit test results from previous impl]:
 
-Tested passed:
+Tests passed:
 assert_equal true, (->(string) { palindrome?(string) }).call("madam")
 assert_equal true, (->(string) { palindrome?(string) }).call("abcba")
 
@@ -132,11 +132,11 @@ assert_equal 5, strlen("12345")
 assert_equal 3, strlen("   ")
 """
 
-PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby unit tests for functions given the signature and docstring. In this step you should only generate unit tests not function implemention.
+PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby unit tests for codes given the docstring. In this step you should only generate unit tests not function implemention.
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
 
-PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby unit tests for functions given the signature and docstring. In this step you should only generate unit tests not function implemention (DO NOT use ".call", pay attention to the example)."""
+PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby unit tests for codes given the docstring. In this step you should only generate unit tests not function implemention."""
 
 
 

@@ -31,17 +31,21 @@ def run_reflexion(
         implementations = []
         test_feedback = []
         cur_func_impl = ""
+        def add_function_container(json_data):
+            buggy_code = json_data["bug_source_code"]
+            wrapped_code = f"def run_buggy()\n{buggy_code}\nend"
+            json_data["bug_source_code"] = wrapped_code
+            return json_data
+
+        modified_data = add_function_container(item["prompt"])
         while cur_pass < pass_at_k and not is_solved:
             print(f"cur_pass: {cur_pass}")
-            if is_leetcode:
-                tests_i = item['visible_tests']
-            else:
-                tests_i = gen.internal_tests(item["prompt"], model, 5)
+            tests_i = gen.internal_tests(modified_data, model, 5)
 
             print("I'm here.5")
 
             # first attempt
-            cur_func_impl = gen.func_impl(item["prompt"], model, "simple")
+            cur_func_impl = gen.func_impl(modified_data, model, "simple")
             implementations.append(cur_func_impl)
             assert isinstance(cur_func_impl, str)
             result = exe.execute(cur_func_impl, tests_i)
@@ -53,8 +57,7 @@ def run_reflexion(
             # if solved, exit early
             if is_passing:
                 print("I'm here.6")
-                is_passing = exe.evaluate(
-                    item["entry_point"], cur_func_impl, item["test"], timeout=10)
+                is_passing = exe.evaluate(cur_func_impl, item["test"], timeout=10)
                 print(f"is_passing1: {is_passing}")
                 is_solved = is_passing
                 num_success += int(is_passing)

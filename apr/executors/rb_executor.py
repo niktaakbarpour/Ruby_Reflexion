@@ -7,12 +7,12 @@ class RbExecutor:
     def execute(self, func: str, tests: List[str], timeout: int = 5) -> dict:
         """
         Executes a Ruby function against a list of test cases.
-        
+
         Args:
             func (str): The Ruby function as a string.
             tests (List[str]): List of test cases as strings.
             timeout (int): Timeout for each test execution (in seconds).
-        
+
         Returns:
             dict: A dictionary containing:
                 - is_passing (bool): Whether all tests passed.
@@ -23,23 +23,27 @@ class RbExecutor:
         failed_tests = []
         is_passing = True
 
-
         func_name = func.split()[1].split('(')[0]  # Extract function name
         ruby_code = f"require 'test/unit'\n\n"
         ruby_code += func + "\n\n"
 
         ruby_code += f"class TestHumanEval < Test::Unit::TestCase\n"
         ruby_code += f"  def test_{func_name}\n"
-        ruby_code += f"    candidate = method(:{func_name})\n"
-        for test in tests:
-            # Replace only function calls in test cases
-            modified_test = re.sub(rf"(?<!\w){func_name}\s*\(", "candidate.call(", test)
-            ruby_code += f"    {modified_test}\n"
+        
+        for test_case in tests:
+            test_input, _ = test_case  # Extract test input and expected output
+            test_input = test_input.strip()  # Prepare the input for Ruby
+
+            # Modify the Ruby code to pass input dynamically and capture output
+            modified_test = f"input = '{test_input}'\n"  # Simulate passing the input
+            ruby_code += f"    input = '{test_input}'\n"  # Pass input dynamically to Ruby function
+            ruby_code += f"    output = {func_name}.call(input)\n"
+            ruby_code += f"    assert_equal({modified_test}, output)\n"
+
         ruby_code += "  end\n"
         ruby_code += "end\n"
 
-
-        print(f"ruby_code4: {ruby_code}")
+        print(f"ruby_code: {ruby_code}")
 
         try:
             result = subprocess.run(
@@ -73,7 +77,7 @@ class RbExecutor:
             "state": [test in success_tests for test in tests],
         }
 
-    def evaluate(self, name: str, func: str, test: str, timeout: int = 5) -> bool:
+    def evaluate(self, func: str, test: str, timeout: int = 5) -> bool:
         """
         Evaluates a Ruby function against a single test case.
         
