@@ -77,34 +77,47 @@ class RbExecutor:
             "state": [test in success_tests for test in tests],
         }
 
-    def evaluate(self, func: str, test: str, timeout: int = 5) -> bool:
-        """
-        Evaluates a Ruby function against a single test case.
-        
-        Args:
-            name (str): Name of the function.
-            func (str): The Ruby function as a string.
-            test (str): The test case as a string.
-            timeout (int): Timeout for execution (in seconds).
-        
-        Returns:
-            bool: True if the test passes, False otherwise.
-        """
-        ruby_code = f"{func}\n{test if test.startswith('r') else 'r' + test}"
-        print(f"ruby_code5: {ruby_code}")
+def evaluate(self, func: str, test_cases: list, timeout: int = 5) -> bool:
+    """
+    Evaluates a Ruby function against multiple test cases.
+
+    Args:
+        func (str): The Ruby function as a string.
+        test_cases (list): A list of dictionaries containing "input" and "output".
+        timeout (int): Timeout for execution (in seconds).
+
+    Returns:
+        bool: True if all test cases pass, False otherwise.
+    """
+    ruby_script_path = "/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby"
+
+    for test in test_cases:
+        test_input = test["input"]
+        expected_output = [line.strip() for line in test["output"]]  # Normalize expected output
 
         try:
             result = subprocess.run(
-                ["/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby", "-e", ruby_code],
+                [ruby_script_path, "-e", func],  # Run the Ruby function
+                input=test_input,  # Pass input via stdin
                 capture_output=True,
                 text=True,
                 timeout=timeout,
             )
 
-            print(f"RESULTSSSSS: {result}")
-            return result.returncode == 0
-        except:
-            return False
+            actual_output = [line.strip() for line in result.stdout.splitlines()]  # Normalize actual output
+            
+            if actual_output != expected_output:
+                return False  # Fail if any test case doesn't match
+
+        except subprocess.TimeoutExpired:
+            return False  # Fail if the process times out
+
+        except Exception as e:
+            print(f"Error executing Ruby code: {e}")
+            return False  # Fail on any other exception
+
+    return True  # Pass only if all test cases succeed
+
 
 
 # Example usage

@@ -57,7 +57,7 @@ def run_reflexion(
             # if solved, exit early
             if is_passing:
                 print("I'm here.6")
-                is_passing = exe.evaluate(cur_func_impl, item["test"], timeout=10)
+                is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
                 print(f"is_passing1: {is_passing}")
                 is_solved = is_passing
                 num_success += int(is_passing)
