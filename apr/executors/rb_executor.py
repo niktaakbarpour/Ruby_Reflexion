@@ -31,6 +31,7 @@ class RbExecutor:
         ruby_code += f"  def test_{func_name}\n"
         
         for test_case in tests:
+            print(f"test_case: {test_case}, type: {type(test_case)}")
             test_input, _ = test_case  # Extract test input and expected output
             test_input = test_input.strip()  # Prepare the input for Ruby
 
