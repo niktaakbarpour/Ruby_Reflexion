@@ -31,13 +31,28 @@ def run_reflexion(
         implementations = []
         test_feedback = []
         cur_func_impl = ""
-        def add_function_container(json_data):
-            buggy_code = json_data["bug_source_code"]
-            wrapped_code = f"def run_buggy()\n{buggy_code}\nend"
-            json_data["bug_source_code"] = wrapped_code
-            return json_data
+        def add_function_container(code: str) -> str:
+            return f"def run_buggy()\n{code}\nend"
+        
+        def create_template(json_data):
+            template = f"""\
+        Buggy source code: {add_function_container(json_data["bug_source_code"])}
 
-        modified_data = add_function_container(item["prompt"])
+        Problem description in textual format, math operations are written in LaTeX: {json_data["description"]}
+
+        How and in what order the input will be given to the program? It also includes the data range, types, and sizes: {json_data["input_spec"]}
+
+        How the outputs should be printed. Most of the time, the unit test results are matched with an exact string match or floating point comparison with a precision boundary: {json_data["output_spec"]}
+
+        A sample input for the code that is expected to solve the problem described in the description: {json_data["sample_inputs"]}
+
+        The expected output for the sample input that is expected to solve the problem described in the description: {json_data["sample_outputs"]}
+
+        Explanation of sample inputs & sample outputs: {json_data["notes"]}
+        """
+            return template
+
+        modified_data = create_template(item)
         while cur_pass < pass_at_k and not is_solved:
             print(f"cur_pass: {cur_pass}")
             tests_i = gen.internal_tests(modified_data, model, 5)
@@ -80,7 +95,7 @@ def run_reflexion(
 
                 # apply self-reflection in the next attempt
                 cur_func_impl = gen.func_impl(
-                    func_sig=item["prompt"],
+                    func_sig=item["bug_source_code"],
                     model=model,
                     strategy="reflexion",
                     prev_func_impl=cur_func_impl,
