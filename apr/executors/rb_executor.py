@@ -22,102 +22,83 @@ class RbExecutor:
         success_tests = []
         failed_tests = []
         is_passing = True
-
-        func_name = func.split()[1].split('(')[0]  # Extract function name
-        ruby_code = f"require 'test/unit'\n\n"
-        ruby_code += func + "\n\n"
-
-        ruby_code += f"class TestHumanEval < Test::Unit::TestCase\n"
-        ruby_code += f"  def test_{func_name}\n"
         
-        for test_case in tests:
-            print(f"test_case: {test_case}, type: {type(test_case)}")
-            test_input, _ = test_case  # Extract test input and expected output
-            test_input = test_input.strip()  # Prepare the input for Ruby
+        for test in tests:
 
-            # Modify the Ruby code to pass input dynamically and capture output
-            modified_test = f"input = '{test_input}'\n"  # Simulate passing the input
-            ruby_code += f"    input = '{test_input}'\n"  # Pass input dynamically to Ruby function
-            ruby_code += f"    output = {func_name}.call(input)\n"
-            ruby_code += f"    assert_equal({modified_test}, output)\n"
+            try:
+                result = subprocess.run(
+                    ["/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby", "-e", func],
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    input=test,
+                )
 
-        ruby_code += "  end\n"
-        ruby_code += "end\n"
+                actual_output = result.stdout.strip()
+                expected_output = test.split("\n")[-1].strip()  # Assuming last line is expected output
+                
+                if actual_output == expected_output:
+                    success_tests.append(test)
+                else:
+                    failed_tests.append(f"Input: {test}, Expected: {expected_output}, Got: {actual_output}")
+                    is_passing = False
 
-        print(f"ruby_code: {ruby_code}")
-
-        try:
-            result = subprocess.run(
-                ["/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby", "-e", ruby_code],
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-            )
-
-            # Parse results
-            if result.returncode == 0:
-                success_tests = tests
-            else:
-                failed_tests.append(f"Test suite failed # output: {result.stdout.strip()} {result.stderr.strip()}")
+            except subprocess.TimeoutExpired:
+                failed_tests.append(f"Timeout for input: {test}")
                 is_passing = False
+            except Exception as e:
+                failed_tests.append(f"Error: {str(e)} for input: {test}")
+                is_passing = False
+        
+            feedback = "Tests passed:\n" + "\n".join(success_tests) + "\n\n" if success_tests else ""
+            feedback += "Tests failed:\n" + "\n".join(failed_tests) if failed_tests else ""
 
-        except subprocess.TimeoutExpired:
-            failed_tests.append("Test suite timed out")
-            is_passing = False
-        except Exception as e:
-            failed_tests.append(f"Error: {str(e)}")
-            is_passing = False
+            return {
+                "is_passing": is_passing,
+                "feedback": feedback,
+                "state": [test in success_tests for test in tests],
+            }
 
-        # Generate feedback
-        feedback = "Tests passed:\n" + "\n".join(success_tests) + "\n\n"
-        feedback += "Tests failed:\n" + "\n".join(failed_tests)
+    def evaluate(self, func: str, test_cases: list, timeout: int = 5) -> bool:
+        """
+        Evaluates a Ruby function against multiple test cases.
 
-        return {
-            "is_passing": is_passing,
-            "feedback": feedback,
-            "state": [test in success_tests for test in tests],
-        }
+        Args:
+            func (str): The Ruby function as a string.
+            test_cases (list): A list of dictionaries containing "input" and "output".
+            timeout (int): Timeout for execution (in seconds).
 
-def evaluate(self, func: str, test_cases: list, timeout: int = 5) -> bool:
-    """
-    Evaluates a Ruby function against multiple test cases.
+        Returns:
+            bool: True if all test cases pass, False otherwise.
+        """
+        ruby_script_path = "/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby"
 
-    Args:
-        func (str): The Ruby function as a string.
-        test_cases (list): A list of dictionaries containing "input" and "output".
-        timeout (int): Timeout for execution (in seconds).
+        for test in test_cases:
+            test_input = test["input"]
+            expected_output = [line.strip() for line in test["output"]]  # Normalize expected output
 
-    Returns:
-        bool: True if all test cases pass, False otherwise.
-    """
-    ruby_script_path = "/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby"
+            try:
+                result = subprocess.run(
+                    [ruby_script_path, "-e", func],  # Run the Ruby function
+                    input=test_input,  # Pass input via stdin
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                )
 
-    for test in test_cases:
-        test_input = test["input"]
-        expected_output = [line.strip() for line in test["output"]]  # Normalize expected output
+                actual_output = [line.strip() for line in result.stdout.splitlines()]  # Normalize actual output
+                
+                if actual_output != expected_output:
+                    return False  # Fail if any test case doesn't match
 
-        try:
-            result = subprocess.run(
-                [ruby_script_path, "-e", func],  # Run the Ruby function
-                input=test_input,  # Pass input via stdin
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-            )
+            except subprocess.TimeoutExpired:
+                return False  # Fail if the process times out
 
-            actual_output = [line.strip() for line in result.stdout.splitlines()]  # Normalize actual output
-            
-            if actual_output != expected_output:
-                return False  # Fail if any test case doesn't match
+            except Exception as e:
+                print(f"Error executing Ruby code: {e}")
+                return False  # Fail on any other exception
 
-        except subprocess.TimeoutExpired:
-            return False  # Fail if the process times out
-
-        except Exception as e:
-            print(f"Error executing Ruby code: {e}")
-            return False  # Fail on any other exception
-
-    return True  # Pass only if all test cases succeed
+        return True  # Pass only if all test cases succeed
 
 
 
