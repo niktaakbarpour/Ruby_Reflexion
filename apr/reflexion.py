@@ -31,12 +31,10 @@ def run_reflexion(
         implementations = []
         test_feedback = []
         cur_func_impl = ""
-        def add_function_container(code: str) -> str:
-            return f"def run_buggy()\n{code}\nend"
         
         def create_template(json_data):
             template = f"""\
-        Buggy source code: {add_function_container(json_data["bug_source_code"])}
+        Buggy source code: {json_data["bug_source_code"]}
 
         Problem description in textual format, math operations are written in LaTeX: {json_data["description"]}
 

@@ -124,19 +124,39 @@ def strlen(string)\n
     # Return length of given string
     # This function takes a string as input and returns the number of characters in the string.
 unit tests:
-assert_equal 0, strlen("")
-assert_equal 3, strlen("abc")
-assert_equal 11, strlen("hello world")
-assert_equal 4, strlen("ruby")
-assert_equal 5, strlen("12345")
-assert_equal 3, strlen("   ")
+[
+    {
+      "input": "abc\r\n",
+      "output": [
+        "3"
+      ]
+    },
+    {
+      "input": "hello world\r\n",
+      "output": [
+        "11"
+      ]
+    },
+    {
+      "input": "ruby\r\n",
+      "output": [
+        "4"
+      ]
+    },
+    {
+      "input": "12345\r\n",
+      "output": [
+        "5"
+      ]
+    },
+]
 """
 
-PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby unit tests for codes given the docstring. In this step you should only generate unit tests not function implemention.
+PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby test cases for codes given the docstring. In this step you should only generate sample input and output not function implemention and not test suite.
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
 
-PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby unit tests for codes given the docstring. In this step you should only generate unit tests not function implemention."""
+PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby test cases for codes given the docstring. In this step you should only generate sample input and output not function implemention and not test suite."""
 
 
 
