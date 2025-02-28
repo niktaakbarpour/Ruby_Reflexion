@@ -55,8 +55,6 @@ def run_reflexion(
             print(f"cur_pass: {cur_pass}")
             tests_i = gen.internal_tests(modified_data, model, 5)
 
-            print(f"tests_i *******: {tests_i}")
-
             # first attempt
             cur_func_impl = gen.func_impl(modified_data, model, "simple")
             implementations.append(cur_func_impl)

@@ -87,7 +87,7 @@ class RbExecutor:
                 )
 
                 actual_output = [line.strip() for line in result.stdout.splitlines()]  # Normalize actual output
-                
+
                 if actual_output != expected_output:
                     return False  # Fail if any test case doesn't match
 
@@ -99,6 +99,7 @@ class RbExecutor:
                 return False  # Fail on any other exception
 
         return True  # Pass only if all test cases succeed
+
 
 
 

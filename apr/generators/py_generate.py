@@ -215,9 +215,9 @@ class PyGenerator(Generator):
             test_generation_few_shot=PY_TEST_GENERATION_FEW_SHOT,
             test_generation_chat_instruction=PY_TEST_GENERATION_CHAT_INSTRUCTION,
             test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
-            parse_tests=parse_tests,
+            # parse_tests=parse_tests,
             # is_syntax_valid=py_is_syntax_valid,
-            is_syntax_valid=rb_is_syntax_valid,
+            # is_syntax_valid=rb_is_syntax_valid,
         )
 
 DUMMY_FUNC_SIG = "def dummy_func\n"  # Ruby style function declaration

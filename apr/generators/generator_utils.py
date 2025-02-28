@@ -105,8 +105,8 @@ def generic_generate_internal_tests(
         test_generation_few_shot: str,
         test_generation_chat_instruction: str,
         test_generation_completion_instruction: str,
-        parse_tests: Callable[[str], List[str]],
-        is_syntax_valid: Callable[[str], bool],
+        # parse_tests: Callable[[str], List[str]],
+        # is_syntax_valid: Callable[[str], bool],
         is_react: bool = False
 ) -> List[str]:
     """Generates tests for a function."""
@@ -139,11 +139,11 @@ def generic_generate_internal_tests(
     else:
         prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func_sig}\nunit tests:'
         output = model.generate(prompt, max_tokens=1024)
-    all_tests = parse_tests(output.split("\n"))
-    valid_tests = [test for test in all_tests if is_syntax_valid(test)]
-    print(f"VALID TESTS: {valid_tests}")
+    # all_tests = parse_tests(output.split("\n"))
+    # valid_tests = [test for test in all_tests if is_syntax_valid(test)]
+    print(f"VALID TESTS: {output}")
 
-    return sample_n_random(valid_tests, max_num_tests)
+    return sample_n_random(output, max_num_tests)
 
 
 def generic_generate_self_reflection(
