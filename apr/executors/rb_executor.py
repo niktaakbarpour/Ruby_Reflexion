@@ -31,23 +31,29 @@ class RbExecutor:
                     capture_output=True,
                     text=True,
                     timeout=timeout,
-                    input=test,
+                    input=test["input"],
                 )
 
+                print(f"RESULTTTTT: {result}")
+
                 actual_output = result.stdout.strip()
-                expected_output = test.split("\n")[-1].strip()  # Assuming last line is expected output
-                
+                expected_output = test["output"][-1].strip()
+                print(f"actual_output: {actual_output}")
+                print(f"expected_output: {expected_output}")
+
                 if actual_output == expected_output:
                     success_tests.append(test)
+                    print("I passed")
                 else:
-                    failed_tests.append(f"Input: {test}, Expected: {expected_output}, Got: {actual_output}")
+                    failed_tests.append(f"Input: {test['input']}, Expected: {expected_output}, Got: {actual_output}")
                     is_passing = False
+                    print("I failed")
 
             except subprocess.TimeoutExpired:
-                failed_tests.append(f"Timeout for input: {test}")
+                failed_tests.append(f"Timeout for input: {test['input']}")
                 is_passing = False
             except Exception as e:
-                failed_tests.append(f"Error: {str(e)} for input: {test}")
+                failed_tests.append(f"Error: {str(e)} for input: {test['input']}")
                 is_passing = False
         
             feedback = "Tests passed:\n" + "\n".join(success_tests) + "\n\n" if success_tests else ""
@@ -86,9 +92,15 @@ class RbExecutor:
                     timeout=timeout,
                 )
 
+                print(f"************2222222222RESULTTTTT: {result}")
+
                 actual_output = [line.strip() for line in result.stdout.splitlines()]  # Normalize actual output
 
+                print(f"actual_output2: {actual_output}")
+                print(f"expected_output2: {expected_output}")
+
                 if actual_output != expected_output:
+                    print("I failed")
                     return False  # Fail if any test case doesn't match
 
             except subprocess.TimeoutExpired:
@@ -97,7 +109,7 @@ class RbExecutor:
             except Exception as e:
                 print(f"Error executing Ruby code: {e}")
                 return False  # Fail on any other exception
-
+        print("I passed")
         return True  # Pass only if all test cases succeed
 
 

@@ -132,7 +132,7 @@ def generic_generate_internal_tests(
                 ),
                 Message(
                     role="user",
-                    content=f"{test_generation_few_shot}\n\n[func signature]:\n{func_sig}\n\n[unit tests]:",
+                    content=f"{test_generation_few_shot}\n\n[explanation of the function]:\n{func_sig}\n\n[unit tests]:",
                 )
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
@@ -141,7 +141,6 @@ def generic_generate_internal_tests(
         output = model.generate(prompt, max_tokens=1024)
     # all_tests = parse_tests(output.split("\n"))
     # valid_tests = [test for test in all_tests if is_syntax_valid(test)]
-    print(f"VALID TESTS: {output}")
 
     return sample_n_random(output, max_num_tests)
 

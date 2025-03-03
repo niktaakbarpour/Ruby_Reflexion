@@ -41,19 +41,20 @@ def run_reflexion(
         How and in what order the input will be given to the program? It also includes the data range, types, and sizes: {json_data["input_spec"]}
 
         How the outputs should be printed. Most of the time, the unit test results are matched with an exact string match or floating point comparison with a precision boundary: {json_data["output_spec"]}
-
-        A sample input for the code that is expected to solve the problem described in the description: {json_data["sample_inputs"]}
-
-        The expected output for the sample input that is expected to solve the problem described in the description: {json_data["sample_outputs"]}
-
-        Explanation of sample inputs & sample outputs: {json_data["notes"]}
         """
             return template
+        
+        # A sample input for the code that is expected to solve the problem described in the description: {json_data["sample_inputs"]}
+
+        # The expected output for the sample input that is expected to solve the problem described in the description: {json_data["sample_outputs"]}
+
+        # Explanation of sample inputs & sample outputs: {json_data["notes"]}
 
         modified_data = create_template(item)
         while cur_pass < pass_at_k and not is_solved:
             print(f"cur_pass: {cur_pass}")
             tests_i = gen.internal_tests(modified_data, model, 5)
+            print(f"tests_i: {tests_i}, type: {type(tests_i)}")
 
             # first attempt
             cur_func_impl = gen.func_impl(modified_data, model, "simple")
@@ -112,8 +113,7 @@ def run_reflexion(
                 # if solved, check if it passes the real tests, exit early
                 if is_passing or cur_iter == max_iters - 1:
                     print("I'm here.9")
-                    is_passing = exe.evaluate(
-                        item["entry_point"], cur_func_impl, item["test"], timeout=10)
+                    is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
                     print(f"is_passing2: {is_passing}")
                     if is_passing:
                         print("I'm here.10")

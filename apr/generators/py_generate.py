@@ -14,7 +14,7 @@ PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a Ruby programming language writi
 PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a Ruby programming language writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
 USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby programming language code block to write your response. For example:\n```ruby\nputs 'Hello world!'\n```"
 
-PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a buggy code implementation and its docstring by the user. Write ONLY your full correct implementation in Ruby (DO NOT write example usage)."
+PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a buggy code implementation and its docstring by the user. Write ONLY your full correct implementation in Ruby (DO NOT write example usage). In other words your task is automatic program repair."
 PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby programming language code. You will be given a buggy code implementation and its docstring by the user. Write your full correct implementation in Ruby."
 PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation in Ruby."
 PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby."
@@ -22,17 +22,26 @@ PY_REFLEXION_FEW_SHOT_ADD = '''Example 1:
 [previous impl]:
 ```ruby
 def strlen(string)\n
-    # Return length of given string\n
     string.chars.map(&:ord).sum\n
 end
 ```
 
 [unit test results from previous impl]:
 Tests passed:
-assert_equal 0, (->(string) { strlen(string) }).call("")
+[
+    {
+      "input": "",
+      "output": 0
+    },
+]
 
 Tests failed:
-assert_equal 3, (->(string) { strlen(string) }).call("abc")
+[
+    {
+      "input": "abc\r\n",
+      "output": 3
+    },
+]
 
 [reflection on previous impl]:
 I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string, which caused the test failures. My plan for improving the result is to modify the strlen function to return the length of the string using string.length, which will pass the test cases that expect the correct character count.
@@ -52,17 +61,26 @@ PY_REFLEXION_FEW_SHOT = '''Example 1:
 [previous impl]:
 ```ruby
 def strlen(string)\n
-    # Return length of given string\n
     string.chars.map(&:ord).sum\n
 end
 ```
 
 [unit test results from previous impl]:
 Tests passed:
-assert_equal 0, (->(string) { strlen(string) }).call("")
+[
+    {
+      "input": "",
+      "output": 0
+    },
+]
 
 Tests failed:
-assert_equal 3, (->(string) { strlen(string) }).call("abc")
+[
+    {
+      "input": "abc\r\n",
+      "output": 3
+    },
+]
 
 [reflection on previous impl]:
 I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string, which caused the test failures. My plan for improving the result is to modify the strlen function to return the length of the string using string.length, which will pass the test cases that expect the correct character count.
@@ -70,7 +88,6 @@ I realized that the implementation of strlen was incorrect because it summed the
 [improved impl]:
 ```ruby
 def strlen(string)\n
-    # Return length of given string\n
     return string.length\n
 end
 ```
@@ -89,11 +106,24 @@ end
 [unit test results from previous impl]:
 
 Tests passed:
-assert_equal true, (->(string) { palindrome?(string) }).call("madam")
-assert_equal true, (->(string) { palindrome?(string) }).call("abcba")
+[
+    {
+      "input": "madam\r\n",
+      "output": true
+    },
+    {
+      "input": "abcba\r\n",
+      "output": true
+    },
+]
 
 Tests failed:
-assert_equal false, (->(string) { palindrome?(string) }).call("hello") # output: true
+[
+    {
+      "input": "hello\r\n",
+      "output": false
+    },
+]
 
 [reflection on previous impl]: I realized that the implementation of palindrome? was incorrect because it was comparing the string directly to its reversed version without checking for case sensitivity or non-alphabetic characters, which caused the test failures. My plan for improving the result is to ensure that both the string and its reversed version are checked after removing non-alphabetic characters and converting to lowercase, which will pass the test cases that expect the correct palindrome check.
 
@@ -108,11 +138,24 @@ end
 [unit test results from previous impl]:
 
 Tests passed:
-assert_equal true, (->(string) { palindrome?(string) }).call("madam")
-assert_equal true, (->(string) { palindrome?(string) }).call("abcba")
+[
+    {
+      "input": "madam\r\n",
+      "output": true
+    },
+    {
+      "input": "abcba\r\n",
+      "output": true
+    },
+]
 
 Tests failed:
-assert_equal false, (->(string) { palindrome?(string) }).call("hello") # output: true
+[
+    {
+      "input": "hello\r\n",
+      "output": false
+    },
+]
 
 [reflection on previous impl]: I realized that the implementation of longest_subarray_with_sum_limit was incorrect because I was using each_with_index.max_by to find the longest subarray, which did not properly calculate the maximum subarray length under the sum limit constraint. My plan for improving the result is to change the approach to use a sliding window technique, which will efficiently find the longest subarray with the sum constraint and handle the edge cases properly.
 END OF EXAMPLES
@@ -152,11 +195,11 @@ unit tests:
 ]
 """
 
-PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming language coding assistant that can writenew, unique, diverse, and intuitive Ruby test cases for codes given the docstring. In this step you should only generate sample input and output not function implemention and not test suite. Do not rewrite the tests that are already in the benchmark.
+PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the docstring. In this step you should only generate sample input and output not function implemention and not test suite.
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
 
-PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the docstring. In this step you should only generate sample input and output not function implemention and not test suite. Do not rewrite the tests that are already in the benchmark."""
+PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the docstring. In this step you should only generate sample input and output not function implemention and not test suite."""
 
 
 
