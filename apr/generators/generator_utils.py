@@ -2,7 +2,7 @@ from generators.model import ModelBase, Message
 import random
 
 from typing import Union, List, Optional, Callable
-
+import json
 
 def generic_generate_func_impl(
     func_sig: str,
@@ -141,8 +141,39 @@ def generic_generate_internal_tests(
         output = model.generate(prompt, max_tokens=1024)
     # all_tests = parse_tests(output.split("\n"))
     # valid_tests = [test for test in all_tests if is_syntax_valid(test)]
+    
+    print(f"Raw output from model before cleaning: {output}, type: {type(output)}")
 
-    return sample_n_random(output, max_num_tests)
+    # Remove triple backticks and surrounding whitespace
+    cleaned_output = output.strip("`").strip()
+
+    # If the first line is "json", remove it
+    lines = cleaned_output.split("\n")
+    if lines[0].strip().lower() == "json":
+        cleaned_output = "\n".join(lines[1:])  # Remove first line
+
+    # Debug: Print cleaned output
+    print(f"Cleaned output: {cleaned_output}")
+
+    # Handle empty output case
+    if not cleaned_output:
+        print("Warning: Model output is empty.")
+        return []
+
+    # Parse JSON safely
+    try:
+        parsed_output = json.loads(cleaned_output)  # Convert JSON string to Python object
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON: {e}")
+        return []  # Return an empty list if parsing fails
+
+    # Extract raw test cases (inputs and outputs)
+    filtered_tests = []
+    for test_case in parsed_output:
+        if "input" in test_case and "output" in test_case:
+            filtered_tests.append((test_case["input"], test_case["output"]))
+
+    return sample_n_random(filtered_tests, max_num_tests)
 
 
 def generic_generate_self_reflection(

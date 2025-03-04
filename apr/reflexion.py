@@ -60,7 +60,13 @@ def run_reflexion(
             cur_func_impl = gen.func_impl(modified_data, model, "simple")
             implementations.append(cur_func_impl)
             assert isinstance(cur_func_impl, str)
-            result = exe.execute(cur_func_impl, tests_i)
+
+            # Convert (input_str, output_list) tuples into {"input": ..., "output": ...} dicts
+            formatted_tests = [{"input": inp, "output": out} for inp, out in tests_i]
+            # Now pass the correctly formatted tests to execute
+            result = exe.execute(cur_func_impl, formatted_tests)
+
+            # result = exe.execute(cur_func_impl, tests_i)
             is_passing = result["is_passing"]
             feedback = result["feedback"]
 
@@ -102,8 +108,11 @@ def run_reflexion(
                 implementations.append(cur_func_impl)
                 assert isinstance(cur_func_impl, str)
 
-                # check if all internal unit tests pass
-                result = exe.execute(cur_func_impl, tests_i)
+                # Convert (input_str, output_list) tuples into {"input": ..., "output": ...} dicts
+                formatted_tests = [{"input": inp, "output": out} for inp, out in tests_i]
+                # Now pass the correctly formatted tests to execute
+                result = exe.execute(cur_func_impl, formatted_tests)
+
                 # is_passing, cur_feedback, _ = exe.execute(
                 #     cur_func_impl, tests_i)
                 is_passing = result["is_passing"]
