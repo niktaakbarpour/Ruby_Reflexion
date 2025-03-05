@@ -4,13 +4,13 @@ import sys
 from typing import List, Tuple
 
 class RbExecutor:
-    def execute(self, func: str, tests: List[str], timeout: int = 5) -> dict:
+    def execute(self, func: str, tests: List[dict], timeout: int = 5) -> dict:
         """
         Executes a Ruby function against a list of test cases.
 
         Args:
             func (str): The Ruby function as a string.
-            tests (List[str]): List of test cases as strings.
+            tests (List[dict]): List of test cases as dictionaries with "input" and "output".
             timeout (int): Timeout for each test execution (in seconds).
 
         Returns:
@@ -24,7 +24,6 @@ class RbExecutor:
         is_passing = True
         
         for test in tests:
-
             try:
                 result = subprocess.run(
                     ["/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby", "-e", func],
@@ -34,20 +33,21 @@ class RbExecutor:
                     input=test["input"],
                 )
 
-                print(f"RESULTTTTT: {result}")
-
                 actual_output = result.stdout.strip()
-                expected_output = test["output"][-1].strip()
-                print(f"actual_output: {actual_output}")
-                print(f"expected_output: {expected_output}")
+                
+                # Normalize expected output, which could be a list or a single string
+                expected_output = test["output"]
+                if isinstance(expected_output, list):
+                    expected_output = ''.join(expected_output).strip()  # If it's a list, join it into a single string
+                else:
+                    expected_output = expected_output.strip()  # If it's a string, just strip it
 
+                # Normalize both actual and expected output for comparison
                 if actual_output == expected_output:
-                    success_tests.append(test)
-                    print("I passed")
+                    success_tests.append(f"Input: {test['input']}, Expected: {expected_output}, Got: {actual_output}")
                 else:
                     failed_tests.append(f"Input: {test['input']}, Expected: {expected_output}, Got: {actual_output}")
                     is_passing = False
-                    print("I failed")
 
             except subprocess.TimeoutExpired:
                 failed_tests.append(f"Timeout for input: {test['input']}")
@@ -56,14 +56,18 @@ class RbExecutor:
                 failed_tests.append(f"Error: {str(e)} for input: {test['input']}")
                 is_passing = False
         
-            feedback = "Tests passed:\n" + "\n".join(success_tests) + "\n\n" if success_tests else ""
-            feedback += "Tests failed:\n" + "\n".join(failed_tests) if failed_tests else ""
+        feedback = ""
+        if success_tests:
+            feedback += "Tests passed:\n" + "\n".join(success_tests) + "\n\n"
+        if failed_tests:
+            feedback += "Tests failed:\n" + "\n".join(failed_tests)
+        
+        return {
+            "is_passing": is_passing,
+            "feedback": feedback,
+            "state": [test in success_tests for test in tests],
+        }
 
-            return {
-                "is_passing": is_passing,
-                "feedback": feedback,
-                "state": [test in success_tests for test in tests],
-            }
 
     def evaluate(self, func: str, test_cases: list, timeout: int = 5) -> bool:
         """
@@ -81,7 +85,13 @@ class RbExecutor:
 
         for test in test_cases:
             test_input = test["input"]
-            expected_output = [line.strip() for line in test["output"]]  # Normalize expected output
+            
+            # Normalize expected output, which could be a list or a single string
+            expected_output = test["output"]
+            if isinstance(expected_output, list):
+                expected_output = ''.join(expected_output).strip()  # If it's a list, join it into a single string
+            else:
+                expected_output = expected_output.strip()  # If it's a string, just strip it
 
             try:
                 result = subprocess.run(
@@ -92,24 +102,25 @@ class RbExecutor:
                     timeout=timeout,
                 )
 
-                print(f"************2222222222RESULTTTTT: {result}")
+                actual_output = result.stdout.strip()  # Normalize actual output
 
-                actual_output = [line.strip() for line in result.stdout.splitlines()]  # Normalize actual output
-
-                print(f"actual_output2: {actual_output}")
-                print(f"expected_output2: {expected_output}")
+                # Debugging output
+                print(f"actual_output: {actual_output}")
+                print(f"expected_output: {expected_output}")
 
                 if actual_output != expected_output:
-                    print("I failed")
+                    print("Test failed")
                     return False  # Fail if any test case doesn't match
 
             except subprocess.TimeoutExpired:
+                print(f"Timeout for input: {test_input}")
                 return False  # Fail if the process times out
 
             except Exception as e:
                 print(f"Error executing Ruby code: {e}")
                 return False  # Fail on any other exception
-        print("I passed")
+        
+        print("All tests passed")
         return True  # Pass only if all test cases succeed
 
 

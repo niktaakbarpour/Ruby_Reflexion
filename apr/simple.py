@@ -5,7 +5,7 @@ from generators import generator_factory, model_factory
 from typing import List
 
 SIMPLE_COMPLETION_INSTRUCTION = "# Write the body of this function only."
-SIMPLE_CHAT_INSTRUCTION = "You are a programming assistant. You will be given a function signature and docstring. You should fill in the following text of the missing function body. For example, the first line of the completion should have 4 spaces for the indendation so that it fits syntactically with the preceding signature."
+SIMPLE_CHAT_INSTRUCTION = "You are a Ruby programming assistant. You will be given a buggy code implementation and its docstring by the user. Write ONLY your full correct implementation in Ruby (DO NOT write example usage). In other words your task is automatic program repair."
 
 def run_simple(
         dataset: List[dict],
@@ -24,14 +24,29 @@ def run_simple(
     
     num_items = len(dataset)
     num_success = 0
+
+    def create_template(json_data):
+        template = f"""\
+        Buggy source code: {json_data["bug_source_code"]}
+
+        Problem description in textual format, math operations are written in LaTeX: {json_data["description"]}
+
+        How and in what order the input will be given to the program? It also includes the data range, types, and sizes: {json_data["input_spec"]}
+
+        How the outputs should be printed. Most of the time, the unit test results are matched with an exact string match or floating point comparison with a precision boundary: {json_data["output_spec"]}
+        """
+        return template
+
+    modified_data = create_template(item)
+
     for i, item in enumerate_resume(dataset, log_path):
         cur_pass = 0
         is_solved = False
         cur_func_impl = ""
         while cur_pass < pass_at_k:
-            cur_func_impl = gen.func_impl(item["prompt"], model, "simple")
+            cur_func_impl = gen.func_impl(modified_data, model, "simple")
             assert isinstance(cur_func_impl, str)
-            is_passing = exe.evaluate(item["entry_point"], cur_func_impl, item["test"], timeout = 20 if is_leetcode else 10)
+            is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
             if is_passing:
                 is_solved = True
                 num_success += 1
