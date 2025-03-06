@@ -1,6 +1,6 @@
 from generators.model import ModelBase, message_to_str
 from .generator_types import Generator
-from .generator_utils import generic_generate_func_impl, generic_generate_internal_tests, generic_generate_self_reflection
+from .generator_utils import generic_generate_first_reflection, generic_generate_func_impl, generic_generate_internal_tests, generic_generate_self_reflection
 
 from typing import Optional, List, Union
 import ast
@@ -94,6 +94,8 @@ end
 END EXAMPLES
 
 '''
+
+FIRST_REFLECTION_CHAT_INSTRUCTION = "You are a helpful programming assistant and an expert Ruby programmer. You are helping a user write a program to solve a problem. The user has written some code, but it has some errors and is not passing the tests. You will help the user by giving a concise textual explanation of what is wrong with the code."
 PY_SELF_REFLECTION_CHAT_INSTRUCTION = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
 PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit test results. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as guidance when you try again later. Only provide the few sentence description in your answer, not the implementation. You will be given a few examples by the user."
 PY_SELF_REFLECTION_FEW_SHOT = """Example 1:
@@ -210,6 +212,17 @@ class PyGenerator(Generator):
             feedback=feedback,
             model=model,
             self_reflection_chat_instruction=PY_SELF_REFLECTION_CHAT_INSTRUCTION,
+            self_reflection_completion_instruction=PY_SELF_REFLECTION_COMPLETION_INSTRUCTION,
+            add_code_block=lambda x: add_code_block(x, "ruby"),
+            self_reflection_few_shot=PY_SELF_REFLECTION_FEW_SHOT
+        )
+    
+    def first_reflection(self, func: str, feedback: str, model: ModelBase) -> str:
+        return generic_generate_first_reflection(
+            func=func,
+            feedback=feedback,
+            model=model,
+            self_reflection_chat_instruction=FIRST_REFLECTION_CHAT_INSTRUCTION,
             self_reflection_completion_instruction=PY_SELF_REFLECTION_COMPLETION_INSTRUCTION,
             add_code_block=lambda x: add_code_block(x, "ruby"),
             self_reflection_few_shot=PY_SELF_REFLECTION_FEW_SHOT

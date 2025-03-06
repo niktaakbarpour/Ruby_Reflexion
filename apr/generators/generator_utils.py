@@ -216,6 +216,46 @@ def generic_generate_self_reflection(
             f'{self_reflection_completion_instruction}\n{add_code_block(func)}\n\n{feedback}\n\nExplanation:')
     return reflection  # type: ignore
 
+def generic_generate_first_reflection(
+        func: str,
+        feedback: str,
+        model: ModelBase,
+        self_reflection_chat_instruction: str,
+        self_reflection_completion_instruction: str,
+        add_code_block: Callable[[str], str],
+        self_reflection_few_shot: Optional[str] = None,
+) -> str:
+    if model.is_chat:
+        if self_reflection_few_shot is not None:
+            messages = [
+                Message(
+                    role="system",
+                    content=self_reflection_chat_instruction,
+                ),
+                Message(
+                    role="user",
+                    content=f'{self_reflection_few_shot}\n\n[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:',
+                )
+            ]
+            reflection = model.generate_chat(messages=messages)
+            print(f'Self reflection output: {reflection}')
+        else:
+            messages = [
+                Message(
+                    role="system",
+                    content=self_reflection_chat_instruction,
+                ),
+                Message(
+                    role="user",
+                    content=f'[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:',
+                )
+            ]
+            reflection = model.generate_chat(messages=messages)
+    else:
+        reflection = model.generate(
+            f'{self_reflection_completion_instruction}\n{add_code_block(func)}\n\n{feedback}\n\nExplanation:')
+    return reflection  # type: ignore
+
 
 def sample_n_random(items: List[str], n: int) -> List[str]:
     """Sample min(n, len(items)) random items from a list"""

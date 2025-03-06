@@ -16,6 +16,9 @@ def run_reflexion(
     is_leetcode: bool = False,
     model_path:str = None
 ) -> None:
+    
+    dataset = [item for item in dataset if item.get("difficulty") == 800]
+
     exe = executor_factory(language, is_leet=is_leetcode)
     gen = generator_factory(language)
     model = model_factory(model_name, model_path)
@@ -24,6 +27,7 @@ def run_reflexion(
 
     num_items = len(dataset)
     num_success = resume_success_count(dataset)
+    
     for i, item in enumerate_resume(dataset, log_path):
         cur_pass = 0
         is_solved = False
@@ -52,7 +56,8 @@ def run_reflexion(
 
         modified_data = create_template(item)
         while cur_pass < pass_at_k and not is_solved:
-            print(f"cur_pass: {cur_pass}")
+            reflection = gen.first_reflection(cur_func_impl, cur_feedback, model)
+            reflections += [reflection]
             tests_i = gen.internal_tests(modified_data, model, 5)
             print(f"tests_i: {tests_i}, type: {type(tests_i)}")
 
