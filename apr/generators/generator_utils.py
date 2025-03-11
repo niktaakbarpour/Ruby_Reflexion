@@ -250,7 +250,6 @@ def generic_generate_self_reflection(
 
 def generic_generate_first_reflection(
         func: str,
-        feedback: str,
         model: ModelBase,
         self_reflection_chat_instruction: str,
         self_reflection_completion_instruction: str,
@@ -266,7 +265,7 @@ def generic_generate_first_reflection(
                 ),
                 Message(
                     role="user",
-                    content=f'{self_reflection_few_shot}\n\n[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:',
+                    content=f'{self_reflection_few_shot}\n\n[function impl]:\n{add_code_block(func)}\n\n[self-reflection]:',
                 )
             ]
             reflection = model.generate_chat(messages=messages)
@@ -279,13 +278,13 @@ def generic_generate_first_reflection(
                 ),
                 Message(
                     role="user",
-                    content=f'[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:',
+                    content=f'[function impl]:\n{add_code_block(func)}\n\n[self-reflection]:',
                 )
             ]
             reflection = model.generate_chat(messages=messages)
     else:
         reflection = model.generate(
-            f'{self_reflection_completion_instruction}\n{add_code_block(func)}\n\n{feedback}\n\nExplanation:')
+            f'{self_reflection_completion_instruction}\n{add_code_block(func)}\n\nExplanation:')
     return reflection  # type: ignore
 
 

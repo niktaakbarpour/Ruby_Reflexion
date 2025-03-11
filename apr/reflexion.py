@@ -16,17 +16,24 @@ def run_reflexion(
     is_leetcode: bool = False,
     model_path:str = None
 ) -> None:
-    
-    dataset = [item for item in dataset if item.get("difficulty") == 800]
+    print("RUN STRATEGY1")
+    # dataset = [item for item in dataset if item.get("difficulty") == 800]
 
     exe = executor_factory(language, is_leet=is_leetcode)
+    print("RUN STRATEGY2")
     gen = generator_factory(language)
+    print("RUN STRATEGY3")
     model = model_factory(model_name, model_path)
+    print("RUN STRATEGY4")
 
     print_v = make_printv(verbose)
+    print("RUN STRATEGY5")
 
     num_items = len(dataset)
+    print("RUN STRATEGY6")
+
     num_success = resume_success_count(dataset)
+    print("RUN STRATEGY7")
     
     for i, item in enumerate_resume(dataset, log_path):
         cur_pass = 0
@@ -36,8 +43,22 @@ def run_reflexion(
         implementations = []
         test_feedback = []
         cur_func_impl = ""
-        
+        print("HELLOOOO????")
         def create_template(json_data):
+
+            exec_outcome = json_data["bug_exec_outcome"]
+    
+            outcome_descriptions = {
+                "COMPILATION ERROR": "The buggy code fails to compile or run due to a syntax error.",
+                "RUNTIME ERROR": "The code compiles successfully but encounters an error during execution, such as division by zero or assertion failures.",
+                "MEMORY LIMIT EXCEEDED": "The code uses more memory than the allowed limit and is terminated.",
+                "TIME LIMIT EXCEEDED": "The code takes longer than the allowed execution time and is terminated.",
+                "WRONG ANSWER": "The code compiles and runs but does not produce the correct output.",
+                "PASSED": "The buggy code unexpectedly passes all unit tests, meaning it might not be buggy or the tests are insufficient.",
+            }
+
+            description = outcome_descriptions.get(exec_outcome, "Unknown execution outcome.")
+
             template = f"""\
         Buggy source code: {json_data["bug_source_code"]}
 
@@ -46,6 +67,8 @@ def run_reflexion(
         How and in what order the input will be given to the program? It also includes the data range, types, and sizes: {json_data["input_spec"]}
 
         How the outputs should be printed. Most of the time, the unit test results are matched with an exact string match or floating point comparison with a precision boundary: {json_data["output_spec"]}
+        
+        A pre-run execution outcome of buggy source code: {exec_outcome} ({description})
         """
             return template
         
@@ -57,7 +80,7 @@ def run_reflexion(
 
         modified_data = create_template(item)
         while cur_pass < pass_at_k and not is_solved:
-            reflection = gen.first_reflection(cur_func_impl, cur_feedback, model)
+            reflection = gen.first_reflection(cur_func_impl, model)
             reflections += [reflection]
             tests_i = gen.internal_tests(modified_data, model, 5)
             print(f"tests_i: {tests_i}, type: {type(tests_i)}")

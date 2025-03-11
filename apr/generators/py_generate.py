@@ -240,10 +240,9 @@ class PyGenerator(Generator):
             self_reflection_few_shot=PY_SELF_REFLECTION_FEW_SHOT
         )
     
-    def first_reflection(self, func: str, feedback: str, model: ModelBase) -> str:
+    def first_reflection(self, func: str, model: ModelBase) -> str:
         return generic_generate_first_reflection(
             func=func,
-            feedback=feedback,
             model=model,
             self_reflection_chat_instruction=FIRST_REFLECTION_CHAT_INSTRUCTION,
             self_reflection_completion_instruction=PY_SELF_REFLECTION_COMPLETION_INSTRUCTION,
