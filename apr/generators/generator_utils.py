@@ -9,59 +9,91 @@ def generic_generate_func_impl(
     model: ModelBase,
     strategy: str,
     prev_func_impl,
-    feedback,
     self_reflection,
+    is_first_reflection: bool,
+    feedback,
     num_comps,
     temperature,
     reflexion_chat_instruction: str,
+    first_reflexion_chat_instruction: str,
     reflexion_few_shot: str,
+    first_reflexion_few_shot: str,
     simple_chat_instruction: str,
     reflexion_completion_instruction: str,
     simple_completion_instruction: str,
     code_block_instruction: str,
     parse_code_block: Callable[[str], str],
-    add_code_block: Callable[[str], str]
+    add_code_block: Callable[[str], str],
 ) -> Union[str, List[str]]:
     if strategy != "reflexion" and strategy != "simple":
         raise ValueError(
             f"Invalid strategy: given `{strategy}` but expected one of `reflexion` or `simple`")
-    if strategy == "reflexion" and (prev_func_impl is None or feedback is None or self_reflection is None):
-        raise ValueError(
-            f"Invalid arguments: given `strategy=reflexion` but `prev_func_impl`, `feedback`, or `self_reflection` is None")
+    # if strategy == "reflexion" and (prev_func_impl is None or feedback is None or self_reflection is None):
+    #     raise ValueError(
+    #         f"Invalid arguments: given `strategy=reflexion` but `prev_func_impl`, `feedback`, or `self_reflection` is None")
 
     if model.is_chat:
         if strategy == "reflexion":
-            message = f"{reflexion_few_shot}\n[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:\n{func_sig}"
-            prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}"
-            print_messages(prompt, message)
-            # func_bodies is a really bad name, as it can also be just 1 string
-            messages = [
-                Message(
-                    role="system",
-                    content=prompt,
-                ),
-                Message(
-                    role="user", # TODO: check this
-                    content=reflexion_few_shot,
-                ),
-                Message(
-                    role="assistant",
-                    content=add_code_block(prev_func_impl),
-                ),
-                Message(
-                    role="user",
-                    content=f"[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:",
-                ),
-                Message(
-                    role="assistant",
-                    content=self_reflection,
-                ),
-                Message(
-                    role="user",
-                    content=f"[improved impl]:\n{func_sig}",
-                ),
-            ]
-            func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
+            if is_first_reflection == True:
+                message = f"{first_reflexion_few_shot}\n[previous impl]:\n{func_sig}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:\n{func_sig}"
+                prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}"
+                print_messages(prompt, message)
+                # func_bodies is a really bad name, as it can also be just 1 string
+                messages = [
+                    Message(
+                        role="system",
+                        content=prompt,
+                    ),
+                    Message(
+                        role="user", # TODO: check this
+                        content=first_reflexion_few_shot,
+                    ),
+                    Message(
+                        role="assistant",
+                        content=func_sig,
+                    ),
+                    Message(
+                        role="assistant",
+                        content=self_reflection,
+                    ),
+                    Message(
+                        role="user",
+                        content=f"[improved impl]:\n{func_sig}",
+                    ),
+                ]
+                func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
+            else:
+                message = f"{reflexion_few_shot}\n[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:\n{func_sig}"
+                prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}"
+                print_messages(prompt, message)
+                # func_bodies is a really bad name, as it can also be just 1 string
+                messages = [
+                    Message(
+                        role="system",
+                        content=prompt,
+                    ),
+                    Message(
+                        role="user", # TODO: check this
+                        content=reflexion_few_shot,
+                    ),
+                    Message(
+                        role="assistant",
+                        content=add_code_block(prev_func_impl),
+                    ),
+                    Message(
+                        role="user",
+                        content=f"[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:",
+                    ),
+                    Message(
+                        role="assistant",
+                        content=self_reflection,
+                    ),
+                    Message(
+                        role="user",
+                        content=f"[improved impl]:\n{func_sig}",
+                    ),
+                ]
+                func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
         else:
             system_prompt = f"{simple_chat_instruction}\n{code_block_instruction}"
             print_messages(system_prompt, func_sig)

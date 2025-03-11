@@ -30,6 +30,7 @@ def run_reflexion(
     
     for i, item in enumerate_resume(dataset, log_path):
         cur_pass = 0
+        is_first_reflection = True
         is_solved = False
         reflections = []
         implementations = []
@@ -62,7 +63,8 @@ def run_reflexion(
             print(f"tests_i: {tests_i}, type: {type(tests_i)}")
 
             # first attempt
-            cur_func_impl = gen.func_impl(modified_data, model, "simple")
+            cur_func_impl = gen.func_impl(modified_data, model, "reflexion", reflection, is_first_reflection)
+            is_first_reflection = False
             implementations.append(cur_func_impl)
             assert isinstance(cur_func_impl, str)
 
@@ -106,9 +108,10 @@ def run_reflexion(
                     func_sig=item["bug_source_code"],
                     model=model,
                     strategy="reflexion",
+                    is_first_reflection=is_first_reflection,
                     prev_func_impl=cur_func_impl,
-                    feedback=cur_feedback,
                     self_reflection=reflection,
+                    feedback=cur_feedback,
                 )
                 implementations.append(cur_func_impl)
                 assert isinstance(cur_func_impl, str)

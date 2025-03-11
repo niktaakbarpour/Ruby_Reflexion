@@ -17,6 +17,7 @@ USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby programming language code block t
 PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a buggy code implementation and its docstring by the user. Write ONLY your full correct implementation in Ruby (DO NOT write example usage). In other words your task is automatic program repair."
 PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby programming language code. You will be given a buggy code implementation and its docstring by the user. Write your full correct implementation in Ruby."
 PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation in Ruby."
+PY_FIRST_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given incorrect user function implementation and a hint to change the implementation appropriately. Write your full implementation in Ruby."
 PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby."
 PY_REFLEXION_FEW_SHOT_ADD = '''Example 1:
 [previous impl]:
@@ -45,6 +46,28 @@ Tests failed:
 
 [reflection on previous impl]:
 I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string, which caused the test failures. My plan for improving the result is to modify the strlen function to return the length of the string using string.length, which will pass the test cases that expect the correct character count.
+
+[improved impl]:
+```ruby
+def strlen(string)\n
+    # Return length of given string\n
+    string.length\n
+end
+```
+END EXAMPLES
+
+'''
+
+PY_FIRST_REFLEXION_FEW_SHOT_ADD = '''Example 1:
+[incorrect user impl]:
+```ruby
+def strlen(string)\n
+    string.chars.map(&:ord).sum\n
+end
+```
+
+[reflection on incorrect user impl]:
+I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string. My plan for improving the result is to modify the strlen function to return the length of the string using string.length.
 
 [improved impl]:
 ```ruby
@@ -95,7 +118,7 @@ END EXAMPLES
 
 '''
 
-FIRST_REFLECTION_CHAT_INSTRUCTION = "You are a helpful programming assistant and an expert Ruby programmer. You are helping a user write a program to solve a problem. The user has written some code, but it has some errors and is not passing the tests. You will help the user by giving a concise textual explanation of what is wrong with the code."
+FIRST_REFLECTION_CHAT_INSTRUCTION = "You are a helpful programming assistant and an expert Ruby programmer. You are helping a user write a program to solve a problem. The user has written some code, but it has some errors and is not passing the tests. You will help the user by giving a concise textual explanation of what is wrong with the code based on the docstring of the problem."
 PY_SELF_REFLECTION_CHAT_INSTRUCTION = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
 PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit test results. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as guidance when you try again later. Only provide the few sentence description in your answer, not the implementation. You will be given a few examples by the user."
 PY_SELF_REFLECTION_FEW_SHOT = """Example 1:
@@ -233,6 +256,7 @@ class PyGenerator(Generator):
         func_sig: str,
         model: ModelBase,
         strategy: str,
+        is_first_reflection: bool,
         prev_func_impl: Optional[str] = None,
         feedback: Optional[str] = None,
         self_reflection: Optional[str] = None,
@@ -243,13 +267,16 @@ class PyGenerator(Generator):
             func_sig=func_sig,
             model=model,
             strategy=strategy,
+            is_first_reflection=is_first_reflection,
             prev_func_impl=prev_func_impl,
             feedback=feedback,
             self_reflection=self_reflection,
             num_comps=num_comps,
             temperature=temperature,
             reflexion_chat_instruction=PY_REFLEXION_CHAT_INSTRUCTION,
+            first_reflexion_chat_instruction=PY_FIRST_REFLEXION_CHAT_INSTRUCTION,
             reflexion_few_shot=PY_REFLEXION_FEW_SHOT_ADD,
+            first_reflexion_few_shot=PY_FIRST_REFLEXION_FEW_SHOT_ADD,
             simple_chat_instruction=PY_SIMPLE_CHAT_INSTRUCTION,
             reflexion_completion_instruction=PY_REFLEXION_COMPLETION_INSTRUCTION,
             simple_completion_instruction=PY_SIMPLE_COMPLETION_INSTRUCTION,
