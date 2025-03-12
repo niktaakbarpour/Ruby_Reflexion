@@ -35,6 +35,7 @@ def generic_generate_func_impl(
     if model.is_chat:
         if strategy == "reflexion":
             if is_first_reflection == True:
+                print(f"is_first_reflection: {is_first_reflection}")
                 message = f"{first_reflexion_few_shot}\n[previous impl]:\n{func_sig}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:\n{func_sig}"
                 prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}"
                 print_messages(prompt, message)
@@ -63,6 +64,7 @@ def generic_generate_func_impl(
                 ]
                 func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
             else:
+                print(f"is_first_reflection2: {is_first_reflection}")
                 message = f"{reflexion_few_shot}\n[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:\n{func_sig}"
                 prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}"
                 print_messages(prompt, message)
@@ -95,6 +97,7 @@ def generic_generate_func_impl(
                 ]
                 func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
         else:
+            print(f"is_first_reflection3: {is_first_reflection}")
             system_prompt = f"{simple_chat_instruction}\n{code_block_instruction}"
             print_messages(system_prompt, func_sig)
             messages = [
@@ -110,10 +113,12 @@ def generic_generate_func_impl(
             func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
     else:
         if strategy == "reflexion":
+            print(f"is_first_reflection4: {is_first_reflection}")
             prompt = f"{reflexion_completion_instruction}\n{add_code_block(prev_func_impl)}\n\nunit tests:\n{feedback}\n\nhint:\n{self_reflection}\n\n# improved implementation\n{func_sig}\n{code_block_instruction}"
             func_bodies = model.generate(
                 prompt, num_comps=num_comps, temperature=temperature)
         else:
+            print(f"is_first_reflection5: {is_first_reflection}")
             prompt = f"{simple_completion_instruction}\n{func_sig}\n{code_block_instruction}"
             func_bodies = model.generate(
                 prompt, num_comps=num_comps, temperature=temperature)
@@ -174,8 +179,6 @@ def generic_generate_internal_tests(
     # all_tests = parse_tests(output.split("\n"))
     # valid_tests = [test for test in all_tests if is_syntax_valid(test)]
     
-    print(f"Raw output from model before cleaning: {output}, type: {type(output)}")
-
     # Remove triple backticks and surrounding whitespace
     cleaned_output = output.strip("`").strip()
 
@@ -183,9 +186,6 @@ def generic_generate_internal_tests(
     lines = cleaned_output.split("\n")
     if lines[0].strip().lower() == "json":
         cleaned_output = "\n".join(lines[1:])  # Remove first line
-
-    # Debug: Print cleaned output
-    print(f"Cleaned output: {cleaned_output}")
 
     # Handle empty output case
     if not cleaned_output:
@@ -265,7 +265,7 @@ def generic_generate_first_reflection(
                 ),
                 Message(
                     role="user",
-                    content=f'{self_reflection_few_shot}\n\n[function impl]:\n{add_code_block(func)}\n\n[self-reflection]:',
+                    content=f'{self_reflection_few_shot}\n\n[incorrect function impl and docstring]:\n{func}\n\n[self-reflection]:',
                 )
             ]
             reflection = model.generate_chat(messages=messages)
@@ -278,13 +278,13 @@ def generic_generate_first_reflection(
                 ),
                 Message(
                     role="user",
-                    content=f'[function impl]:\n{add_code_block(func)}\n\n[self-reflection]:',
+                    content=f'[function impl]:\n{func}\n\n[self-reflection]:',
                 )
             ]
             reflection = model.generate_chat(messages=messages)
     else:
         reflection = model.generate(
-            f'{self_reflection_completion_instruction}\n{add_code_block(func)}\n\nExplanation:')
+            f'{self_reflection_completion_instruction}\n{func}\n\nExplanation:')
     return reflection  # type: ignore
 
 

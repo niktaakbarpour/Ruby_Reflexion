@@ -16,24 +16,17 @@ def run_reflexion(
     is_leetcode: bool = False,
     model_path:str = None
 ) -> None:
-    print("RUN STRATEGY1")
     # dataset = [item for item in dataset if item.get("difficulty") == 800]
 
     exe = executor_factory(language, is_leet=is_leetcode)
-    print("RUN STRATEGY2")
     gen = generator_factory(language)
-    print("RUN STRATEGY3")
     model = model_factory(model_name, model_path)
-    print("RUN STRATEGY4")
 
     print_v = make_printv(verbose)
-    print("RUN STRATEGY5")
 
     num_items = len(dataset)
-    print("RUN STRATEGY6")
 
     num_success = resume_success_count(dataset)
-    print("RUN STRATEGY7")
     
     for i, item in enumerate_resume(dataset, log_path):
         cur_pass = 0
@@ -43,19 +36,20 @@ def run_reflexion(
         implementations = []
         test_feedback = []
         cur_func_impl = ""
-        print("HELLOOOO????")
+
         def create_template(json_data):
 
             exec_outcome = json_data["bug_exec_outcome"]
     
             outcome_descriptions = {
-                "COMPILATION ERROR": "The buggy code fails to compile or run due to a syntax error.",
-                "RUNTIME ERROR": "The code compiles successfully but encounters an error during execution, such as division by zero or assertion failures.",
-                "MEMORY LIMIT EXCEEDED": "The code uses more memory than the allowed limit and is terminated.",
-                "TIME LIMIT EXCEEDED": "The code takes longer than the allowed execution time and is terminated.",
-                "WRONG ANSWER": "The code compiles and runs but does not produce the correct output.",
-                "PASSED": "The buggy code unexpectedly passes all unit tests, meaning it might not be buggy or the tests are insufficient.",
+            "COMPILATION_ERROR": "The buggy code fails to compile or run due to a syntax error.",
+            "RUNTIME_ERROR": "The code compiles successfully but encounters an error during execution, such as division by zero or assertion failures.",
+            "MEMORY_LIMIT_EXCEEDED": "The code uses more memory than the allowed limit and is terminated.",
+            "TIME_LIMIT_EXCEEDED": "The code takes longer than the allowed execution time and is terminated.",
+            "WRONG_ANSWER": "The code compiles and runs but does not produce the correct output.",
+            "PASSED": "The buggy code unexpectedly passes all unit tests, meaning it might not be buggy or the tests are insufficient.",
             }
+
 
             description = outcome_descriptions.get(exec_outcome, "Unknown execution outcome.")
 
@@ -80,13 +74,13 @@ def run_reflexion(
 
         modified_data = create_template(item)
         while cur_pass < pass_at_k and not is_solved:
-            reflection = gen.first_reflection(cur_func_impl, model)
+            reflection = gen.first_reflection(modified_data, model)
             reflections += [reflection]
             tests_i = gen.internal_tests(modified_data, model, 5)
             print(f"tests_i: {tests_i}, type: {type(tests_i)}")
 
             # first attempt
-            cur_func_impl = gen.func_impl(modified_data, model, "reflexion", reflection, is_first_reflection)
+            cur_func_impl = gen.func_impl(func_sig = modified_data, model = model, strategy = "reflexion", is_first_reflection = is_first_reflection, self_reflection = reflection)
             is_first_reflection = False
             implementations.append(cur_func_impl)
             assert isinstance(cur_func_impl, str)
