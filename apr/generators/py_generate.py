@@ -118,7 +118,15 @@ END EXAMPLES
 
 '''
 
-FIRST_REFLECTION_CHAT_INSTRUCTION = "You are a helpful Ruby programming assistant. You are helping a user write a program to solve a problem. The user has written some code, but it has some errors. You will help the user by giving a concise textual explanation in NATURAL LANGUAGE of what is wrong with the code based on the docstring of the problem. You will need this as a hint when you try again later. Only provide a few sentence description in your answer, do NOT write the implementation."
+FIRST_REFLECTION_CHAT_INSTRUCTION = """You are a helpful Ruby programming assistant. You are helping a user debug a Ruby program. The user has written some code, but it has errors. You will help the user by analyzing the following information:
+The buggy source code provided.
+The problem description, which explains the intended behavior of the program.
+The input format, which describes the structure, range, and constraints of inputs.
+The expected output format, which specifies how the program's output should be structured.
+The pre-run execution outcome, which describes how the buggy code currently behaves.
+Based on this information, explain why the provided code does not work correctly in a concise natural language response. Focus only on describing the issue and do not suggest or generate a corrected implementation.
+Your response should be a short explanation (2-3 sentences) of what is wrong. Do not include code in your response."""
+
 PY_SELF_REFLECTION_CHAT_INSTRUCTION = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
 PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit test results. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as guidance when you try again later. Only provide the few sentence description in your answer, not the implementation. You will be given a few examples by the user."
 PY_SELF_REFLECTION_FEW_SHOT = """Example 1:
@@ -240,7 +248,13 @@ PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming l
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
 
-PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the docstring. In this step you should only generate sample input and output not function implemention and not test suite."""
+PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the following information:
+The buggy source code provided.
+The problem description, which explains the intended behavior of the program.
+The input format, which describes the structure, range, and constraints of inputs.
+The expected output format, which specifies how the program's output should be structured.
+The pre-run execution outcome, which describes how the buggy code currently behaves.
+In this step you should only generate sample input and output not function implemention and not test suite."""
 
 
 
@@ -268,7 +282,7 @@ class PyGenerator(Generator):
 
     def func_impl(
         self,
-        func_sig: str,
+        problem_context: str,
         model: ModelBase,
         strategy: str,
         is_first_reflection: bool,
@@ -279,7 +293,7 @@ class PyGenerator(Generator):
         temperature: float = 0.0,
     ) -> Union[str, List[str]]:
         return generic_generate_func_impl(
-            func_sig=func_sig,
+            problem_context=problem_context,
             model=model,
             strategy=strategy,
             is_first_reflection=is_first_reflection,

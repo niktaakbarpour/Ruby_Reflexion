@@ -37,34 +37,36 @@ def run_reflexion(
         test_feedback = []
         cur_func_impl = ""
 
-        def create_template(json_data):
-
+        def create_template(json_data, include_buggy_code=True):
             exec_outcome = json_data["bug_exec_outcome"]
-    
-            outcome_descriptions = {
-            "COMPILATION_ERROR": "The buggy code fails to compile or run due to a syntax error.",
-            "RUNTIME_ERROR": "The code compiles successfully but encounters an error during execution, such as division by zero or assertion failures.",
-            "MEMORY_LIMIT_EXCEEDED": "The code uses more memory than the allowed limit and is terminated.",
-            "TIME_LIMIT_EXCEEDED": "The code takes longer than the allowed execution time and is terminated.",
-            "WRONG_ANSWER": "The code compiles and runs but does not produce the correct output.",
-            "PASSED": "The buggy code unexpectedly passes all unit tests, meaning it might not be buggy or the tests are insufficient.",
-            }
 
+            outcome_descriptions = {
+                "COMPILATION_ERROR": "The buggy code fails to compile or run due to a syntax error.",
+                "RUNTIME_ERROR": "The code compiles successfully but encounters an error during execution, such as division by zero or assertion failures.",
+                "MEMORY_LIMIT_EXCEEDED": "The code uses more memory than the allowed limit and is terminated.",
+                "TIME_LIMIT_EXCEEDED": "The code takes longer than the allowed execution time and is terminated.",
+                "WRONG_ANSWER": "The code compiles and runs but does not produce the correct output.",
+                "PASSED": "The buggy code unexpectedly passes all unit tests, meaning it might not be buggy or the tests are insufficient.",
+            }
 
             description = outcome_descriptions.get(exec_outcome, "Unknown execution outcome.")
 
-            template = f"""\
-        Buggy source code: {json_data["bug_source_code"]}
+            template = ""
 
-        Problem description in textual format, math operations are written in LaTeX: {json_data["description"]}
+            if include_buggy_code:
+                template += f"Buggy source code: {json_data['bug_source_code']}\n\n"
 
-        How and in what order the input will be given to the program? It also includes the data range, types, and sizes: {json_data["input_spec"]}
+            template += f"""Problem description: {json_data["description"]}
 
-        How the outputs should be printed. Most of the time, the unit test results are matched with an exact string match or floating point comparison with a precision boundary: {json_data["output_spec"]}
-        
+        Input format: {json_data["input_spec"]}
+
+        Output format: {json_data["output_spec"]}
+
         A pre-run execution outcome of buggy source code: {exec_outcome} ({description})
         """
+
             return template
+
         
         # A sample input for the code that is expected to solve the problem described in the description: {json_data["sample_inputs"]}
 
@@ -72,7 +74,7 @@ def run_reflexion(
 
         # Explanation of sample inputs & sample outputs: {json_data["notes"]}
 
-        modified_data = create_template(item)
+        modified_data = create_template(item, True)
         while cur_pass < pass_at_k and not is_solved:
             reflection = gen.first_reflection(modified_data, model)
             reflections += [reflection]
@@ -80,7 +82,12 @@ def run_reflexion(
             print(f"tests_i: {tests_i}, type: {type(tests_i)}")
 
             # first attempt
-            cur_func_impl = gen.func_impl(func_sig = modified_data, model = model, strategy = "reflexion", is_first_reflection = is_first_reflection, self_reflection = reflection)
+            cur_func_impl = gen.func_impl(problem_context = create_template(item, False),
+                                          model = model,
+                                          strategy = "reflexion",
+                                          is_first_reflection = is_first_reflection,
+                                          prev_func_impl = item["bug_source_code"],
+                                          self_reflection = reflection)
             is_first_reflection = False
             implementations.append(cur_func_impl)
             assert isinstance(cur_func_impl, str)
@@ -122,7 +129,7 @@ def run_reflexion(
 
                 # apply self-reflection in the next attempt
                 cur_func_impl = gen.func_impl(
-                    func_sig=item["bug_source_code"],
+                    problem_context=create_template(item, False),
                     model=model,
                     strategy="reflexion",
                     is_first_reflection=is_first_reflection,
