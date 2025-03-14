@@ -58,11 +58,11 @@ def run_reflexion(
 
             template += f"""Problem description: {json_data["description"]}
 
-        Input format: {json_data["input_spec"]}
+Input format: {json_data["input_spec"]}
 
-        Output format: {json_data["output_spec"]}
+Output format: {json_data["output_spec"]}
 
-        A pre-run execution outcome of buggy source code: {exec_outcome} ({description})
+A pre-run execution outcome of buggy source code: {exec_outcome} ({description})
         """
 
             return template
