@@ -79,7 +79,7 @@ A pre-run execution outcome of buggy source code: {exec_outcome} ({description})
             reflection = gen.first_reflection(modified_data, model)
             reflections += [reflection]
             tests_i = gen.internal_tests(modified_data, model, 5)
-            print(f"tests_i: {tests_i}, type: {type(tests_i)}")
+            print(f"tests_i: {tests_i}")
 
             # first attempt
             cur_func_impl = gen.func_impl(problem_context = create_template(item, False),

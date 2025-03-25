@@ -194,7 +194,7 @@ Tests failed:
 END OF EXAMPLES
 """
 
-PY_FIRST_SELF_REFLECTION_FEW_SHOT = '''Example 1:
+PY_FIRST_SELF_REFLECTION_FEW_SHOT = '''Examples:
 [incorrect user impl]:
 ```ruby
 def strlen(string)\n
@@ -202,7 +202,7 @@ def strlen(string)\n
 end
 ```
 
-[reflection on incorrect user impl]:
+[reflection on incorrect impl]:
 I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string. My plan for improving the result is to modify the strlen function to return the length of the string using string.length.
 
 ```

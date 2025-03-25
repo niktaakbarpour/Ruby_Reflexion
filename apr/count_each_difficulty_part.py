@@ -1,6 +1,7 @@
 import json
 import matplotlib.pyplot as plt
 from collections import Counter
+from matplotlib.backends.backend_pdf import PdfPages
 
 # Path to your JSONL file
 file_path = "benchmarks/merged_output.jsonl"
@@ -42,24 +43,29 @@ colors = {
     "WRONG_ANSWER": "#59a89c"
 }
 
-# Create a stacked bar chart
-plt.figure(figsize=(10, 6))
+# Save plot to PDF
+pdf_filename = "bug_outcomes.pdf"
+with PdfPages(pdf_filename) as pdf:
+    plt.figure(figsize=(10, 6))
+    
+    bar_width = 40  # Bar width
+    bottom = [0] * len(difficulties)  # Start with a base of 0 for stacking
+    
+    for outcome, color in colors.items():
+        plt.bar(difficulties, outcome_data[outcome], bar_width, bottom=bottom, label=outcome, color=color)
+        bottom = [bottom[i] + outcome_data[outcome][i] for i in range(len(difficulties))]  # Update the base for the next stack
+    
+    # Adding labels and title
+    plt.xlabel("Difficulty Level")
+    plt.ylabel("Number of Entries")
+    plt.title("Distribution of Bug Execution Outcomes by Difficulty Level")
+    plt.xticks(rotation=45)
+    plt.legend(title="Bug Execution Outcome")
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    
+    # Save the plot to the PDF
+    plt.tight_layout()
+    pdf.savefig()
+    plt.close()
 
-bar_width = 40  # Bar width
-bottom = [0] * len(difficulties)  # Start with a base of 0 for stacking
-
-for outcome, color in colors.items():
-    plt.bar(difficulties, outcome_data[outcome], bar_width, bottom=bottom, label=outcome, color=color)
-    bottom = [bottom[i] + outcome_data[outcome][i] for i in range(len(difficulties))]  # Update the base for the next stack
-
-# Adding labels and title
-plt.xlabel("Difficulty Level")
-plt.ylabel("Number of Entries")
-plt.title("Distribution of Bug Execution Outcomes by Difficulty Level")
-plt.xticks(rotation=45)
-plt.legend(title="Bug Execution Outcome")
-plt.grid(axis="y", linestyle="--", alpha=0.7)
-
-# Show the plot
-plt.tight_layout()
-plt.show()
+print(f"Bug outcomes saved to {pdf_filename}")

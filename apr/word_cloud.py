@@ -1,6 +1,7 @@
 import json
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
+from matplotlib.backends.backend_pdf import PdfPages
 
 # Path to your JSONL file
 file_path = "benchmarks/merged_output.jsonl"
@@ -29,21 +30,28 @@ with open(file_path, "r", encoding="utf-8") as f:
         except json.JSONDecodeError as e:
             print(f"Skipping invalid JSON line: {e}")
 
-# Function to generate and display word cloud
-def generate_wordcloud(tags, title):
+# Function to generate and save word cloud
+def generate_wordcloud(tags, title, pdf):
     if tags:  # Only generate word cloud if there are tags
         text = " ".join(tags)  # Join tags into a single string
         wordcloud = WordCloud(width=800, height=400, background_color="white").generate(text)
-
+        
         plt.figure(figsize=(10, 5))
         plt.imshow(wordcloud, interpolation="bilinear")
         plt.axis("off")
         plt.title(title)
-        plt.show()
+        
+        # Save figure to PDF
+        pdf.savefig()
+        plt.close()
     else:
         print(f"No tags available for {title}. Skipping word cloud generation.")
 
-# Generate word clouds for each difficulty level
-generate_wordcloud(easy_tags, "Easy Difficulty Word Cloud")
-generate_wordcloud(medium_tags, "Medium Difficulty Word Cloud")
-generate_wordcloud(hard_tags, "Hard Difficulty Word Cloud")
+# Save word clouds to a PDF file
+pdf_filename = "wordclouds.pdf"
+with PdfPages(pdf_filename) as pdf:
+    generate_wordcloud(easy_tags, "Easy Difficulty Word Cloud", pdf)
+    generate_wordcloud(medium_tags, "Medium Difficulty Word Cloud", pdf)
+    generate_wordcloud(hard_tags, "Hard Difficulty Word Cloud", pdf)
+
+print(f"Word clouds saved to {pdf_filename}")
