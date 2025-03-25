@@ -125,7 +125,8 @@ def generic_generate_func_impl(
 
 
 def generic_generate_internal_tests(
-        func_sig: str,
+        problem_context: str,
+        prev_func_impl: str,
         model: ModelBase,
         max_num_tests: int,
         test_generation_few_shot: str,
@@ -145,12 +146,12 @@ def generic_generate_internal_tests(
                 ),
                 Message(
                     role="user",
-                    content=f"{test_generation_few_shot}\n\n[func signature]:\n{func_sig}\n\n[think]:"
+                    content=f"{test_generation_few_shot}\n\n[func signature]:\n{prev_func_impl}\n\n[think]:"
                 )
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
         else:
-            message = f"[problem context]:\n{func_sig}\n\n[unit tests]:"
+            message = f"[buggy code]:\n{prev_func_impl}\n\n[problem context]:\n{problem_context}\n\n[unit tests]:"
             prompt = f"{test_generation_chat_instruction}\n{test_generation_few_shot}"
             print_messages(prompt, message)
             messages = [
@@ -160,7 +161,7 @@ def generic_generate_internal_tests(
                 ),
                 Message(
                     role="user",
-                    content=f"[problem context]:\n{func_sig}\n\n[unit tests]:",
+                    content=f"[buggy code]:\n{prev_func_impl}\n\n[problem context]:\n{problem_context}\n\n[unit tests]:"
                 )
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
@@ -210,8 +211,8 @@ def generic_generate_self_reflection(
 ) -> str:
     if model.is_chat:
         if self_reflection_few_shot is not None:
-            message = f"{self_reflection_chat_instruction}\n{self_reflection_few_shot}"
-            prompt = f"[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:"
+            prompt = f"{self_reflection_chat_instruction}\n{self_reflection_few_shot}"
+            message = f"[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:"
             print_messages(prompt, message)
             messages = [
                 Message(
@@ -247,6 +248,7 @@ def generic_generate_self_reflection(
     return reflection  # type: ignore
 
 def generic_generate_first_reflection(
+        problem_context: str,
         func: str,
         model: ModelBase,
         self_reflection_chat_instruction: str,
@@ -256,8 +258,8 @@ def generic_generate_first_reflection(
 ) -> str:
     if model.is_chat:
         if self_reflection_few_shot is not None:
-            message = f"{self_reflection_chat_instruction}\n\n{self_reflection_few_shot}"
-            prompt = f"[incorrect function impl and docstring]:\n{func}\n\n[self-reflection]:"
+            prompt = f"{self_reflection_chat_instruction}\n\n{self_reflection_few_shot}"
+            message = f"[incorrect function impl]:\n{add_code_block(func)}\n\n[problem context]:\n{problem_context}\n\n[self-reflection]:"
             print_messages(prompt, message)
             messages = [
                 Message(
@@ -266,7 +268,7 @@ def generic_generate_first_reflection(
                 ),
                 Message(
                     role="user",
-                    content=f"[incorrect function impl and docstring]:\n{func}\n\n[self-reflection]:",
+                    content=f"[incorrect function impl]:\n{add_code_block(func)}\n\n[problem context]:\n{problem_context}\n\n[self-reflection]:",
                 )
             ]
             reflection = model.generate_chat(messages=messages)

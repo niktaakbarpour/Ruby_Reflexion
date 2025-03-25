@@ -270,8 +270,9 @@ class PyGenerator(Generator):
             self_reflection_few_shot=PY_SELF_REFLECTION_FEW_SHOT
         )
     
-    def first_reflection(self, func: str, model: ModelBase) -> str:
+    def first_reflection(self, problem_context: str, func: str, model: ModelBase) -> str:
         return generic_generate_first_reflection(
+            problem_context=problem_context,
             func=func,
             model=model,
             self_reflection_chat_instruction=FIRST_REFLECTION_CHAT_INSTRUCTION,
@@ -314,14 +315,15 @@ class PyGenerator(Generator):
             add_code_block=lambda x: add_code_block(x, "ruby"),
         )
 
-    def internal_tests(self, func_sig: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
+    def internal_tests(self, problem_context: str, prev_func_impl: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
         def parse_tests(tests: List[str]) -> List[str]:
             return [test.strip() for test in tests if "assert_equal" in test.strip()]
         """
         Generates tests for a function.
         """
         return generic_generate_internal_tests(
-            func_sig=func_sig,
+            problem_context=problem_context,
+            prev_func_impl=prev_func_impl,
             model=model,
             max_num_tests=max_num_tests,
             test_generation_few_shot=PY_TEST_GENERATION_FEW_SHOT,
