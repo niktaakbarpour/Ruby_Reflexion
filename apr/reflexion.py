@@ -77,11 +77,11 @@ A pre-run execution outcome of buggy source code: {exec_outcome} ({description})
         modified_data = create_template(item, True)
         while cur_pass < pass_at_k and not is_solved:
             reflection = gen.first_reflection(problem_context = create_template(item, False),
-                                              prev_func_impl = item["bug_source_code"],
+                                              func = item["bug_source_code"],
                                               model = model)
             reflections += [reflection]
             tests_i = gen.internal_tests(problem_context = create_template(item, False),
-                                              prev_func_impl = item["bug_source_code"],
+                                              func = item["bug_source_code"],
                                               model = model,
                                               max_num_tests = 5)
             print(f"tests_i: {tests_i}")

@@ -22,36 +22,84 @@ PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assi
 PY_REFLEXION_FEW_SHOT_ADD = '''Example 1:
 [previous impl]:
 ```ruby
-def strlen(string)\n
-    string.chars.map(&:ord).sum\n
-end
-```
+x, y = gets.split.map(&:to_i)
 
-[unit test results from previous impl]:
+if x > 0 && y > 0
+  # First quadrant: both coordinates positive.
+  # Triangle vertices: (0, 0), (0, x+y), (x+y, 0)
+  puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 && y < 0
+  # Fourth quadrant: x positive, y negative.
+  # Triangle vertices: (0, 0), (0, x-y), (x-y, 0)
+  puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+  # Second quadrant: x negative, y positive.
+  # Triangle vertices: (0, 0), (-(y-x), 0), (0, y-x)
+  # (Note: here y-x is positive since x is negative.)
+  puts "#{-(y-x)} 0 0 #{y-x}"
+else
+  # Third quadrant: both coordinates negative.
+  # Triangle vertices: (0, 0), (x+y, 0), (0, x+y)
+  puts "#{x+y} 0 0 #{x+y}"
+end
+
+```
+[unit test results]:
+
 Tests passed:
 [
     {
-      "input": "",
-      "output": 0
+      "input": "10 5\r\n",
+      "output": [
+        "0 15 15 0"
+      ]
+    },
+    {
+      "input": "-10 5\r\n",
+      "output": [
+        "-15 0 0 15"
+      ]
+    },
+    {
+      "input": "-10 -1000000000\r\n",
+      "output": [
+        "-1000000010 0 0 -1000000010"
+      ]
     },
 ]
 
 Tests failed:
 [
     {
-      "input": "abc\r\n",
-      "output": 3
+      "input": "20 -10\r\n",
+      "output": [
+        "0 30 30 0"
+      ]
     },
 ]
 
-[reflection on previous impl]:
-I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string, which caused the test failures. My plan for improving the result is to modify the strlen function to return the length of the string using string.length, which will pass the test cases that expect the correct character count.
+[reflection on previous impl]: The error occurs because in the case where x is positive and y is negative, the implementation calculates the coordinate using x - y, which produces a positive value. However, the expected output requires the y-coordinate of one triangle vertex to be negative so that the triangle properly encloses the rectangle. In short, the sign for the y-coordinate is handled incorrectly in this quadrant.
 
 [improved impl]:
 ```ruby
-def strlen(string)\n
-    # Return length of given string\n
-    string.length\n
+x, y = gets.split.map(&:to_i)
+
+if x > 0 && y > 0
+  # First quadrant: both positive.
+  L = x + y
+  puts "0 #{L} #{L} 0"
+elsif x > 0 && y < 0
+  # Fourth quadrant: x positive, y negative.
+  L = x - y  # y is negative, so L is positive.
+  puts "0 #{-L} #{L} 0"
+elsif x < 0 && y > 0
+  # Second quadrant: x negative, y positive.
+  L = y - x  # x is negative, so L is positive.
+  puts "#{-L} 0 0 #{L}"
+else
+  # Third quadrant: both negative.
+  # Here, x+y is negative; it serves as the leg length (with proper sign).
+  puts "#{x+y} 0 0 #{x+y}"
 end
 ```
 END EXAMPLES
@@ -61,19 +109,48 @@ END EXAMPLES
 PY_FIRST_REFLEXION_FEW_SHOT_ADD = '''Example 1:
 [incorrect user impl]:
 ```ruby
-def strlen(string)\n
-    string.chars.map(&:ord).sum\n
+x,y=gets.split.map(&:to_i)
+if x > 0 and y > 0
+    puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 and y < 0
+    puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+    puts "#{-(y-x)} 0 0 #{y-x}"
+else
+    puts "#{x+y} 0 0 #{x+y}"
 end
+
 ```
 
-[reflection on incorrect user impl]:
-I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string. My plan for improving the result is to modify the strlen function to return the length of the string using string.length.
+[problem context]:
+Problem description: Vasily the bear has a favorite rectangle, it has one vertex at point (0, 0), and the opposite vertex at point (x, y). Of course, the sides of Vasya's favorite rectangle are parallel to the coordinate axes. Vasya also loves triangles, if the triangles have one vertex at point B = (0, 0). That's why today he asks you to find two points A = (x1, y1) and C = (x2, y2), such that the following conditions hold:  the coordinates of points: x1, x2, y1, y2 are integers. Besides, the following inequation holds: x1 &lt; x2;  the triangle formed by point A, B and C is rectangular and isosceles ( is right);  all points of the favorite rectangle are located inside or on the border of triangle ABC;  the area of triangle ABC is as small as possible. Help the bear, find the required points. It is not so hard to proof that these points are unique.
+Input format: The first line contains two integers x, y ( - 109 ≤ x, y ≤ 109, x ≠ 0, y ≠ 0).
+Output format: Print in the single line four integers x1, y1, x2, y2 — the coordinates of the required points.
+A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compiles and runs but does not produce the correct output.)
+
+[self-reflection]:
+The provided code does not work correctly because it incorrectly calculates the coordinates for points A, B, and C based on the input values of x and y. The code attempts to determine the coordinates of points A and C based on the conditions for a right-isosceles triangle with one vertex at the origin (0,0), but it fails to correctly compute the coordinates for A and C. Additionally, the conditions for the area of the triangle and the placement of the rectangle inside the triangle are not properly handled in the code.
 
 [improved impl]:
 ```ruby
-def strlen(string)\n
-    # Return length of given string\n
-    string.length\n
+x, y = gets.split.map(&:to_i)
+
+if x > 0 && y > 0
+  # First quadrant: both positive.
+  L = x + y
+  puts "0 #{L} #{L} 0"
+elsif x > 0 && y < 0
+  # Fourth quadrant: x positive, y negative.
+  L = x - y  # y is negative, so L is positive.
+  puts "0 #{-L} #{L} 0"
+elsif x < 0 && y > 0
+  # Second quadrant: x negative, y positive.
+  L = y - x  # x is negative, so L is positive.
+  puts "#{-L} 0 0 #{L}"
+else
+  # Third quadrant: both negative.
+  # Here, x+y is negative; it serves as the leg length (with proper sign).
+  puts "#{x+y} 0 0 #{x+y}"
 end
 ```
 END EXAMPLES
@@ -83,36 +160,86 @@ END EXAMPLES
 PY_REFLEXION_FEW_SHOT = '''Example 1:
 [previous impl]:
 ```ruby
-def strlen(string)\n
-    string.chars.map(&:ord).sum\n
-end
-```
+x, y = gets.split.map(&:to_i)
 
-[unit test results from previous impl]:
+if x > 0 && y > 0
+  # First quadrant: both coordinates positive.
+  # Triangle vertices: (0, 0), (0, x+y), (x+y, 0)
+  puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 && y < 0
+  # Fourth quadrant: x positive, y negative.
+  # Triangle vertices: (0, 0), (0, x-y), (x-y, 0)
+  puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+  # Second quadrant: x negative, y positive.
+  # Triangle vertices: (0, 0), (-(y-x), 0), (0, y-x)
+  # (Note: here y-x is positive since x is negative.)
+  puts "#{-(y-x)} 0 0 #{y-x}"
+else
+  # Third quadrant: both coordinates negative.
+  # Triangle vertices: (0, 0), (x+y, 0), (0, x+y)
+  puts "#{x+y} 0 0 #{x+y}"
+end
+
+```
+[unit test results]:
+
 Tests passed:
 [
     {
-      "input": "",
-      "output": 0
+      "input": "10 5\r\n",
+      "output": [
+        "0 15 15 0"
+      ]
+    },
+    {
+      "input": "-10 5\r\n",
+      "output": [
+        "-15 0 0 15"
+      ]
+    },
+    {
+      "input": "-10 -1000000000\r\n",
+      "output": [
+        "-1000000010 0 0 -1000000010"
+      ]
     },
 ]
 
 Tests failed:
 [
     {
-      "input": "abc\r\n",
-      "output": 3
+      "input": "20 -10\r\n",
+      "output": [
+        "0 30 30 0"
+      ]
     },
 ]
 
-[reflection on previous impl]:
-I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string, which caused the test failures. My plan for improving the result is to modify the strlen function to return the length of the string using string.length, which will pass the test cases that expect the correct character count.
+[reflection on previous impl]: The error occurs because in the case where x is positive and y is negative, the implementation calculates the coordinate using x - y, which produces a positive value. However, the expected output requires the y-coordinate of one triangle vertex to be negative so that the triangle properly encloses the rectangle. In short, the sign for the y-coordinate is handled incorrectly in this quadrant.
 
 [improved impl]:
 ```ruby
-def strlen(string)\n
-    return string.length\n
+x, y = gets.split.map(&:to_i)
+
+if x > 0 && y > 0
+  # First quadrant: both positive.
+  L = x + y
+  puts "0 #{L} #{L} 0"
+elsif x > 0 && y < 0
+  # Fourth quadrant: x positive, y negative.
+  L = x - y  # y is negative, so L is positive.
+  puts "0 #{-L} #{L} 0"
+elsif x < 0 && y > 0
+  # Second quadrant: x negative, y positive.
+  L = y - x  # x is negative, so L is positive.
+  puts "#{-L} 0 0 #{L}"
+else
+  # Third quadrant: both negative.
+  # Here, x+y is negative; it serves as the leg length (with proper sign).
+  puts "#{x+y} 0 0 #{x+y}"
 end
+
 ```
 END EXAMPLES
 
@@ -132,78 +259,91 @@ PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Ruby programming assistant. 
 PY_SELF_REFLECTION_FEW_SHOT = """Example 1:
 [function impl]:
 ```ruby
-def palindrome?(string)\n
-    return string.downcase == string.downcase.reverse\n
+x, y = gets.split.map(&:to_i)
+
+if x > 0 && y > 0
+  # First quadrant: both coordinates positive.
+  # Triangle vertices: (0, 0), (0, x+y), (x+y, 0)
+  puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 && y < 0
+  # Fourth quadrant: x positive, y negative.
+  # Triangle vertices: (0, 0), (0, x-y), (x-y, 0)
+  puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+  # Second quadrant: x negative, y positive.
+  # Triangle vertices: (0, 0), (-(y-x), 0), (0, y-x)
+  # (Note: here y-x is positive since x is negative.)
+  puts "#{-(y-x)} 0 0 #{y-x}"
+else
+  # Third quadrant: both coordinates negative.
+  # Triangle vertices: (0, 0), (x+y, 0), (0, x+y)
+  puts "#{x+y} 0 0 #{x+y}"
 end
+
 ```
-[unit test results from previous impl]:
+[unit test results]:
 
 Tests passed:
 [
     {
-      "input": "madam\r\n",
-      "output": true
+      "input": "10 5\r\n",
+      "output": [
+        "0 15 15 0"
+      ]
     },
     {
-      "input": "abcba\r\n",
-      "output": true
+      "input": "-10 5\r\n",
+      "output": [
+        "-15 0 0 15"
+      ]
+    },
+    {
+      "input": "-10 -1000000000\r\n",
+      "output": [
+        "-1000000010 0 0 -1000000010"
+      ]
     },
 ]
 
 Tests failed:
 [
     {
-      "input": "hello\r\n",
-      "output": false
+      "input": "20 -10\r\n",
+      "output": [
+        "0 30 30 0"
+      ]
     },
 ]
 
-[reflection on previous impl]: I realized that the implementation of palindrome? was incorrect because it was comparing the string directly to its reversed version without checking for case sensitivity or non-alphabetic characters, which caused the test failures. My plan for improving the result is to ensure that both the string and its reversed version are checked after removing non-alphabetic characters and converting to lowercase, which will pass the test cases that expect the correct palindrome check.
+[reflection on previous impl]: The error occurs because in the case where x is positive and y is negative, the implementation calculates the coordinate using x - y, which produces a positive value. However, the expected output requires the y-coordinate of one triangle vertex to be negative so that the triangle properly encloses the rectangle. In short, the sign for the y-coordinate is handled incorrectly in this quadrant.
 
-Example 2:
-[function impl]:
-```ruby
-def longest_subarray_with_sum_limit(arr, limit)\n
-    return arr.each_with_index.max_by { |_, idx| arr[0..idx].sum <= limit ? idx + 1 : 0 }&.last || 0\n
-end
-
-```
-[unit test results from previous impl]:
-
-Tests passed:
-[
-    {
-      "input": "madam\r\n",
-      "output": true
-    },
-    {
-      "input": "abcba\r\n",
-      "output": true
-    },
-]
-
-Tests failed:
-[
-    {
-      "input": "hello\r\n",
-      "output": false
-    },
-]
-
-[reflection on previous impl]: I realized that the implementation of longest_subarray_with_sum_limit was incorrect because I was using each_with_index.max_by to find the longest subarray, which did not properly calculate the maximum subarray length under the sum limit constraint. My plan for improving the result is to change the approach to use a sliding window technique, which will efficiently find the longest subarray with the sum constraint and handle the edge cases properly.
 END OF EXAMPLES
 """
 
 PY_FIRST_SELF_REFLECTION_FEW_SHOT = '''Examples:
 [incorrect user impl]:
 ```ruby
-def strlen(string)\n
-    string.chars.map(&:ord).sum\n
+x,y=gets.split.map(&:to_i)
+if x > 0 and y > 0
+    puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 and y < 0
+    puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+    puts "#{-(y-x)} 0 0 #{y-x}"
+else
+    puts "#{x+y} 0 0 #{x+y}"
 end
+
 ```
 
-[reflection on incorrect impl]:
-I realized that the implementation of strlen was incorrect because it summed the ASCII values of the characters instead of simply returning the length of the string. My plan for improving the result is to modify the strlen function to return the length of the string using string.length.
+[problem context]:
+Problem description: Vasily the bear has a favorite rectangle, it has one vertex at point (0, 0), and the opposite vertex at point (x, y). Of course, the sides of Vasya's favorite rectangle are parallel to the coordinate axes. Vasya also loves triangles, if the triangles have one vertex at point B = (0, 0). That's why today he asks you to find two points A = (x1, y1) and C = (x2, y2), such that the following conditions hold:  the coordinates of points: x1, x2, y1, y2 are integers. Besides, the following inequation holds: x1 &lt; x2;  the triangle formed by point A, B and C is rectangular and isosceles ( is right);  all points of the favorite rectangle are located inside or on the border of triangle ABC;  the area of triangle ABC is as small as possible. Help the bear, find the required points. It is not so hard to proof that these points are unique.
+Input format: The first line contains two integers x, y ( - 109 ≤ x, y ≤ 109, x ≠ 0, y ≠ 0).
+Output format: Print in the single line four integers x1, y1, x2, y2 — the coordinates of the required points.
+A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compiles and runs but does not produce the correct output.)
+
+[self-reflection]:
+The provided code does not work correctly because it incorrectly calculates the coordinates for points A, B, and C based on the input values of x and y. The code attempts to determine the coordinates of points A and C based on the conditions for a right-isosceles triangle with one vertex at the origin (0,0), but it fails to correctly compute the coordinates for A and C. Additionally, the conditions for the area of the triangle and the placement of the rectangle inside the triangle are not properly handled in the code.
 
 ```
 END EXAMPLES
@@ -211,34 +351,53 @@ END EXAMPLES
 '''
 
 PY_TEST_GENERATION_FEW_SHOT = """Examples:
-func signature:
-def strlen(string)\n
-    # Return length of given string
-    # This function takes a string as input and returns the number of characters in the string.
-unit tests:
+[buggy code]:
+x,y=gets.split.map(&:to_i)
+if x > 0 and y > 0
+    puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 and y < 0
+    puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+    puts "#{-(y-x)} 0 0 #{y-x}"
+else
+    puts "#{x+y} 0 0 #{x+y}"
+end
+
+
+[problem context]:
+Problem description: Vasily the bear has a favorite rectangle, it has one vertex at point (0, 0), and the opposite vertex at point (x, y). Of course, the sides of Vasya's favorite rectangle are parallel to the coordinate axes. Vasya also loves triangles, if the triangles have one vertex at point B = (0, 0). That's why today he asks you to find two points A = (x1, y1) and C = (x2, y2), such that the following conditions hold:  the coordinates of points: x1, x2, y1, y2 are integers. Besides, the following inequation holds: x1 &lt; x2;  the triangle formed by point A, B and C is rectangular and isosceles ( is right);  all points of the favorite rectangle are located inside or on the border of triangle ABC;  the area of triangle ABC is as small as possible. Help the bear, find the required points. It is not so hard to proof that these points are unique.
+
+Input format: The first line contains two integers x, y ( - 109 ≤ x, y ≤ 109, x ≠ 0, y ≠ 0).
+
+Output format: Print in the single line four integers x1, y1, x2, y2 — the coordinates of the required points.
+
+A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compiles and runs but does not produce the correct output.)
+
+
+[unit tests]:
 [
     {
-      "input": "abc\r\n",
+      "input": "10 5\r\n",
       "output": [
-        "3"
+        "0 15 15 0"
       ]
     },
     {
-      "input": "hello world\r\n",
+      "input": "-10 5\r\n",
       "output": [
-        "11"
+        "-15 0 0 15"
       ]
     },
     {
-      "input": "ruby\r\n",
+      "input": "20 -10\r\n",
       "output": [
-        "4"
+        "0 -30 30 0"
       ]
     },
     {
-      "input": "12345\r\n",
+      "input": "-10 -1000000000\r\n",
       "output": [
-        "5"
+        "-1000000010 0 0 -1000000010"
       ]
     },
 ]
@@ -315,7 +474,7 @@ class PyGenerator(Generator):
             add_code_block=lambda x: add_code_block(x, "ruby"),
         )
 
-    def internal_tests(self, problem_context: str, prev_func_impl: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
+    def internal_tests(self, problem_context: str, func: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
         def parse_tests(tests: List[str]) -> List[str]:
             return [test.strip() for test in tests if "assert_equal" in test.strip()]
         """
@@ -323,7 +482,7 @@ class PyGenerator(Generator):
         """
         return generic_generate_internal_tests(
             problem_context=problem_context,
-            prev_func_impl=prev_func_impl,
+            func=func,
             model=model,
             max_num_tests=max_num_tests,
             test_generation_few_shot=PY_TEST_GENERATION_FEW_SHOT,

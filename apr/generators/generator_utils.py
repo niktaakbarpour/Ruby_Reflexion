@@ -126,7 +126,7 @@ def generic_generate_func_impl(
 
 def generic_generate_internal_tests(
         problem_context: str,
-        prev_func_impl: str,
+        func: str,
         model: ModelBase,
         max_num_tests: int,
         test_generation_few_shot: str,
@@ -146,12 +146,12 @@ def generic_generate_internal_tests(
                 ),
                 Message(
                     role="user",
-                    content=f"{test_generation_few_shot}\n\n[func signature]:\n{prev_func_impl}\n\n[think]:"
+                    content=f"{test_generation_few_shot}\n\n[func signature]:\n{func}\n\n[think]:"
                 )
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
         else:
-            message = f"[buggy code]:\n{prev_func_impl}\n\n[problem context]:\n{problem_context}\n\n[unit tests]:"
+            message = f"[buggy code]:\n{func}\n\n[problem context]:\n{problem_context}\n\n[unit tests]:"
             prompt = f"{test_generation_chat_instruction}\n{test_generation_few_shot}"
             print_messages(prompt, message)
             messages = [
@@ -161,12 +161,12 @@ def generic_generate_internal_tests(
                 ),
                 Message(
                     role="user",
-                    content=f"[buggy code]:\n{prev_func_impl}\n\n[problem context]:\n{problem_context}\n\n[unit tests]:"
+                    content=f"[buggy code]:\n{func}\n\n[problem context]:\n{problem_context}\n\n[unit tests]:"
                 )
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
     else:
-        prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func_sig}\nunit tests:'
+        prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:'
         output = model.generate(prompt, max_tokens=1024)
     # all_tests = parse_tests(output.split("\n"))
     # valid_tests = [test for test in all_tests if is_syntax_valid(test)]
