@@ -165,6 +165,9 @@ def generic_generate_internal_tests(
                 )
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
+            print("Raw Model Output:", repr(output))
+            if not output.strip().endswith("}"):
+                print("Warning: Response might be truncated.")
     else:
         prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:'
         output = model.generate(prompt, max_tokens=1024)

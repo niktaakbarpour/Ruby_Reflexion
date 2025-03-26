@@ -107,7 +107,7 @@ END EXAMPLES
 '''
 
 PY_FIRST_REFLEXION_FEW_SHOT_ADD = '''Example 1:
-[incorrect user impl]:
+[incorrect function impl]:
 ```ruby
 x,y=gets.split.map(&:to_i)
 if x > 0 and y > 0
@@ -245,7 +245,7 @@ END EXAMPLES
 
 '''
 
-FIRST_REFLECTION_CHAT_INSTRUCTION = """You are a helpful Ruby programming assistant. You are helping a user debug a Ruby program. The user has written some code, but it has errors. You will help the user by analyzing the following information:
+FIRST_REFLECTION_CHAT_INSTRUCTION = """You are a helpful Ruby programming assistant. You are helping a user debug a Ruby program. The user has written some code, but it has errors. You will help the user by analyzing problem context which contains the following information:
 The buggy source code provided.
 The problem description, which explains the intended behavior of the program.
 The input format, which describes the structure, range, and constraints of inputs.
@@ -321,7 +321,7 @@ END OF EXAMPLES
 """
 
 PY_FIRST_SELF_REFLECTION_FEW_SHOT = '''Examples:
-[incorrect user impl]:
+[incorrect function impl]:
 ```ruby
 x,y=gets.split.map(&:to_i)
 if x > 0 and y > 0
@@ -407,7 +407,7 @@ PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming l
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
 
-PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the following information:
+PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the problem context containing following information:
 The buggy source code provided.
 The problem description, which explains the intended behavior of the program.
 The input format, which describes the structure, range, and constraints of inputs.
