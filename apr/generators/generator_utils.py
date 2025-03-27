@@ -122,6 +122,17 @@ def generic_generate_func_impl(
         func_bodies = [parse_code_block(func_body) for func_body in func_bodies]
         print_generated_func_body("\n\n".join(func_bodies))
         return func_bodies
+    
+
+def extract_json(raw_output):
+    """Find the first valid JSON structure inside a string and parse it."""
+    start_index = raw_output.find("[")  # Locate first `[`
+    if start_index == -1:
+        raise ValueError("No valid JSON array found!")
+
+    clean_json_str = raw_output[start_index:]  # Extract only from `[`
+    
+    return json.loads(clean_json_str)  # Safely parse JSON
 
 
 def generic_generate_internal_tests(
@@ -166,8 +177,13 @@ def generic_generate_internal_tests(
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
             print("Raw Model Output:", repr(output))
-            if not output.strip().endswith("}"):
-                print("Warning: Response might be truncated.")
+            try:
+                unit_tests = extract_json(output)
+                print("Parsed JSON:", unit_tests)
+            except json.JSONDecodeError as e:
+                print("JSON Decode Error:", e)
+            except ValueError as e:
+                print("Value Error:", e)
     else:
         prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:'
         output = model.generate(prompt, max_tokens=1024)
@@ -175,7 +191,7 @@ def generic_generate_internal_tests(
     # valid_tests = [test for test in all_tests if is_syntax_valid(test)]
     
     # Remove triple backticks and surrounding whitespace
-    cleaned_output = output.strip("`").strip()
+    cleaned_output = unit_tests.strip("`").strip()
 
     # If the first line is "json", remove it
     lines = cleaned_output.split("\n")
