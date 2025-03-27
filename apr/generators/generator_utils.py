@@ -177,6 +177,9 @@ def generic_generate_internal_tests(
             ]
             output = model.generate_chat(messages=messages, max_tokens=1024)
             print("Raw Model Output:", repr(output))
+
+            unit_tests = ""  # Initialize with an empty string
+
             try:
                 unit_tests = extract_json(output)
                 print("Parsed JSON:", unit_tests)
@@ -184,12 +187,18 @@ def generic_generate_internal_tests(
                 print("JSON Decode Error:", e)
             except ValueError as e:
                 print("Value Error:", e)
+
     else:
         prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:'
         output = model.generate(prompt, max_tokens=1024)
     # all_tests = parse_tests(output.split("\n"))
     # valid_tests = [test for test in all_tests if is_syntax_valid(test)]
     
+    # Ensure unit_tests is not empty before proceeding
+    if not unit_tests:
+        print("Warning: No unit tests extracted.")
+        return []
+
     # Remove triple backticks and surrounding whitespace
     cleaned_output = unit_tests.strip("`").strip()
 
