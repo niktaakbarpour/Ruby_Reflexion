@@ -65,7 +65,8 @@ with PdfPages(pdf_filename) as pdf:
     
     # Save the plot to the PDF
     plt.tight_layout()
-    pdf.savefig()
-    plt.close()
+    plt.show()
+    # pdf.savefig()
+    # plt.close()
 
 print(f"Bug outcomes saved to {pdf_filename}")

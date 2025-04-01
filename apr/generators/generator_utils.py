@@ -185,8 +185,10 @@ def generic_generate_internal_tests(
                 print("Parsed JSON:", unit_tests)
             except json.JSONDecodeError as e:
                 print("JSON Decode Error:", e)
+                return []
             except ValueError as e:
                 print("Value Error:", e)
+                return []
 
     else:
         prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:'
@@ -198,31 +200,35 @@ def generic_generate_internal_tests(
     if not unit_tests:
         print("Warning: No unit tests extracted.")
         return []
+    
+    if isinstance(unit_tests, list):
+        parsed_output = unit_tests  # Already a valid Python list
+    else:
 
-    # Remove triple backticks and surrounding whitespace
-    cleaned_output = unit_tests.strip("`").strip()
+        # Remove triple backticks and surrounding whitespace
+        cleaned_output = unit_tests.strip("`").strip()
 
-    # If the first line is "json", remove it
-    lines = cleaned_output.split("\n")
-    if lines[0].strip().lower() == "json":
-        cleaned_output = "\n".join(lines[1:])  # Remove first line
+        # If the first line is "json", remove it
+        lines = cleaned_output.split("\n")
+        if lines[0].strip().lower() == "json":
+            cleaned_output = "\n".join(lines[1:])  # Remove first line
 
-    # Handle empty output case
-    if not cleaned_output:
-        print("Warning: Model output is empty.")
-        return []
+        # Handle empty output case
+        if not cleaned_output:
+            print("Warning: Model output is empty.")
+            return []
 
-    # Parse JSON safely
-    try:
-        parsed_output = json.loads(cleaned_output)  # Convert JSON string to Python object
-    except json.JSONDecodeError as e:
-        print(f"Error parsing JSON: {e}")
-        return []  # Return an empty list if parsing fails
+        # Parse JSON safely
+        try:
+            parsed_output = json.loads(cleaned_output)  # Convert JSON string to Python object
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON: {e}")
+            return []  # Return an empty list if parsing fails
 
     # Extract raw test cases (inputs and outputs)
     filtered_tests = []
     for test_case in parsed_output:
-        if "input" in test_case and "output" in test_case:
+        if isinstance(test_case, dict) and "input" in test_case and "output" in test_case:
             filtered_tests.append((test_case["input"], test_case["output"]))
 
     return sample_n_random(filtered_tests, max_num_tests)
