@@ -18,6 +18,8 @@ def run_reflexion(
 ) -> None:
     # dataset = [item for item in dataset if item.get("difficulty") == 800]
 
+    prompting = "scot"
+
     exe = executor_factory(language, is_leet=is_leetcode)
     gen = generator_factory(language)
     model = model_factory(model_name, model_path)
@@ -75,7 +77,6 @@ def run_reflexion(
 
             # Explanation of sample inputs & sample outputs: {json_data["notes"]}
 
-            modified_data = create_template(item, True)
             while cur_pass < pass_at_k and not is_solved:
                 reflection = gen.first_reflection(problem_context = create_template(item, False),
                                                 func = item["bug_source_code"],
@@ -89,16 +90,28 @@ def run_reflexion(
 
                 # first attempt
                 try:
-                    cur_func_impl = gen.func_impl(problem_context=create_template(item, False),
-                                                model=model,
-                                                strategy="reflexion",
-                                                is_first_reflection=is_first_reflection,
-                                                prev_func_impl=item["bug_source_code"],
-                                                self_reflection=reflection)
-                    is_first_reflection = False
-                    implementations.append(cur_func_impl)
-                    if not isinstance(cur_func_impl, str):
-                       raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
+                    if prompting == "scot":
+                        cur_func_impl = gen.func_impl(problem_context=create_template(item, False),
+                                                    model=model,
+                                                    strategy="scot",
+                                                    is_first_reflection=is_first_reflection,
+                                                    prev_func_impl=item["bug_source_code"],
+                                                    self_reflection=reflection)
+                        is_first_reflection = False
+                        implementations.append(cur_func_impl)
+                        if not isinstance(cur_func_impl, str):
+                            raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
+                    else:
+                        cur_func_impl = gen.func_impl(problem_context=create_template(item, False),
+                                                    model=model,
+                                                    strategy="reflexion",
+                                                    is_first_reflection=is_first_reflection,
+                                                    prev_func_impl=item["bug_source_code"],
+                                                    self_reflection=reflection)
+                        is_first_reflection = False
+                        implementations.append(cur_func_impl)
+                        if not isinstance(cur_func_impl, str):
+                            raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
 
                 except Exception as e:
                     print(f"Skipping item {i} due to error: {e}")

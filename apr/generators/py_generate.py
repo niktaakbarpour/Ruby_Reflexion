@@ -17,6 +17,7 @@ USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby programming language code block t
 PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a buggy code implementation and its docstring by the user. Write ONLY your full correct implementation in Ruby (DO NOT write example usage). In other words your task is automatic program repair."
 PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby programming language code. You will be given a buggy code implementation and its docstring by the user. Write your full correct implementation in Ruby."
 PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation in Ruby."
+RB_FIRST_SCOT_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given incorrect user function implementation, its docstring, and a hint to change the implementation appropriately. Your task is to write the correct implementation in Ruby. You should first write a rough problem-solving process using three programming structures (i.e. sequential, branch, and loop structures) and then output the final code."
 PY_FIRST_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given incorrect user function implementation and a hint to change the implementation appropriately. Write your full implementation in Ruby."
 PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby."
 PY_REFLEXION_FEW_SHOT_ADD = '''Example 1:
@@ -104,6 +105,162 @@ end
 ```
 END EXAMPLES
 
+'''
+
+RB_FIRST_SCOT_FEW_SHOT = '''
+Example 1:
+[incorrect function impl]:
+```ruby
+values = [5, 10, 15]
+total = 0
+formatted_values = ""
+
+values.each do |val|
+  formatted_values = formatted_values + val.to_s + ", "
+  total = val
+end
+
+puts "Total: #{total}, Values: #{formatted_values}"
+```
+
+[problem context]:
+This code processes an array of numbers, attempting to compute their sum and create a formatted string representation (e.g., "Total: 30, Values: 5, 10, 15").
+
+[self-reflection]:
+total = val overwrites total in each iteration instead of accumulating.
+formatted_values = formatted_values + val.to_s + ", " always appends a trailing comma, even at the last element.
+
+
+[Structured Chain-of-Thought (Sequence Structure)]:
+Let's think step by step:
+Input: Array of numbers.
+Output: Printed formatted string.
+
+1. Initialize total ← 0 and formatted_values ← "".
+2. For each element val in values, do:
+3. Compute total ← total + val.
+4. Convert val to string and append to formatted_values.
+5. After loop, remove trailing comma from formatted_values.
+6. Print "Total: <total>, Values: <formatted_values>".
+
+[Repaired Code]:
+```ruby
+values = [5, 10, 15]
+total = 0
+formatted_values = []
+
+values.each do |val|
+  total += val  # Fix: Accumulate instead of overwrite
+  formatted_values << val.to_s  # Fix: Use an array for correct formatting
+end
+
+puts "Total: #{total}, Values: #{formatted_values.join(', ')}"  # Fix: Remove trailing comma
+```
+
+Example 2:
+[incorrect function impl]:
+```ruby
+password = "secure123"
+attempt = gets.chomp
+
+if password == attempt
+  puts "Access granted"
+if password != attempt
+  puts "Access denied"
+end
+```
+
+[problem context]:
+This snippet checks user authentication. The expected behavior is: If the user enters the correct password, print "Access granted". Otherwise, print "Access denied".
+
+[self-reflection]:
+The if password == attempt block is not properly closed.
+The second condition (if password != attempt) runs independently, so it always executes, printing both messages at once.
+
+
+[Structured Chain-of-Thought (Branch Structure)]:
+Let's think step by step:
+Input: String (password attempt).
+Output: Printed authentication message.
+
+1. If password == attempt then:
+2. Print "Access granted"
+3. Else:
+4. Print "Access denied"
+
+[Repaired Code]:
+```ruby
+password = "secure123"
+attempt = gets.chomp
+
+if password == attempt
+  puts "Access granted"
+else  # Fix: Ensure mutually exclusive branches
+  puts "Access denied"
+end
+```
+
+Example 3:
+[incorrect function impl]:
+```ruby
+matrix = [
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9]
+]
+
+sum = 0
+i = 0
+j = 0
+
+while i < matrix.length && j < matrix[0].length
+  sum += matrix[i][j]
+  i += 1
+end
+
+puts sum
+```
+
+[problem context]:
+This code aims to compute the sum of the diagonal elements of a matrix.
+
+[self-reflection]:
+while i < matrix.length && j < matrix[0].length ensures the loop exits before iterating all diagonals.
+j is never incremented, meaning it always reads matrix[i][0] instead of following the diagonal.
+
+
+[Structured Chain-of-Thought (Loop Structure)]:
+Let's think step by step:
+Input: 2D array.
+Output: Printed diagonal sum.
+
+1. Initialize sum ← 0, i ← 0, j ← 0.
+2. While i < matrix.length && j < matrix[0].length do:
+3. Compute sum ← sum + matrix[i][j].
+4. Update i ← i + 1, j ← j + 1 to follow diagonal.
+5. Print sum.
+
+[Repaired Code]:
+```ruby
+matrix = [
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9]
+]
+
+sum = 0
+i = 0
+j = 0
+
+while i < matrix.length && j < matrix[0].length
+  sum += matrix[i][j]
+  i += 1  # Fix: Move both indices to traverse the diagonal
+  j += 1
+end
+
+puts sum  # Output: 15
+```
+END EXAMPLES
 '''
 
 PY_FIRST_REFLEXION_FEW_SHOT_ADD = '''Example 1:
