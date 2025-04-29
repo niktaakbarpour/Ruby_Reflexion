@@ -27,7 +27,9 @@ from .prompt_constants import (
     RB_FIRST_SCOT_CHAT_INSTRUCTION,
     RB_REFLEXION_SCOT_FEW_SHOT_ADD,
     RB_FIRST_SCOT_FEW_SHOT,
-    FIRST_REFLECTION_CHAT_INSTRUCTION
+    FIRST_REFLECTION_CHAT_INSTRUCTION,
+    RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION,
+    RB_TEST_GENERATION_EDGE_FEW_SHOT
 )
 
 from .rb_parse import parse_code_block, add_code_block
@@ -131,7 +133,7 @@ class PyGenerator(Generator):
             func=func,
             model=model,
             max_num_tests=max_num_tests,
-            test_generation_few_shot=PY_TEST_GENERATION_FEW_SHOT,
-            test_generation_chat_instruction=PY_TEST_GENERATION_CHAT_INSTRUCTION,
+            test_generation_few_shot=RB_TEST_GENERATION_EDGE_FEW_SHOT,
+            test_generation_chat_instruction=RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION,
             test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
         )

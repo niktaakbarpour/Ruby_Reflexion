@@ -698,6 +698,64 @@ A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compile
 ]
 """
 
+RB_TEST_GENERATION_EDGE_FEW_SHOT = """Examples:
+[buggy code]:
+x,y=gets.split.map(&:to_i)
+if x > 0 and y > 0
+    puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 and y < 0
+    puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+    puts "#{-(y-x)} 0 0 #{y-x}"
+else
+    puts "#{x+y} 0 0 #{x+y}"
+end
+
+
+[problem context]:
+Problem description: Vasily the bear has a favorite rectangle, it has one vertex at point (0, 0), and the opposite vertex at point (x, y). Of course, the sides of Vasya's favorite rectangle are parallel to the coordinate axes. Vasya also loves triangles, if the triangles have one vertex at point B = (0, 0). That's why today he asks you to find two points A = (x1, y1) and C = (x2, y2), such that the following conditions hold:  the coordinates of points: x1, x2, y1, y2 are integers. Besides, the following inequation holds: x1 &lt; x2;  the triangle formed by point A, B and C is rectangular and isosceles ( is right);  all points of the favorite rectangle are located inside or on the border of triangle ABC;  the area of triangle ABC is as small as possible. Help the bear, find the required points. It is not so hard to proof that these points are unique.
+
+Input format: The first line contains two integers x, y ( - 109 ≤ x, y ≤ 109, x ≠ 0, y ≠ 0).
+
+Output format: Print in the single line four integers x1, y1, x2, y2 — the coordinates of the required points.
+
+A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compiles and runs but does not produce the correct output.)
+
+
+[unit tests]:
+[
+    # Basic Test Cases
+    {
+        "input": "10 5\r\n",
+        "output": ["0 15 15 0"]
+    },
+    {
+        "input": "-10 5\r\n",
+        "output": ["-15 0 0 15"]
+    },
+
+    # Edge Test Cases
+    {
+        "input": "1 -1\r\n",
+        "output": ["0 -2 2 0"]
+    },
+    {
+        "input": "-1 -1\r\n",
+        "output": ["-2 0 0 -2"]
+    },
+
+    # Large Scale Test Cases
+    {
+        "input": "-10 -1000000000\r\n",
+        "output": ["-1000000010 0 0 -1000000010"]
+    },
+    {
+        "input": "1000000000 1000000000\r\n",
+        "output": ["0 2000000000 2000000000 0"]
+    }
+]
+"""
+
 PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the docstring. In this step you should only generate sample input and output not function implemention and not test suite.
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
@@ -709,3 +767,34 @@ The input format, which describes the structure, range, and constraints of input
 The expected output format, which specifies how the program's output should be structured.
 The pre-run execution outcome, which describes how the buggy code currently behaves.
 In this step you should only generate sample input and output not function implemention and not test suite."""
+
+RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The expected output format, which specifies how the program's output should be structured, and
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
+**Role**: As a tester, your goal is to create comprehensive and diverse test cases that evaluate the correctness and robustness of the Ruby function under various scenarios.
+
+Please organize the test cases into the following three categories:
+
+**1. Basic Test Cases**:
+- **Objective**: Verify the function’s fundamental correctness under standard conditions.
+- Include typical input values expected from everyday use.
+
+**2. Edge Test Cases**:
+- **Objective**: Challenge the function with extreme, unusual, or minimal input values.
+- These should test boundary conditions and rare cases that could reveal hidden bugs.
+
+**3. Large Scale Test Cases**:
+- **Objective**: Evaluate the function’s behavior and performance under large or computationally intensive inputs.
+- Ensure the function handles high-volume data without crashing or slowing down.
+
+**Instructions**:
+- Generate all test cases as a list of dictionaries, each containing an \"input\" and an \"output\".
+- Do NOT include the function implementation or a full test suite. Only return test inputs and expected outputs.
+- Comment each test case to briefly explain what it tests (e.g., # basic test, # edge case: empty list, # stress test).
+- Return the test cases as valid JSON array.
+
+Your response should be limited to a structured JSON list of test cases only, without additional explanation or prose."""
