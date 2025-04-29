@@ -91,9 +91,9 @@ def run_reflexion(
                 # first attempt
                 try:
                     if prompting == "scot":
-                        cur_func_impl = gen.func_impl(problem_context=create_template(item, False),
+                        cur_func_impl = gen.scot_func_impl(problem_context=create_template(item, False),
                                                     model=model,
-                                                    strategy="scot",
+                                                    strategy="reflexion",
                                                     is_first_reflection=is_first_reflection,
                                                     prev_func_impl=item["bug_source_code"],
                                                     self_reflection=reflection)
@@ -153,8 +153,21 @@ def run_reflexion(
 
                         print("I'm here.8")
 
+                        if prompting == "scot":
+                            cur_func_impl = gen.scot_func_impl(problem_context=create_template(item, False),
+                                                    model=model,
+                                                    strategy="reflexion",
+                                                    is_first_reflection=is_first_reflection,
+                                                    prev_func_impl=cur_func_impl,
+                                                    self_reflection=reflection,
+                                                    feedback=cur_feedback)
+                            implementations.append(cur_func_impl)
+                            if not isinstance(cur_func_impl, str):
+                                raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
+                        
+                        else:
                         # apply self-reflection in the next attempt
-                        cur_func_impl = gen.func_impl(
+                            cur_func_impl = gen.func_impl(
                             problem_context=create_template(item, False),
                             model=model,
                             strategy="reflexion",
@@ -163,9 +176,9 @@ def run_reflexion(
                             self_reflection=reflection,
                             feedback=cur_feedback,
                         )
-                        implementations.append(cur_func_impl)
-                        if not isinstance(cur_func_impl, str):
-                            raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
+                            implementations.append(cur_func_impl)
+                            if not isinstance(cur_func_impl, str):
+                                raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
 
 
                         # Convert (input_str, output_list) tuples into {"input": ..., "output": ...} dicts

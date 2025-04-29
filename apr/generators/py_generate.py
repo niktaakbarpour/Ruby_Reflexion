@@ -1,6 +1,6 @@
 from generators.model import ModelBase, message_to_str
 from .generator_types import Generator
-from .generator_utils import generic_generate_first_reflection, generic_generate_func_impl, generic_generate_internal_tests, generic_generate_self_reflection
+from .generator_utils import generic_generate_first_reflection, generic_generate_func_impl, generic_generate_internal_tests, generic_generate_self_reflection, generic_generate_scot_func_impl
 
 from typing import Optional, List, Union
 import ast
@@ -17,9 +17,157 @@ USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a Ruby programming language code block t
 PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with Ruby programming language code, NOT ENGLISH and NOT PYTHON. You will be given a buggy code implementation and its docstring by the user. Write ONLY your full correct implementation in Ruby (DO NOT write example usage). In other words your task is automatic program repair."
 PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby programming language code. You will be given a buggy code implementation and its docstring by the user. Write your full correct implementation in Ruby."
 PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write your full implementation in Ruby."
-RB_FIRST_SCOT_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given incorrect user function implementation, its docstring, and a hint to change the implementation appropriately. Your task is to write the correct implementation in Ruby. You should first write a rough problem-solving process using three programming structures (i.e. sequential, branch, and loop structures) and then output the final code."
 PY_FIRST_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given incorrect user function implementation and a hint to change the implementation appropriately. Write your full implementation in Ruby."
 PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby."
+RB_SCOT_CHAT_INSTRUCTION = '''
+You are an expert Ruby programming assistant.
+
+You will be given:
+- Your past function implementation,
+- A series of unit tests,
+- Its docstring describing the intended behavior,
+- And a hint to guide you toward the correct solution.
+
+Your task:
+- First, carefully plan the correct solution.
+    - Write a rough structured plan using programming structures: **sequence**, **branch** (conditional logic), and **loop** (iteration).
+    - Clearly specify the inputs, outputs, and main steps.
+- Then, write the full corrected Ruby code according to your structured plan.
+
+Always follow this two-step format:
+1. Structured Plan
+2. Corrected Ruby Code
+'''
+
+RB_FIRST_SCOT_CHAT_INSTRUCTION = '''
+You are an expert Ruby programming assistant.
+
+You will be given:
+- An incorrect Ruby function implementation,
+- Its docstring describing the intended behavior,
+- And a hint to guide you toward the correct solution.
+
+Your task:
+- First, carefully plan the correct solution.
+    - Write a rough structured plan using programming structures: **sequence**, **branch** (conditional logic), and **loop** (iteration).
+    - Clearly specify the inputs, outputs, and main steps.
+- Then, write the full corrected Ruby code according to your structured plan.
+
+Always follow this two-step format:
+1. Structured Plan
+2. Corrected Ruby Code
+'''
+
+RB_REFLEXION_SCOT_FEW_SHOT_ADD = '''Example 1:
+[previous impl]:
+```ruby
+x, y = gets.split.map(&:to_i)
+
+if x > 0 && y > 0
+  # First quadrant: both coordinates positive.
+  # Triangle vertices: (0, 0), (0, x+y), (x+y, 0)
+  puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 && y < 0
+  # Fourth quadrant: x positive, y negative.
+  # Triangle vertices: (0, 0), (0, x-y), (x-y, 0)
+  puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+  # Second quadrant: x negative, y positive.
+  # Triangle vertices: (0, 0), (-(y-x), 0), (0, y-x)
+  # (Note: here y-x is positive since x is negative.)
+  puts "#{-(y-x)} 0 0 #{y-x}"
+else
+  # Third quadrant: both coordinates negative.
+  # Triangle vertices: (0, 0), (x+y, 0), (0, x+y)
+  puts "#{x+y} 0 0 #{x+y}"
+end
+
+```
+[unit test results]:
+
+Tests passed:
+[
+    {
+      "input": "10 5\r\n",
+      "output": [
+        "0 15 15 0"
+      ]
+    },
+    {
+      "input": "-10 5\r\n",
+      "output": [
+        "-15 0 0 15"
+      ]
+    },
+    {
+      "input": "-10 -1000000000\r\n",
+      "output": [
+        "-1000000010 0 0 -1000000010"
+      ]
+    },
+]
+
+Tests failed:
+[
+    {
+      "input": "20 -10\r\n",
+      "output": [
+        "0 30 30 0"
+      ]
+    },
+]
+
+[reflection on previous impl]: The error occurs because in the case where x is positive and y is negative, the implementation calculates the coordinate using x - y, which produces a positive value. However, the expected output requires the y-coordinate of one triangle vertex to be negative so that the triangle properly encloses the rectangle. In short, the sign for the y-coordinate is handled incorrectly in this quadrant.
+
+[Structured Chain-of-Thought]:
+Input: Two integers, x and y.
+Output: Four integers representing two triangle vertices (besides (0, 0)).
+
+Step-by-step plan:
+1. Read two integers x and y from user input.
+2. Determine the quadrant based on the signs of x and y:
+2.1. Sequence:
+2.1.1. If x > 0 and y > 0:
+2.1.1.1. Calculate L = x + y.
+2.1.1.2. Output vertices: (0, L), (L, 0).
+2.2. Branch:
+2.2.1. If x > 0 and y < 0:
+2.2.1.1. Calculate L = x - y. (since y is negative, subtracting makes L positive)
+2.2.1.2. Output vertices: (0, -L), (L, 0) to ensure y-coordinate remains negative.
+2.2.2. If x < 0 and y > 0:
+2.2.2.1. Calculate L = y - x. (since x is negative, y-x is positive)
+2.2.2.2. Output vertices: (-L, 0), (0, L).
+2.2.3. If x < 0 and y < 0:
+2.2.3.1. Calculate L = x + y. (both negative)
+2.2.3.2. Output vertices: (L, 0), (0, L).
+3. Loop: (No loop needed in this case as it is a single conditional dispatch.)
+
+[improved impl]:
+```ruby
+x, y = gets.split.map(&:to_i)
+
+if x > 0 && y > 0
+  # First quadrant: both positive.
+  L = x + y
+  puts "0 #{L} #{L} 0"
+elsif x > 0 && y < 0
+  # Fourth quadrant: x positive, y negative.
+  L = x - y  # y is negative, so L is positive.
+  puts "0 #{-L} #{L} 0"
+elsif x < 0 && y > 0
+  # Second quadrant: x negative, y positive.
+  L = y - x  # x is negative, so L is positive.
+  puts "#{-L} 0 0 #{L}"
+else
+  # Third quadrant: both negative.
+  # Here, x+y is negative; it serves as the leg length (with proper sign).
+  puts "#{x+y} 0 0 #{x+y}"
+end
+```
+END EXAMPLES
+
+'''
+
 PY_REFLEXION_FEW_SHOT_ADD = '''Example 1:
 [previous impl]:
 ```ruby
@@ -131,17 +279,17 @@ total = val overwrites total in each iteration instead of accumulating.
 formatted_values = formatted_values + val.to_s + ", " always appends a trailing comma, even at the last element.
 
 
-[Structured Chain-of-Thought (Sequence Structure)]:
-Let's think step by step:
-Input: Array of numbers.
-Output: Printed formatted string.
+[Structured Chain-of-Thought]:
+Input: Array of numbers
+Output: Printed formatted string showing total sum and all numbers.
 
-1. Initialize total ← 0 and formatted_values ← "".
-2. For each element val in values, do:
-3. Compute total ← total + val.
-4. Convert val to string and append to formatted_values.
-5. After loop, remove trailing comma from formatted_values.
-6. Print "Total: <total>, Values: <formatted_values>".
+Step-by-step plan:
+1. Initialize total ← 0 and formatted_values ← empty list.
+2. For each element val in values:
+2.1. Add val to total.
+2.2. Append val (as string) to formatted_values list.
+3. After the loop, join formatted_values with commas.
+4. Print "Total: <total>, Values: <formatted_values>".
 
 [Repaired Code]:
 ```ruby
@@ -178,15 +326,16 @@ The if password == attempt block is not properly closed.
 The second condition (if password != attempt) runs independently, so it always executes, printing both messages at once.
 
 
-[Structured Chain-of-Thought (Branch Structure)]:
-Let's think step by step:
-Input: String (password attempt).
+[Structured Chain-of-Thought]:
+Input: User's password attempt (string)
 Output: Printed authentication message.
 
-1. If password == attempt then:
-2. Print "Access granted"
+Step-by-step plan:
+1. Compare attempt with password.
+2. If they are equal:
+2.1. Print "Access granted".
 3. Else:
-4. Print "Access denied"
+3.1 Print "Access denied".
 
 [Repaired Code]:
 ```ruby
@@ -229,16 +378,16 @@ while i < matrix.length && j < matrix[0].length ensures the loop exits before it
 j is never incremented, meaning it always reads matrix[i][0] instead of following the diagonal.
 
 
-[Structured Chain-of-Thought (Loop Structure)]:
-Let's think step by step:
-Input: 2D array.
-Output: Printed diagonal sum.
+[Structured Chain-of-Thought]:
+Input: 2D array (matrix)
+Output: Printed sum of diagonal elements.
 
+Step-by-step plan:
 1. Initialize sum ← 0, i ← 0, j ← 0.
-2. While i < matrix.length && j < matrix[0].length do:
-3. Compute sum ← sum + matrix[i][j].
-4. Update i ← i + 1, j ← j + 1 to follow diagonal.
-5. Print sum.
+2. While i < number of rows and j < number of columns:
+2.1. Add matrix[i][j] to sum.
+2.2. Increment both i and j to move along the diagonal.
+3. After loop ends, print sum.
 
 [Repaired Code]:
 ```ruby
@@ -623,6 +772,40 @@ class PyGenerator(Generator):
             first_reflexion_chat_instruction=PY_FIRST_REFLEXION_CHAT_INSTRUCTION,
             reflexion_few_shot=PY_REFLEXION_FEW_SHOT_ADD,
             first_reflexion_few_shot=PY_FIRST_REFLEXION_FEW_SHOT_ADD,
+            simple_chat_instruction=PY_SIMPLE_CHAT_INSTRUCTION,
+            reflexion_completion_instruction=PY_REFLEXION_COMPLETION_INSTRUCTION,
+            simple_completion_instruction=PY_SIMPLE_COMPLETION_INSTRUCTION,
+            code_block_instruction=USE_PYTHON_CODEBLOCK_INSTRUCTION,
+            parse_code_block=lambda x: parse_code_block(x, "ruby"),
+            add_code_block=lambda x: add_code_block(x, "ruby"),
+        )
+    
+    def scot_func_impl(
+        self,
+        problem_context: str,
+        model: ModelBase,
+        strategy: str,
+        is_first_reflection: bool,
+        prev_func_impl: Optional[str] = None,
+        feedback: Optional[str] = None,
+        self_reflection: Optional[str] = None,
+        num_comps: int = 1,
+        temperature: float = 0.0,
+    ) -> Union[str, List[str]]:
+        return generic_generate_scot_func_impl(
+            problem_context=problem_context,
+            model=model,
+            strategy=strategy,
+            is_first_reflection=is_first_reflection,
+            prev_func_impl=prev_func_impl,
+            feedback=feedback,
+            self_reflection=self_reflection,
+            num_comps=num_comps,
+            temperature=temperature,
+            reflexion_chat_instruction=RB_SCOT_CHAT_INSTRUCTION,
+            first_reflexion_chat_instruction=RB_FIRST_SCOT_CHAT_INSTRUCTION,
+            reflexion_few_shot=RB_REFLEXION_SCOT_FEW_SHOT_ADD,
+            first_reflexion_few_shot=RB_FIRST_SCOT_FEW_SHOT,
             simple_chat_instruction=PY_SIMPLE_CHAT_INSTRUCTION,
             reflexion_completion_instruction=PY_REFLEXION_COMPLETION_INSTRUCTION,
             simple_completion_instruction=PY_SIMPLE_COMPLETION_INSTRUCTION,
