@@ -761,11 +761,12 @@ PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming l
 {PY_TEST_GENERATION_FEW_SHOT}"""
 
 PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the problem context containing following information:
-The buggy source code provided.
-The problem description, which explains the intended behavior of the program.
-The input format, which describes the structure, range, and constraints of inputs.
-The expected output format, which specifies how the program's output should be structured.
-The pre-run execution outcome, which describes how the buggy code currently behaves.
+- The buggy source code provided.
+- The problem description, which explains the intended behavior of the program.
+- The input format, which describes the structure, range, and constraints of inputs.
+- The expected output format, which specifies how the program's output should be structured.
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
 In this step you should only generate sample input and output not function implemention and not test suite."""
 
 RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:
@@ -798,3 +799,25 @@ Please organize the test cases into the following three categories:
 - Return the test cases as valid JSON array.
 
 Your response should be limited to a structured JSON list of test cases only, without additional explanation or prose."""
+
+RB_TEST_GENERATION_IO_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The expected output format, which specifies how the program's output should be structured, and
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
+**Role**: You are a test engineer. Your job is to create diverse and valid test cases to evaluate the function's correctness and robustness.
+
+Each test case must be generated in two phases:
+1. **Input Generation**: Based on the input format and problem requirements, generate a meaningful and valid input.
+2. **Output Derivation**: Given the generated input and the intended behavior described in the problem statement, infer the expected correct output. Do not replicate the buggy behavior — your output must reflect the correct solution.
+
+**Instructions**:
+- Return a list of dictionaries in JSON format. Each item must include:
+  - `"input"`: a single string input (use newline characters if needed),
+  - `"output"`: a list of output lines (as strings),
+
+- Do **not** include function implementations or test harnesses.
+- Ensure all inputs are valid and all outputs match the intended behavior of the problem.
+- Do not output any extra explanation — only the test cases in structured format."""
