@@ -1,8 +1,153 @@
+from typing import List
 from utils import enumerate_resume, make_printv, write_jsonl, resume_success_count
 from executors import executor_factory
 from generators import generator_factory, model_factory
 
-from typing import List
+
+def create_problem_template(item: dict, include_buggy_code: bool = True) -> str:
+    outcome_descriptions = {
+        "COMPILATION_ERROR": "The buggy code fails to compile or run due to a syntax error.",
+        "RUNTIME_ERROR": "The code compiles successfully but encounters an error during execution.",
+        "MEMORY_LIMIT_EXCEEDED": "The code uses more memory than allowed.",
+        "TIME_LIMIT_EXCEEDED": "The code takes too long to run.",
+        "WRONG_ANSWER": "The code runs but produces incorrect output.",
+        "PASSED": "The buggy code passes all tests (may indicate insufficient tests).",
+    }
+    exec_outcome = item["bug_exec_outcome"]
+    description = outcome_descriptions.get(exec_outcome, "Unknown execution outcome.")
+
+    template = f"""Problem description: {item['description']}
+
+Input format: {item['input_spec']}
+
+Output format: {item['output_spec']}
+
+A pre-run execution outcome of buggy source code: {exec_outcome} ({description})
+"""
+    if include_buggy_code:
+        template = f"Buggy source code: {item['bug_source_code']}\n\n" + template
+
+    return template
+
+
+def generate_function(gen, item, model, strategy, cur_func_impl, reflection, is_first_reflection, prompting, feedback=None):
+    problem_context = create_problem_template(item, include_buggy_code=False)
+
+    if prompting == "scot":
+        return gen.scot_func_impl(
+            problem_context=problem_context,
+            model=model,
+            strategy=strategy,
+            is_first_reflection=is_first_reflection,
+            prev_func_impl=cur_func_impl,
+            self_reflection=reflection,
+            feedback=feedback
+        )
+    else:
+        return gen.func_impl(
+            problem_context=problem_context,
+            model=model,
+            strategy=strategy,
+            is_first_reflection=is_first_reflection,
+            prev_func_impl=cur_func_impl,
+            self_reflection=reflection,
+            feedback=feedback
+        )
+
+
+def run_single_item(item, i, exe, gen, model, pass_at_k, max_iters, prompting, verbose):
+    print_v = make_printv(verbose)
+    num_success = 0
+    cur_pass = 0
+    is_first_reflection = True
+    is_solved = False
+    reflections, implementations, test_feedback = [], [], []
+    cur_func_impl = ""
+
+    while cur_pass < pass_at_k and not is_solved:
+        try:
+            reflection = gen.first_reflection(
+                problem_context=create_problem_template(item, False),
+                func=item["bug_source_code"],
+                model=model
+            )
+            reflections.append(reflection)
+
+            tests = gen.internal_tests(
+                problem_context=create_problem_template(item, False),
+                func=item["bug_source_code"],
+                model=model,
+                max_num_tests=5
+            )
+            print(f"tests_i: {tests}")
+
+            cur_func_impl = generate_function(
+                gen, item, model, strategy="reflexion", cur_func_impl=item["bug_source_code"],
+                reflection=reflection, is_first_reflection=is_first_reflection,
+                prompting=prompting
+            )
+            implementations.append(cur_func_impl)
+            is_first_reflection = False
+
+            formatted_tests = [{"input": inp, "output": out} for inp, out in tests]
+            result = exe.execute(cur_func_impl, formatted_tests)
+            is_passing = result["is_passing"]
+            feedback = result["feedback"]
+            test_feedback.append(feedback)
+
+            if is_passing:
+                is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
+                if is_passing:
+                    is_solved = True
+                    num_success += 1
+                    break
+
+            cur_iter = 1
+            cur_feedback = feedback
+
+            while cur_iter < max_iters:
+                try:
+                    reflection = gen.self_reflection(cur_func_impl, cur_feedback, model)
+                    reflections.append(reflection)
+
+                    cur_func_impl = generate_function(
+                        gen, item, model, strategy="reflexion", cur_func_impl=cur_func_impl,
+                        reflection=reflection, is_first_reflection=is_first_reflection,
+                        prompting=prompting, feedback=cur_feedback
+                    )
+                    implementations.append(cur_func_impl)
+
+                    result = exe.execute(cur_func_impl, formatted_tests)
+                    is_passing = result["is_passing"]
+                    cur_feedback = result["feedback"]
+                    test_feedback.append(cur_feedback)
+
+                    if is_passing or cur_iter == max_iters - 1:
+                        is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
+                        if is_passing:
+                            is_solved = True
+                            num_success += 1
+                        break
+
+                    cur_iter += 1
+                except Exception as e:
+                    print(f"Error in iteration {cur_iter} for item {i}: {e}")
+                    cur_iter += 1
+                    continue
+
+            cur_pass += 1
+
+        except Exception as e:
+            print(f"Skipping item {i} due to error: {e}")
+            break
+
+    item["is_solved"] = is_solved
+    item["reflections"] = reflections
+    item["implementations"] = implementations
+    item["test_feedback"] = test_feedback
+    item["solution"] = cur_func_impl
+
+    return item, num_success
 
 
 def run_reflexion(
@@ -14,12 +159,9 @@ def run_reflexion(
     log_path: str,
     verbose: bool,
     is_leetcode: bool = False,
-    model_path:str = None
+    model_path: str = None
 ) -> None:
-    # dataset = [item for item in dataset if item.get("difficulty") == 800]
-
     prompting = "scot"
-
     exe = executor_factory(language, is_leet=is_leetcode)
     gen = generator_factory(language)
     model = model_factory(model_name, model_path)
@@ -27,205 +169,17 @@ def run_reflexion(
     print_v = make_printv(verbose)
 
     num_items = len(dataset)
+    total_success = resume_success_count(dataset)
 
-    num_success = resume_success_count(dataset)
-    
     for i, item in enumerate_resume(dataset, log_path):
         try:
-            cur_pass = 0
-            is_first_reflection = True
-            is_solved = False
-            reflections = []
-            implementations = []
-            test_feedback = []
-            cur_func_impl = ""
+            updated_item, num_success = run_single_item(
+                item, i, exe, gen, model, pass_at_k, max_iters, prompting, verbose
+            )
+            write_jsonl(log_path, [updated_item], append=True)
+            total_success += num_success
 
-            def create_template(json_data, include_buggy_code=True):
-                exec_outcome = json_data["bug_exec_outcome"]
-
-                outcome_descriptions = {
-                    "COMPILATION_ERROR": "The buggy code fails to compile or run due to a syntax error.",
-                    "RUNTIME_ERROR": "The code compiles successfully but encounters an error during execution, such as division by zero or assertion failures.",
-                    "MEMORY_LIMIT_EXCEEDED": "The code uses more memory than the allowed limit and is terminated.",
-                    "TIME_LIMIT_EXCEEDED": "The code takes longer than the allowed execution time and is terminated.",
-                    "WRONG_ANSWER": "The code compiles and runs but does not produce the correct output.",
-                    "PASSED": "The buggy code unexpectedly passes all unit tests, meaning it might not be buggy or the tests are insufficient.",
-                }
-
-                description = outcome_descriptions.get(exec_outcome, "Unknown execution outcome.")
-
-                template = ""
-
-                if include_buggy_code:
-                    template += f"Buggy source code: {json_data['bug_source_code']}\n\n"
-
-                template += f"""Problem description: {json_data["description"]}
-
-    Input format: {json_data["input_spec"]}
-
-    Output format: {json_data["output_spec"]}
-
-    A pre-run execution outcome of buggy source code: {exec_outcome} ({description})
-            """
-
-                return template
-
-            
-            # A sample input for the code that is expected to solve the problem described in the description: {json_data["sample_inputs"]}
-
-            # The expected output for the sample input that is expected to solve the problem described in the description: {json_data["sample_outputs"]}
-
-            # Explanation of sample inputs & sample outputs: {json_data["notes"]}
-
-            while cur_pass < pass_at_k and not is_solved:
-                reflection = gen.first_reflection(problem_context = create_template(item, False),
-                                                func = item["bug_source_code"],
-                                                model = model)
-                reflections += [reflection]
-                tests_i = gen.internal_tests(problem_context = create_template(item, False),
-                                                func = item["bug_source_code"],
-                                                model = model,
-                                                max_num_tests = 5)
-                print(f"tests_i: {tests_i}")
-
-                # first attempt
-                try:
-                    if prompting == "scot":
-                        cur_func_impl = gen.scot_func_impl(problem_context=create_template(item, False),
-                                                    model=model,
-                                                    strategy="reflexion",
-                                                    is_first_reflection=is_first_reflection,
-                                                    prev_func_impl=item["bug_source_code"],
-                                                    self_reflection=reflection)
-                        is_first_reflection = False
-                        implementations.append(cur_func_impl)
-                        if not isinstance(cur_func_impl, str):
-                            raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
-                    else:
-                        cur_func_impl = gen.func_impl(problem_context=create_template(item, False),
-                                                    model=model,
-                                                    strategy="reflexion",
-                                                    is_first_reflection=is_first_reflection,
-                                                    prev_func_impl=item["bug_source_code"],
-                                                    self_reflection=reflection)
-                        is_first_reflection = False
-                        implementations.append(cur_func_impl)
-                        if not isinstance(cur_func_impl, str):
-                            raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
-
-                except Exception as e:
-                    print(f"Skipping item {i} due to error: {e}")
-                    break
-
-                # Convert (input_str, output_list) tuples into {"input": ..., "output": ...} dicts
-                formatted_tests = [{"input": inp, "output": out} for inp, out in tests_i]
-                # Now pass the correctly formatted tests to execute
-                result = exe.execute(cur_func_impl, formatted_tests)
-
-                # result = exe.execute(cur_func_impl, tests_i)
-                is_passing = result["is_passing"]
-                feedback = result["feedback"]
-
-                test_feedback.append(feedback)
-
-                # if solved, exit early
-                if is_passing:
-                    print("I'm here.6")
-                    is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
-                    print(f"is_passing1: {is_passing}")
-                    is_solved = is_passing
-                    num_success += int(is_passing)
-                    print(f"num_success1: {num_success}")
-                    break
-
-                # use self-reflection to iteratively improve
-                cur_iter = 1
-                cur_feedback = feedback
-                print("I'm here.7")
-                print(f"cur_iter: {cur_iter}")
-                print(f"max_iter: {max_iters}")
-                while cur_iter < max_iters:
-                    try:
-                        # get self-reflection
-                        reflection = gen.self_reflection(
-                            cur_func_impl, cur_feedback, model)
-                        reflections += [reflection]
-
-                        print("I'm here.8")
-
-                        if prompting == "scot":
-                            cur_func_impl = gen.scot_func_impl(problem_context=create_template(item, False),
-                                                    model=model,
-                                                    strategy="reflexion",
-                                                    is_first_reflection=is_first_reflection,
-                                                    prev_func_impl=cur_func_impl,
-                                                    self_reflection=reflection,
-                                                    feedback=cur_feedback)
-                            implementations.append(cur_func_impl)
-                            if not isinstance(cur_func_impl, str):
-                                raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
-                        
-                        else:
-                        # apply self-reflection in the next attempt
-                            cur_func_impl = gen.func_impl(
-                            problem_context=create_template(item, False),
-                            model=model,
-                            strategy="reflexion",
-                            is_first_reflection=is_first_reflection,
-                            prev_func_impl=cur_func_impl,
-                            self_reflection=reflection,
-                            feedback=cur_feedback,
-                        )
-                            implementations.append(cur_func_impl)
-                            if not isinstance(cur_func_impl, str):
-                                raise ValueError(f"Generated function implementation is not a string: {type(cur_func_impl)}")
-
-
-                        # Convert (input_str, output_list) tuples into {"input": ..., "output": ...} dicts
-                        formatted_tests = [{"input": inp, "output": out} for inp, out in tests_i]
-                        # Now pass the correctly formatted tests to execute
-                        result = exe.execute(cur_func_impl, formatted_tests)
-
-                        # is_passing, cur_feedback, _ = exe.execute(
-                        #     cur_func_impl, tests_i)
-                        is_passing = result["is_passing"]
-                        cur_feedback = result["feedback"]
-                        test_feedback.append(cur_feedback)
-
-                        # if solved, check if it passes the real tests, exit early
-                        if is_passing or cur_iter == max_iters - 1:
-                            print("I'm here.9")
-                            is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
-                            print(f"is_passing2: {is_passing}")
-                            if is_passing:
-                                print("I'm here.10")
-                                item["solution"] = cur_func_impl
-                                is_solved = True
-                                num_success += 1
-                                print(f"num_success2: {num_success}")
-                            break
-                        print("I'm here.11")
-                        cur_iter += 1
-                    except Exception as e:
-                        print(f"Error in iteration {cur_iter} for item {i}: {e}")
-                        cur_iter += 1  # Try again instead of breaking
-                        continue  # Continue the next iteration
-
-                print("I'm here.12")
-                cur_pass += 1
-
-            print("I'm here.13")
-
-            item["is_solved"] = is_solved
-            item["reflections"] = reflections
-            item["implementations"] = implementations
-            item["test_feedback"] = test_feedback
-            item["solution"] = cur_func_impl
-
-            write_jsonl(log_path, [item], append=True)
-
-            print_v(
-                f'completed {i+1}/{num_items}: acc = {round(num_success/(i+1), 2)}')
+            print_v(f"completed {i+1}/{num_items}: acc = {round(total_success/(i+1), 2)}")
         except Exception as e:
             print(f"Error processing item {i}: {e}. Continuing with next item.")
-            continue  # This ensures that if any error occurs, the loop continues
+            continue

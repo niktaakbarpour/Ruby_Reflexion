@@ -1,8 +1,34 @@
-from generators.model import ModelBase, Message
-import random
+# generator_utils.py (clean and separated version)
 
+from generators.model import ModelBase, Message
 from typing import Union, List, Optional, Callable
 import json
+import random
+
+def print_messages(system_message_text: str, user_message_text: str) -> None:
+    print(f"""----------------------- SYSTEM MESSAGE -----------------------)
+{system_message_text}
+----------------------------------------------
+----------------------- USER MESSAGE -----------------------
+{user_message_text}
+----------------------------------------------
+""", flush=True)
+
+def print_generated_func_body(func_body_str: str) -> None:
+    print(f"""--------------------- GENERATED FUNC BODY ---------------------
+{func_body_str}
+------------------------------------------""")
+
+def sample_n_random(items: List[str], n: int) -> List[str]:
+    if n >= len(items):
+        return items
+    return random.sample(items, n)
+
+def extract_json(raw_output):
+    start_index = raw_output.find("[")
+    if start_index == -1:
+        raise ValueError("No valid JSON array found!")
+    return json.loads(raw_output[start_index:])
 
 def generic_generate_func_impl(
     problem_context: str,
@@ -25,442 +51,146 @@ def generic_generate_func_impl(
     parse_code_block: Callable[[str], str],
     add_code_block: Callable[[str], str],
 ) -> Union[str, List[str]]:
-    if strategy != "reflexion" and strategy != "simple":
-        raise ValueError(
-            f"Invalid strategy: given `{strategy}` but expected one of `reflexion` or `simple`")
-    # if strategy == "reflexion" and (prev_func_impl is None or feedback is None or self_reflection is None):
-    #     raise ValueError(
-    #         f"Invalid arguments: given `strategy=reflexion` but `prev_func_impl`, `feedback`, or `self_reflection` is None")
+    if strategy not in {"reflexion", "simple"}:
+        raise ValueError(f"Invalid strategy: {strategy}")
 
     if model.is_chat:
         if strategy == "reflexion":
-            if is_first_reflection == True:
-                print(f"is_first_reflection: {is_first_reflection}")
-                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:"
+            if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}\n\n{first_reflexion_few_shot}"
+                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
                 print_messages(prompt, message)
-                # func_bodies is a really bad name, as it can also be just 1 string
                 messages = [
-                    Message(
-                        role="system",
-                        content=prompt,
-                    ),
-                    Message(
-                        role="user", # TODO: check this
-                        content=f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}",
-                    ),
-                    Message(
-                        role="assistant",
-                        content=self_reflection,
-                    ),
-                    Message(
-                        role="user",
-                        content=f"[improved impl]:",
-                    ),
+                    Message(role="system", content=prompt),
+                    Message(role="user", content=message),
+                    Message(role="assistant", content=self_reflection),
+                    Message(role="user", content="[improved impl]:")
                 ]
-                func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
             else:
-                print(f"is_first_reflection2: {is_first_reflection}")
-                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:"
                 prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}\n\n{reflexion_few_shot}"
+                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
                 print_messages(prompt, message)
-                # func_bodies is a really bad name, as it can also be just 1 string
                 messages = [
-                    Message(
-                        role="system",
-                        content=prompt,
-                    ),
-                    Message(
-                        role="assistant",
-                        content=add_code_block(prev_func_impl),
-                    ),
-                    Message(
-                        role="user",
-                        content=problem_context,
-                    ),
-                    Message(
-                        role="assistant",
-                        content=f"[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}",
-                    ),
-                    Message(
-                        role="user",
-                        content=f"[improved impl]:",
-                    ),
+                    Message(role="system", content=prompt),
+                    Message(role="assistant", content=add_code_block(prev_func_impl)),
+                    Message(role="user", content=problem_context),
+                    Message(role="assistant", content=f"[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}"),
+                    Message(role="user", content="[improved impl]:")
                 ]
-                func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
         else:
-            system_prompt = f"{simple_chat_instruction}\n{code_block_instruction}"
-            print_messages(system_prompt, "[improved impl]:")
+            prompt = f"{simple_chat_instruction}\n{code_block_instruction}"
+            print_messages(prompt, "[improved impl]:")
             messages = [
-                Message(
-                    role="system",
-                    content=f"{simple_chat_instruction}\n{code_block_instruction}",
-                ),
-                Message(
-                    role="user",
-                    content="[improved impl]:",
-                ),
+                Message(role="system", content=prompt),
+                Message(role="user", content="[improved impl]:")
             ]
-            func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
+
+        func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
     else:
         if strategy == "reflexion":
             prompt = f"{reflexion_completion_instruction}\n{add_code_block(prev_func_impl)}\n\nunit tests:\n{feedback}\n\nhint:\n{self_reflection}\n\n# improved implementation\n{code_block_instruction}"
-            func_bodies = model.generate(
-                prompt, num_comps=num_comps, temperature=temperature)
         else:
             prompt = f"{simple_completion_instruction}\n{code_block_instruction}"
-            func_bodies = model.generate(
-                prompt, num_comps=num_comps, temperature=temperature)
+        func_bodies = model.generate(prompt, num_comps=num_comps, temperature=temperature)
 
     if num_comps == 1:
         assert isinstance(func_bodies, str)
-        func_body_str = parse_code_block(func_bodies)
-        print_generated_func_body(func_body_str)
-        return func_body_str
-
+        parsed = parse_code_block(func_bodies)
+        print_generated_func_body(parsed)
+        return parsed
     else:
-        func_bodies = [parse_code_block(func_body) for func_body in func_bodies]
-        print_generated_func_body("\n\n".join(func_bodies))
-        return func_bodies
-    
+        parsed = [parse_code_block(body) for body in func_bodies]
+        print_generated_func_body("\n\n".join(parsed))
+        return parsed
+
 def generic_generate_scot_func_impl(
-    problem_context: str,
-    model: ModelBase,
-    strategy: str,
-    prev_func_impl,
-    self_reflection,
-    is_first_reflection: bool,
-    feedback,
-    num_comps,
-    temperature,
-    reflexion_chat_instruction: str,
-    first_reflexion_chat_instruction: str,
-    reflexion_few_shot: str,
-    first_reflexion_few_shot: str,
-    simple_chat_instruction: str,
-    reflexion_completion_instruction: str,
-    simple_completion_instruction: str,
-    code_block_instruction: str,
-    parse_code_block: Callable[[str], str],
-    add_code_block: Callable[[str], str],
-) -> Union[str, List[str]]:
-    if strategy != "reflexion" and strategy != "simple":
-        raise ValueError(
-            f"Invalid strategy: given `{strategy}` but expected one of `reflexion` or `simple`")
-    # if strategy == "reflexion" and (prev_func_impl is None or feedback is None or self_reflection is None):
-    #     raise ValueError(
-    #         f"Invalid arguments: given `strategy=reflexion` but `prev_func_impl`, `feedback`, or `self_reflection` is None")
-
-    if model.is_chat:
-        if strategy == "reflexion":
-            if is_first_reflection == True:
-                print(f"is_first_reflection: {is_first_reflection}")
-                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:"
-                prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}\n\n{first_reflexion_few_shot}"
-                print_messages(prompt, message)
-                # func_bodies is a really bad name, as it can also be just 1 string
-                messages = [
-                    Message(
-                        role="system",
-                        content=prompt,
-                    ),
-                    Message(
-                        role="user", # TODO: check this
-                        content=f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}",
-                    ),
-                    Message(
-                        role="assistant",
-                        content=self_reflection,
-                    ),
-                    Message(
-                        role="user",
-                        content=f"[improved impl]:",
-                    ),
-                ]
-                func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
-            else:
-                print(f"is_first_reflection2: {is_first_reflection}")
-                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}\n\n[improved impl]:"
-                prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}\n\n{reflexion_few_shot}"
-                print_messages(prompt, message)
-                # func_bodies is a really bad name, as it can also be just 1 string
-                messages = [
-                    Message(
-                        role="system",
-                        content=prompt,
-                    ),
-                    Message(
-                        role="assistant",
-                        content=add_code_block(prev_func_impl),
-                    ),
-                    Message(
-                        role="user",
-                        content=problem_context,
-                    ),
-                    Message(
-                        role="assistant",
-                        content=f"[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}",
-                    ),
-                    Message(
-                        role="user",
-                        content=f"[improved impl]:",
-                    ),
-                ]
-                func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
-        else:
-            system_prompt = f"{simple_chat_instruction}\n{code_block_instruction}"
-            print_messages(system_prompt, "[improved impl]:")
-            messages = [
-                Message(
-                    role="system",
-                    content=f"{simple_chat_instruction}\n{code_block_instruction}",
-                ),
-                Message(
-                    role="user",
-                    content="[improved impl]:",
-                ),
-            ]
-            func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
-    else:
-        if strategy == "reflexion":
-            prompt = f"{reflexion_completion_instruction}\n{add_code_block(prev_func_impl)}\n\nunit tests:\n{feedback}\n\nhint:\n{self_reflection}\n\n# improved implementation\n{code_block_instruction}"
-            func_bodies = model.generate(
-                prompt, num_comps=num_comps, temperature=temperature)
-        else:
-            prompt = f"{simple_completion_instruction}\n{code_block_instruction}"
-            func_bodies = model.generate(
-                prompt, num_comps=num_comps, temperature=temperature)
-
-    if num_comps == 1:
-        assert isinstance(func_bodies, str)
-        func_body_str = parse_code_block(func_bodies)
-        print_generated_func_body(func_body_str)
-        return func_body_str
-
-    else:
-        func_bodies = [parse_code_block(func_body) for func_body in func_bodies]
-        print_generated_func_body("\n\n".join(func_bodies))
-        return func_bodies
-    
-
-def extract_json(raw_output):
-    """Find the first valid JSON structure inside a string and parse it."""
-    start_index = raw_output.find("[")  # Locate first `[`
-    if start_index == -1:
-        raise ValueError("No valid JSON array found!")
-
-    clean_json_str = raw_output[start_index:]  # Extract only from `[`
-    
-    return json.loads(clean_json_str)  # Safely parse JSON
-
+    *args, **kwargs
+):
+    return generic_generate_func_impl(*args, **kwargs)
 
 def generic_generate_internal_tests(
-        problem_context: str,
-        func: str,
-        model: ModelBase,
-        max_num_tests: int,
-        test_generation_few_shot: str,
-        test_generation_chat_instruction: str,
-        test_generation_completion_instruction: str,
-        # parse_tests: Callable[[str], List[str]],
-        # is_syntax_valid: Callable[[str], bool],
-        is_react: bool = False
+    problem_context: str,
+    func: str,
+    model: ModelBase,
+    max_num_tests: int,
+    test_generation_few_shot: str,
+    test_generation_chat_instruction: str,
+    test_generation_completion_instruction: str,
+    is_react: bool = False,
 ) -> List[str]:
-    """Generates tests for a function."""
     if model.is_chat:
         if is_react:
             messages = [
-                Message(
-                    role="system",
-                    content=test_generation_chat_instruction,
-                ),
-                Message(
-                    role="user",
-                    content=f"{test_generation_few_shot}\n\n[func signature]:\n{func}\n\n[think]:"
-                )
+                Message(role="system", content=test_generation_chat_instruction),
+                Message(role="user", content=f"{test_generation_few_shot}\n\n[func signature]:\n{func}\n\n[think]:")
             ]
-            output = model.generate_chat(messages=messages, max_tokens=1024)
         else:
-            message = f"[buggy code]:\n{func}\n\n[problem context]:\n{problem_context}\n\n[unit tests]:"
             prompt = f"{test_generation_chat_instruction}\n{test_generation_few_shot}"
+            message = f"[buggy code]:\n{func}\n\n[problem context]:\n{problem_context}\n\n[unit tests]:"
             print_messages(prompt, message)
             messages = [
-                Message(
-                    role="system",
-                    content=f"{test_generation_chat_instruction}\n{test_generation_few_shot}",
-                ),
-                Message(
-                    role="user",
-                    content=f"[buggy code]:\n{func}\n\n[problem context]:\n{problem_context}\n\n[unit tests]:"
-                )
+                Message(role="system", content=prompt),
+                Message(role="user", content=message)
             ]
-            output = model.generate_chat(messages=messages, max_tokens=1024)
-            print("Raw Model Output:", repr(output))
-
-            unit_tests = ""  # Initialize with an empty string
-
-            try:
-                unit_tests = extract_json(output)
-                print("Parsed JSON:", unit_tests)
-            except json.JSONDecodeError as e:
-                print("JSON Decode Error:", e)
-                return []
-            except ValueError as e:
-                print("Value Error:", e)
-                return []
-
-    else:
-        prompt = f'{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:'
-        output = model.generate(prompt, max_tokens=1024)
-    # all_tests = parse_tests(output.split("\n"))
-    # valid_tests = [test for test in all_tests if is_syntax_valid(test)]
-    
-    # Ensure unit_tests is not empty before proceeding
-    if not unit_tests:
-        print("Warning: No unit tests extracted.")
-        return []
-    
-    if isinstance(unit_tests, list):
-        parsed_output = unit_tests  # Already a valid Python list
-    else:
-
-        # Remove triple backticks and surrounding whitespace
-        cleaned_output = unit_tests.strip("`").strip()
-
-        # If the first line is "json", remove it
-        lines = cleaned_output.split("\n")
-        if lines[0].strip().lower() == "json":
-            cleaned_output = "\n".join(lines[1:])  # Remove first line
-
-        # Handle empty output case
-        if not cleaned_output:
-            print("Warning: Model output is empty.")
-            return []
-
-        # Parse JSON safely
+        output = model.generate_chat(messages=messages, max_tokens=1024)
         try:
-            parsed_output = json.loads(cleaned_output)  # Convert JSON string to Python object
-        except json.JSONDecodeError as e:
-            print(f"Error parsing JSON: {e}")
-            return []  # Return an empty list if parsing fails
+            unit_tests = extract_json(output)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Test generation failed: {e}")
+            return []
+    else:
+        prompt = f"{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:"
+        output = model.generate(prompt, max_tokens=1024)
+        unit_tests = []
 
-    # Extract raw test cases (inputs and outputs)
-    filtered_tests = []
-    for test_case in parsed_output:
-        if isinstance(test_case, dict) and "input" in test_case and "output" in test_case:
-            filtered_tests.append((test_case["input"], test_case["output"]))
-
-    return sample_n_random(filtered_tests, max_num_tests)
-
+    if isinstance(unit_tests, list):
+        return sample_n_random([
+            (t["input"], t["output"])
+            for t in unit_tests if isinstance(t, dict) and "input" in t and "output" in t
+        ], max_num_tests)
+    return []
 
 def generic_generate_self_reflection(
-        func: str,
-        feedback: str,
-        model: ModelBase,
-        self_reflection_chat_instruction: str,
-        self_reflection_completion_instruction: str,
-        add_code_block: Callable[[str], str],
-        self_reflection_few_shot: Optional[str] = None,
+    func: str,
+    feedback: str,
+    model: ModelBase,
+    self_reflection_chat_instruction: str,
+    self_reflection_completion_instruction: str,
+    add_code_block: Callable[[str], str],
+    self_reflection_few_shot: Optional[str] = None,
 ) -> str:
     if model.is_chat:
-        if self_reflection_few_shot is not None:
-            prompt = f"{self_reflection_chat_instruction}\n{self_reflection_few_shot}"
-            message = f"[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:"
-            print_messages(prompt, message)
-            messages = [
-                Message(
-                    role="system",
-                    content=f"{self_reflection_chat_instruction}\n{self_reflection_few_shot}",
-                ),
-                Message(
-                    role="assistant",
-                    content=f"[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}",
-                ),
-                Message(
-                    role="user",
-                    content=f"[self-reflection]:",
-                ),
-            ]
-            reflection = model.generate_chat(messages=messages)
-            print(f'Self reflection output: {reflection}')
-        else:
-            messages = [
-                Message(
-                    role="system",
-                    content=self_reflection_chat_instruction,
-                ),
-                Message(
-                    role="user",
-                    content=f'[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:',
-                )
-            ]
-            reflection = model.generate_chat(messages=messages)
-    else:
-        reflection = model.generate(
-            f'{self_reflection_completion_instruction}\n{add_code_block(func)}\n\n{feedback}\n\nExplanation:')
-    return reflection  # type: ignore
+        system_content = self_reflection_chat_instruction
+        if self_reflection_few_shot:
+            system_content += f"\n{self_reflection_few_shot}"
+        user_content = f"[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:"
+        print_messages(system_content, user_content)
+        messages = [
+            Message(role="system", content=system_content),
+            Message(role="user", content=user_content)
+        ]
+        return model.generate_chat(messages=messages)
+    return model.generate(f"{self_reflection_completion_instruction}\n{add_code_block(func)}\n\n{feedback}\n\nExplanation:")
 
 def generic_generate_first_reflection(
-        problem_context: str,
-        func: str,
-        model: ModelBase,
-        self_reflection_chat_instruction: str,
-        self_reflection_completion_instruction: str,
-        add_code_block: Callable[[str], str],
-        self_reflection_few_shot: Optional[str] = None,
+    problem_context: str,
+    func: str,
+    model: ModelBase,
+    self_reflection_chat_instruction: str,
+    self_reflection_completion_instruction: str,
+    add_code_block: Callable[[str], str],
+    self_reflection_few_shot: Optional[str] = None,
 ) -> str:
     if model.is_chat:
-        if self_reflection_few_shot is not None:
-            prompt = f"{self_reflection_chat_instruction}\n\n{self_reflection_few_shot}"
-            message = f"[incorrect function impl]:\n{add_code_block(func)}\n\n[problem context]:\n{problem_context}\n\n[self-reflection]:"
-            print_messages(prompt, message)
-            messages = [
-                Message(
-                    role="system",
-                    content=f"{self_reflection_chat_instruction}\n\n{self_reflection_few_shot}",
-                ),
-                Message(
-                    role="user",
-                    content=f"[incorrect function impl]:\n{add_code_block(func)}\n\n[problem context]:\n{problem_context}\n\n[self-reflection]:",
-                )
-            ]
-            reflection = model.generate_chat(messages=messages)
-            print(f'Self reflection output: {reflection}')
-        else:
-            messages = [
-                Message(
-                    role="system",
-                    content=self_reflection_chat_instruction,
-                ),
-                Message(
-                    role="user",
-                    content=f'[function impl]:\n{func}\n\n[self-reflection]:',
-                )
-            ]
-            reflection = model.generate_chat(messages=messages)
-    else:
-        reflection = model.generate(
-            f'{self_reflection_completion_instruction}\n{func}\n\nExplanation:')
-    return reflection  # type: ignore
+        system_content = self_reflection_chat_instruction
+        if self_reflection_few_shot:
+            system_content += f"\n{self_reflection_few_shot}"
+        user_content = f"[incorrect function impl]:\n{add_code_block(func)}\n\n[problem context]:\n{problem_context}\n\n[self-reflection]:"
+        print_messages(system_content, user_content)
+        messages = [
+            Message(role="system", content=system_content),
+            Message(role="user", content=user_content)
+        ]
+        return model.generate_chat(messages=messages)
+    return model.generate(f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:")
 
-
-def sample_n_random(items: List[str], n: int) -> List[str]:
-    """Sample min(n, len(items)) random items from a list"""
-    assert n >= 0
-    if n >= len(items):
-        return items
-    return random.sample(items, n)
-
-def print_messages(system_message_text: str, user_message_text: str) -> None:
-    print(f"""----------------------- SYSTEM MESSAGE -----------------------)
-{system_message_text}
-----------------------------------------------
------------------------ USER MESSAGE -----------------------
-{user_message_text}
-----------------------------------------------
-""", flush=True)
-
-def print_generated_func_body(func_body_str: str) -> None:
-    print(f"""--------------------- GENERATED FUNC BODY ---------------------
-{func_body_str}
-------------------------------------------""")
