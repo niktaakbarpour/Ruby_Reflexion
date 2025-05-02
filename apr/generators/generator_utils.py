@@ -4,6 +4,8 @@ from generators.model import ModelBase, Message
 from typing import Union, List, Optional, Callable
 import json
 import random
+from typing import List, Tuple
+
 
 def print_messages(system_message_text: str, user_message_text: str) -> None:
     print(f"""----------------------- SYSTEM MESSAGE -----------------------)
@@ -149,6 +151,63 @@ def generic_generate_internal_tests(
             for t in unit_tests if isinstance(t, dict) and "input" in t and "output" in t
         ], max_num_tests)
     return []
+
+def generic_validate_internal_tests(
+    tests: List[Tuple[str, List[str]]],
+    problem_context: str,
+    func: str,
+    model: ModelBase,
+    max_num_tests: int,
+    test_generation_few_shot: str,
+    test_generation_chat_instruction: str,
+    test_generation_completion_instruction: str,
+    is_react: bool = False,
+) -> List[Tuple[str, str]]:
+    formatted_tests = []
+    for input_str, output_list in tests:
+        # Assuming output is always a list of strings
+        expected_output = "\n".join(output_list)
+        formatted_tests.append({
+            "input": input_str,
+            "output": expected_output
+        })
+
+    if model.is_chat:
+        prompt = f"{test_generation_chat_instruction}\n{test_generation_few_shot}"
+        message = f"""[buggy code]:
+{func}
+
+[problem context]:
+{problem_context}
+
+[Test cases to validate]:
+{json.dumps(formatted_tests, indent=2)}
+
+[unit tests]:"""
+        print_messages(prompt, message)
+        messages = [
+            Message(role="system", content=prompt),
+            Message(role="user", content=message)
+        ]
+        output = model.generate_chat(messages=messages, max_tokens=1024)
+        try:
+            unit_tests = extract_json(output)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Test generation failed: {e}")
+            return []
+    else:
+        prompt = f"{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:"
+        output = model.generate(prompt, max_tokens=1024)
+        unit_tests = []
+
+    if isinstance(unit_tests, list):
+        return sample_n_random([
+            (t["input"], t["output"])
+            for t in unit_tests if isinstance(t, dict) and "input" in t and "output" in t
+        ], max_num_tests)
+    return []
+
+
 
 def generic_generate_self_reflection(
     func: str,

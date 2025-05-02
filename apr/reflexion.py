@@ -81,6 +81,15 @@ def run_single_item(item, i, exe, gen, model, pass_at_k, max_iters, prompting, v
             )
             print(f"tests_i: {tests}")
 
+            validated_tests = gen.validate_internal_tests(
+                tests=tests,
+                problem_context=create_problem_template(item, False),
+                func=item["bug_source_code"],
+                model=model,
+                max_num_tests=5
+            )
+            print(f"validated_tests_i: {validated_tests}")
+
             cur_func_impl = generate_function(
                 gen, item, model, strategy="reflexion", cur_func_impl=item["bug_source_code"],
                 reflection=reflection, is_first_reflection=is_first_reflection,

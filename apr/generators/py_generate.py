@@ -5,7 +5,8 @@ from .generator_utils import (
     generic_generate_func_impl,
     generic_generate_internal_tests,
     generic_generate_self_reflection,
-    generic_generate_scot_func_impl
+    generic_generate_scot_func_impl,
+    generic_validate_internal_tests
 )
 from .prompt_constants import (
     PY_SIMPLE_COMPLETION_INSTRUCTION,
@@ -29,7 +30,9 @@ from .prompt_constants import (
     RB_FIRST_SCOT_FEW_SHOT,
     FIRST_REFLECTION_CHAT_INSTRUCTION,
     RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION,
-    RB_TEST_GENERATION_EDGE_FEW_SHOT
+    RB_TEST_GENERATION_EDGE_FEW_SHOT,
+    RB_TEST_VALIDATION_IO_COT_FEW_SHOT,
+    RB_TEST_VALIDATION_IO_COT_CHAT_INSTRUCTION,
 )
 
 from .rb_parse import parse_code_block, add_code_block
@@ -135,5 +138,17 @@ class PyGenerator(Generator):
             max_num_tests=max_num_tests,
             test_generation_few_shot=RB_TEST_GENERATION_EDGE_FEW_SHOT,
             test_generation_chat_instruction=RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION,
+            test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
+        )
+    
+    def validate_internal_tests(self, tests: List[str], problem_context: str, func: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
+        return generic_validate_internal_tests(
+            tests=tests,
+            problem_context=problem_context,
+            func=func,
+            model=model,
+            max_num_tests=max_num_tests,
+            test_generation_few_shot=RB_TEST_VALIDATION_IO_COT_FEW_SHOT,
+            test_generation_chat_instruction=RB_TEST_VALIDATION_IO_COT_CHAT_INSTRUCTION,
             test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
         )

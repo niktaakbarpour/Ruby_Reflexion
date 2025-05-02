@@ -756,6 +756,134 @@ A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compile
 ]
 """
 
+RB_TEST_GENERATION_IO_COT_FEW_SHOT = """Examples:
+[buggy code]:
+x,y=gets.split.map(&:to_i)
+if x > 0 and y > 0
+    puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 and y < 0
+    puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+    puts "#{-(y-x)} 0 0 #{y-x}"
+else
+    puts "#{x+y} 0 0 #{x+y}"
+end
+
+
+[problem context]:
+Problem description: Vasily the bear has a favorite rectangle, it has one vertex at point (0, 0), and the opposite vertex at point (x, y). Of course, the sides of Vasya's favorite rectangle are parallel to the coordinate axes. Vasya also loves triangles, if the triangles have one vertex at point B = (0, 0). That's why today he asks you to find two points A = (x1, y1) and C = (x2, y2), such that the following conditions hold:  the coordinates of points: x1, x2, y1, y2 are integers. Besides, the following inequation holds: x1 &lt; x2;  the triangle formed by point A, B and C is rectangular and isosceles ( is right);  all points of the favorite rectangle are located inside or on the border of triangle ABC;  the area of triangle ABC is as small as possible. Help the bear, find the required points. It is not so hard to proof that these points are unique.
+Input format: The first line contains two integers x, y ( - 109 ≤ x, y ≤ 109, x ≠ 0, y ≠ 0).
+Output format: Print in the single line four integers x1, y1, x2, y2 — the coordinates of the required points.
+A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compiles and runs but does not produce the correct output.)
+
+
+[Chain-of-Thought Reasoning]:
+
+**Step 1: Generate Input**
+- I need to choose a valid input (x, y), where both x and y are non-zero integers.
+- Let's pick x = 10 and y = 5.
+- So the input is `"10 5\\r\\n"`.
+
+**Step 2: Generate Expected Output**
+- Since x > 0 and y > 0, the point lies in the first quadrant.
+- To enclose the rectangle inside an isosceles triangle rooted at (0, 0), the triangle legs should extend to x + y on both axes.
+- So, (x1, y1) = (0, x + y) = (0, 15), and (x2, y2) = (x + y, 0) = (15, 0).
+- Therefore, the correct output is `["0 15 15 0"]`.
+
+
+[unit tests]:
+[
+    {
+      "input": "10 5\r\n",
+      "output": [
+        "0 15 15 0"
+      ]
+    },
+    {
+      "input": "-10 5\r\n",
+      "output": [
+        "-15 0 0 15"
+      ]
+    },
+    {
+      "input": "20 -10\r\n",
+      "output": [
+        "0 -30 30 0"
+      ]
+    },
+    {
+      "input": "-10 -1000000000\r\n",
+      "output": [
+        "-1000000010 0 0 -1000000010"
+      ]
+    },
+]
+"""
+
+RB_TEST_VALIDATION_IO_COT_FEW_SHOT = """Examples:
+[buggy code]:
+x,y=gets.split.map(&:to_i)
+if x > 0 and y > 0
+    puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 and y < 0
+    puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+    puts "#{-(y-x)} 0 0 #{y-x}"
+else
+    puts "#{x+y} 0 0 #{x+y}"
+end
+
+
+[problem context]:
+Problem description: Vasily the bear has a favorite rectangle, it has one vertex at point (0, 0), and the opposite vertex at point (x, y). Of course, the sides of Vasya's favorite rectangle are parallel to the coordinate axes. Vasya also loves triangles, if the triangles have one vertex at point B = (0, 0). That's why today he asks you to find two points A = (x1, y1) and C = (x2, y2), such that the following conditions hold:  the coordinates of points: x1, x2, y1, y2 are integers. Besides, the following inequation holds: x1 &lt; x2;  the triangle formed by point A, B and C is rectangular and isosceles ( is right);  all points of the favorite rectangle are located inside or on the border of triangle ABC;  the area of triangle ABC is as small as possible. Help the bear, find the required points. It is not so hard to proof that these points are unique.
+Input format: The first line contains two integers x, y ( - 109 ≤ x, y ≤ 109, x ≠ 0, y ≠ 0).
+Output format: Print in the single line four integers x1, y1, x2, y2 — the coordinates of the required points.
+A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compiles and runs but does not produce the correct output.)
+
+[Test case to validate]:
+{
+  "input": "20 -10\\r\\n",
+  "output": ["0 30 30 0"]
+}
+
+[Chain-of-Thought Validation]:
+
+1. **Input Review**:
+   - Input: x = 20, y = -10
+   - x > 0 and y < 0 → the point lies in the fourth quadrant.
+
+2. **Expected Geometry**:
+   - We need a triangle that fully encloses the rectangle with corners (0,0) to (20, -10).
+   - To ensure coverage and symmetry in an isosceles right triangle:
+     - Let L = x - y = 20 - (-10) = 30
+     - A = (0, -30), C = (30, 0)
+
+3. **Expected Output**:
+   - Triangle vertices: A = (0, -30), C = (30, 0)
+   - Output: ["0 -30 30 0"]
+
+4. **Compare with Provided Output**:
+   - Provided: ["0 30 30 0"] ← ⚠️ y-coordinate is incorrectly positive
+
+❌ Incorrect output
+
+✅ Corrected test case:
+{
+  "input": "20 -10\\r\\n",
+  "output": ["0 -30 30 0"]
+}
+
+[unit tests]:
+[
+    {
+      "input": "20 -10\\r\\n",
+      "output": [
+        "0 -30 30 0"
+      ]
+    },
+]
+"""
+
 PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming language coding assistant that can write new, unique, diverse, and intuitive Ruby test cases for codes given the docstring. In this step you should only generate sample input and output not function implemention and not test suite.
 
 {PY_TEST_GENERATION_FEW_SHOT}"""
@@ -821,3 +949,55 @@ Each test case must be generated in two phases:
 - Do **not** include function implementations or test harnesses.
 - Ensure all inputs are valid and all outputs match the intended behavior of the problem.
 - Do not output any extra explanation — only the test cases in structured format."""
+
+RB_TEST_GENERATION_IO_COT_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The expected output format, which specifies how the program's output should be structured, and
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
+**Role**: You are a test engineer. Your job is to create diverse and valid test cases to evaluate the function's correctness and robustness.
+
+Each test case must be generated in two phases:
+1. **Input Generation**: Based on the input format and problem requirements, generate a meaningful and valid input.
+2. **Output Derivation**: Given the generated input and the intended behavior described in the problem statement, infer the expected correct output. Do not replicate the buggy behavior — your output must reflect the correct solution.
+
+**Important**: Think step-by-step during both phases. First decide the input. Then explain how to derive the output. Then provide the final test case.
+
+**Instructions**:
+- Return a list of dictionaries in JSON format. Each item must include:
+  - `"input"`: a single string input (use newline characters if needed),
+  - `"output"`: a list of output lines (as strings),
+
+- Do **not** include function implementations or test harnesses.
+- Ensure all inputs are valid and all outputs match the intended behavior of the problem.
+- Do not output any extra explanation — only the test cases in structured format."""
+
+RB_TEST_VALIDATION_IO_COT_CHAT_INSTRUCTION = """You are an AI Ruby programming language assistant tasked with validating the correctness of test cases based on the provided problem context, which includes:
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The expected output format, which specifies how the program's output should be structured, and
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
+**Role**: You are a validation agent. Your job is to check whether a given test case contains the correct **expected output** for a given **input**, based on the intended behavior (not the buggy implementation).
+
+Each test case will be validated in two steps:
+1. **Input Review**: Read and understand the input string and verify that it is valid and meaningful according to the input specification.
+2. **Output Reasoning**: Think step-by-step to derive the correct output based on the given input and the problem description. Then compare it to the provided output.
+
+**Important**:
+- Think out loud during your reasoning. Start by analyzing the input.
+- Then explain how to derive the output.
+- Finally, state whether the provided output is correct or incorrect, and why.
+
+**Instructions**:
+- Your response should include:
+  - Step-by-step reasoning,
+  - A final verdict: “✅ Correct output” or “❌ Incorrect output”,
+  - If the output is incorrect, provide the corrected test case in the same JSON format (with both `"input"` and corrected `"output"`).
+
+- Do not rerun or describe the buggy implementation.
+- Base your validation purely on the expected behavior described in the problem context.
+"""

@@ -45,3 +45,12 @@ class Generator:
             max_num_tests: int = 5
     ) -> List[str]:
         ...
+
+    @abstractmethod
+    def validate_internal_tests(
+            self,
+            func_sig: str,
+            model: ModelBase,
+            max_num_tests: int = 5
+    ) -> List[str]:
+        ...
