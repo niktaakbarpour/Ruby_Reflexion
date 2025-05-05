@@ -5,6 +5,7 @@ from typing import Union, List, Optional, Callable
 import json
 import random
 from typing import List, Tuple
+import re
 
 
 def print_messages(system_message_text: str, user_message_text: str) -> None:
@@ -31,6 +32,25 @@ def extract_json(raw_output):
     if start_index == -1:
         raise ValueError("No valid JSON array found!")
     return json.loads(raw_output[start_index:])
+
+def extract_json_fuzzy(output: str):
+    try:
+        # Try strict parsing first
+        return json.loads(output)
+    except json.JSONDecodeError:
+        pass
+
+    # Try to extract the JSON array manually using regex
+    match = re.search(r"\[\s*{.*?}\s*]", output, re.DOTALL)
+    if match:
+        json_block = match.group(0)
+        try:
+            return json.loads(json_block)
+        except json.JSONDecodeError:
+            raise ValueError("Found potential JSON block but failed to decode.")
+    
+    raise ValueError("No valid JSON array found in model output.")
+
 
 def generic_generate_func_impl(
     problem_context: str,
@@ -190,8 +210,10 @@ def generic_validate_internal_tests(
             Message(role="user", content=message)
         ]
         output = model.generate_chat(messages=messages, max_tokens=1024)
+        print(f"OUTPUT!!!!!!: {output}")
         try:
-            unit_tests = extract_json(output)
+            # unit_tests = extract_json(output)
+            unit_tests = extract_json_fuzzy(output)
         except (json.JSONDecodeError, ValueError) as e:
             print(f"Test generation failed: {e}")
             return []
