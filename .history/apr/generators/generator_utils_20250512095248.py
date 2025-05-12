@@ -157,7 +157,7 @@ def generic_generate_internal_tests(
         output = model.generate_chat(messages=messages, max_tokens=1024)
         print(f"OUTPUT GENERATION!!!!!!: {output}")
         try:
-            unit_tests = extract_json_fuzzy(output)
+            unit_tests = extract_json(output)
         except (json.JSONDecodeError, ValueError) as e:
             print(f"Test generation failed: {e}")
             return []
@@ -172,24 +172,6 @@ def generic_generate_internal_tests(
             for t in unit_tests if isinstance(t, dict) and "input" in t and "output" in t
         ], max_num_tests)
     return []
-
-
-
-
-import re
-from typing import List, Tuple
-
-def extract_validated_tests_from_cot_response(response: str) -> List[Tuple[str, str]]:
-    """
-    Extracts test cases marked as correct (✅) from CoT-style LLM output.
-    Returns a list of (input, output) tuples.
-    """
-    pattern = re.compile(
-        r"\*\*Input:\*\*\s*`(.*?)`\s*\*\*Expected Output:\*\*\s*`(.*?)`.*?\*\*Verdict:\*\*\s*✅ Correct output",
-        re.DOTALL
-    )
-    return [(inp.strip(), out.strip()) for inp, out in pattern.findall(response)]
-
 
 def generic_validate_internal_tests(
     tests: List[Tuple[str, List[str]]],
@@ -230,8 +212,12 @@ def generic_validate_internal_tests(
         ]
         output = model.generate_chat(messages=messages, max_tokens=1024)
         print(f"OUTPUT VALIDATION!!!!!!: {output}")
-        validated = extract_validated_tests_from_cot_response(output)
-        unit_tests = [{"input": inp, "output": out} for inp, out in validated]
+        try:
+            # unit_tests = extract_json(output)
+            unit_tests = extract_json_fuzzy(output)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Test generation failed: {e}")
+            return []
     else:
         prompt = f"{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:"
         output = model.generate(prompt, max_tokens=1024)
@@ -246,66 +232,6 @@ def generic_validate_internal_tests(
 
 
 
-
-
-# def generic_validate_internal_tests(
-#     tests: List[Tuple[str, List[str]]],
-#     problem_context: str,
-#     func: str,
-#     model: ModelBase,
-#     max_num_tests: int,
-#     test_generation_few_shot: str,
-#     test_generation_chat_instruction: str,
-#     test_generation_completion_instruction: str,
-#     is_react: bool = False,
-# ) -> List[Tuple[str, str]]:
-#     formatted_tests = []
-#     for input_str, output_list in tests:
-#         # Assuming output is always a list of strings
-#         expected_output = "\n".join(output_list)
-#         formatted_tests.append({
-#             "input": input_str,
-#             "output": expected_output
-#         })
-
-#     if model.is_chat:
-#         prompt = f"{test_generation_chat_instruction}\n{test_generation_few_shot}"
-#         message = f"""[buggy code]:
-# {func}
-
-# [problem context]:
-# {problem_context}
-
-# [Test cases to validate]:
-# {json.dumps(formatted_tests, indent=2)}
-
-# [unit tests]:"""
-#         print_messages(prompt, message)
-#         messages = [
-#             Message(role="system", content=prompt),
-#             Message(role="user", content=message)
-#         ]
-#         output = model.generate_chat(messages=messages, max_tokens=1024)
-#         print(f"OUTPUT VALIDATION!!!!!!: {output}")
-#         try:
-#             unit_tests = extract_json_fuzzy(output)
-#         except (json.JSONDecodeError, ValueError) as e:
-#             print(f"Test generation failed: {e}")
-#             return []
-#     else:
-#         prompt = f"{test_generation_completion_instruction}\n\nfunc signature:\n{func}\nunit tests:"
-#         output = model.generate(prompt, max_tokens=1024)
-#         unit_tests = []
-
-#     if isinstance(unit_tests, list):
-#         return sample_n_random([
-#             (t["input"], t["output"])
-#             for t in unit_tests if isinstance(t, dict) and "input" in t and "output" in t
-#         ], max_num_tests)
-#     return []
-
-
-
 def generic_generate_self_reflection(
     func: str,
     feedback: str,
@@ -313,7 +239,7 @@ def generic_generate_self_reflection(
     self_reflection_chat_instruction: str,
     self_reflection_completion_instruction: str,
     add_code_block: Callable[[str], str],
-    self_reflection_few_shot: Optional[str],
+    self_reflection_few_shot: Optional[str] = None,
 ) -> str:
     if model.is_chat:
         system_content = self_reflection_chat_instruction
@@ -335,7 +261,7 @@ def generic_generate_first_reflection(
     self_reflection_chat_instruction: str,
     self_reflection_completion_instruction: str,
     add_code_block: Callable[[str], str],
-    self_reflection_few_shot: Optional[str],
+    self_reflection_few_shot: Optional[str] = None,
 ) -> str:
     if model.is_chat:
         system_content = self_reflection_chat_instruction
@@ -347,8 +273,6 @@ def generic_generate_first_reflection(
             Message(role="system", content=system_content),
             Message(role="user", content=user_content)
         ]
-        response = model.generate_chat(messages=messages)
-        print(f"RESPONSE!!!!!!: {response}")
-        return response
+        return model.generate_chat(messages=messages)
     return model.generate(f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:")
 

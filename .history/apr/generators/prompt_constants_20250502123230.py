@@ -724,6 +724,7 @@ A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compile
 
 [unit tests]:
 [
+    # Basic Test Cases
     {
         "input": "10 5\r\n",
         "output": ["0 15 15 0"]
@@ -732,6 +733,8 @@ A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compile
         "input": "-10 5\r\n",
         "output": ["-15 0 0 15"]
     },
+
+    # Edge Test Cases
     {
         "input": "1 -1\r\n",
         "output": ["0 -2 2 0"]
@@ -740,6 +743,8 @@ A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compile
         "input": "-1 -1\r\n",
         "output": ["-2 0 0 -2"]
     },
+
+    # Large Scale Test Cases
     {
         "input": "-10 -1000000000\r\n",
         "output": ["-1000000010 0 0 -1000000010"]
@@ -918,6 +923,7 @@ Please organize the test cases into the following three categories:
 **Instructions**:
 - Generate all test cases as a list of dictionaries, each containing an \"input\" and an \"output\".
 - Do NOT include the function implementation or a full test suite. Only return test inputs and expected outputs.
+- Comment each test case to briefly explain what it tests (e.g., # basic test, # edge case: empty list, # stress test).
 - Return the test cases as valid JSON array.
 
 Your response should be limited to a structured JSON list of test cases only, without additional explanation or prose."""
@@ -967,28 +973,6 @@ Each test case must be generated in two phases:
 - Do **not** include function implementations or test harnesses.
 - Ensure all inputs are valid and all outputs match the intended behavior of the problem.
 - Do not output any extra explanation — only the test cases in structured format."""
-
-RB_TEST_VALIDATION_IO_CHAT_INSTRUCTION = """You are an AI Ruby programming language assistant tasked with validating the correctness of test cases based on the provided problem context, which includes:
-- The buggy source code,
-- The problem description, which explains the intended behavior of the program,
-- The input format, which describes the structure, range, and constraints of inputs,
-- The expected output format, which specifies how the program's output should be structured, and
-- The pre-run execution outcome, which describes how the buggy code currently behaves.
-
-**Role**: You are a validation agent. Your job is to check whether a given test case contains the correct **expected output** for a given **input**, based solely on the intended behavior described in the problem context.
-
-**Instructions**:
-- For each test case, verify that the input conforms to the input specification and that the expected output matches the correct output.
-- Do not provide step-by-step reasoning or explain your thought process.
-- Directly return your verdict.
-
-**Your response must include**:
-- A final decision: “✅ Correct output” or “❌ Incorrect output”.
-- If incorrect, provide the corrected test case in the same JSON format (with both `"input"` and corrected `"output"`).
-
-- Do not refer to or describe the buggy implementation.
-- Only consider the intended correct behavior described in the problem.
-"""
 
 RB_TEST_VALIDATION_IO_COT_CHAT_INSTRUCTION = """You are an AI Ruby programming language assistant tasked with validating the correctness of test cases based on the provided problem context, which includes:
 - The buggy source code,

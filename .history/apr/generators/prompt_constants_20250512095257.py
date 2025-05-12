@@ -724,6 +724,7 @@ A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compile
 
 [unit tests]:
 [
+    # Basic Test Cases
     {
         "input": "10 5\r\n",
         "output": ["0 15 15 0"]
@@ -732,6 +733,8 @@ A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compile
         "input": "-10 5\r\n",
         "output": ["-15 0 0 15"]
     },
+
+    # Edge Test Cases
     {
         "input": "1 -1\r\n",
         "output": ["0 -2 2 0"]
@@ -740,6 +743,8 @@ A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compile
         "input": "-1 -1\r\n",
         "output": ["-2 0 0 -2"]
     },
+
+    # Large Scale Test Cases
     {
         "input": "-10 -1000000000\r\n",
         "output": ["-1000000010 0 0 -1000000010"]
@@ -918,6 +923,7 @@ Please organize the test cases into the following three categories:
 **Instructions**:
 - Generate all test cases as a list of dictionaries, each containing an \"input\" and an \"output\".
 - Do NOT include the function implementation or a full test suite. Only return test inputs and expected outputs.
+- Comment each test case to briefly explain what it tests (e.g., # basic test, # edge case: empty list, # stress test).
 - Return the test cases as valid JSON array.
 
 Your response should be limited to a structured JSON list of test cases only, without additional explanation or prose."""

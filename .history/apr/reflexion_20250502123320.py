@@ -71,7 +71,6 @@ def run_single_item(item, i, exe, gen, model, pass_at_k, max_iters, prompting, v
                 func=item["bug_source_code"],
                 model=model
             )
-            print(f"REFLECTION!!!!!!!!: {reflection}")
             reflections.append(reflection)
 
             tests = gen.internal_tests(
