@@ -1,10 +1,12 @@
 # generator_utils.py (clean and separated version)
 
 from generators.model import ModelBase, Message
-from typing import Union, List, Optional, Callable, Tuple
+from typing import Union, List, Optional, Callable
 import json
 import random
+from typing import List, Tuple
 import re
+
 
 def print_messages(system_message_text: str, user_message_text: str) -> None:
     print(f"""----------------------- SYSTEM MESSAGE -----------------------)
@@ -170,6 +172,12 @@ def generic_generate_internal_tests(
             for t in unit_tests if isinstance(t, dict) and "input" in t and "output" in t
         ], max_num_tests)
     return []
+
+
+
+
+import re
+from typing import List, Tuple
 
 def extract_validated_tests_from_cot_response(response: str) -> List[Tuple[str, str]]:
     """

@@ -130,7 +130,7 @@ class PyGenerator(Generator):
             add_code_block=lambda x: add_code_block(x, "ruby"),
         )
 
-    def internal_tests(self, problem_context: str, func: str, model: ModelBase, max_num_tests: int = 10) -> List[str]:
+    def internal_tests(self, problem_context: str, func: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
         return generic_generate_internal_tests(
             problem_context=problem_context,
             func=func,
