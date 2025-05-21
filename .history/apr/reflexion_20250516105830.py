@@ -30,7 +30,7 @@ A pre-run execution outcome of buggy source code: {exec_outcome} ({description})
     return template
 
 
-def generate_function(gen, item, model, strategy, cur_func_impl, reflections, is_first_reflection, prompting, feedback=None):
+def generate_function(gen, item, model, strategy, cur_func_impl, self_reflection, is_first_reflection, prompting, feedback=None):
     problem_context = create_problem_template(item, include_buggy_code=False)
 
     if prompting == "scot":
@@ -40,7 +40,7 @@ def generate_function(gen, item, model, strategy, cur_func_impl, reflections, is
             strategy=strategy,
             is_first_reflection=is_first_reflection,
             prev_func_impl=cur_func_impl,
-            reflections=reflections,
+            self_reflection=self_reflection,
             feedback=feedback
         )
     else:
@@ -50,7 +50,7 @@ def generate_function(gen, item, model, strategy, cur_func_impl, reflections, is
             strategy=strategy,
             is_first_reflection=is_first_reflection,
             prev_func_impl=cur_func_impl,
-            reflections=reflections,
+            self_reflection=self_reflection,
             feedback=feedback
         )
 
@@ -96,7 +96,7 @@ def run_single_item(item, i, exe, gen, model, pass_at_k, max_iters, prompting, v
 
             cur_func_impl = generate_function(
                 gen, item, model, strategy="reflexion", cur_func_impl=item["bug_source_code"],
-                reflections=reflections, is_first_reflection=is_first_reflection,
+                reflection=reflection, is_first_reflection=is_first_reflection,
                 prompting=prompting
             )
             implementations.append(cur_func_impl)
@@ -125,7 +125,7 @@ def run_single_item(item, i, exe, gen, model, pass_at_k, max_iters, prompting, v
                     print(f"REFLECTION!!!!!!!!: {reflection}")
                     cur_func_impl = generate_function(
                         gen, item, model, strategy="reflexion", cur_func_impl=cur_func_impl,
-                        reflections=reflections, is_first_reflection=is_first_reflection,
+                        reflection=reflection, is_first_reflection=is_first_reflection,
                         prompting=prompting, feedback=cur_feedback
                     )
                     implementations.append(cur_func_impl)

@@ -55,7 +55,7 @@ def generic_generate_func_impl(
     model: ModelBase,
     strategy: str,
     prev_func_impl,
-    reflections,
+    self_reflection,
     is_first_reflection: bool,
     feedback,
     num_comps,
@@ -78,12 +78,12 @@ def generic_generate_func_impl(
         if strategy == "reflexion":
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}\n\n{first_reflexion_few_shot}"
-                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{reflections}"
+                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{self_reflection}"
                 print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
                     Message(role="user", content=message),
-                    Message(role="assistant", content=reflections),
+                    Message(role="assistant", content=self_reflection),
                     Message(role="user", content="[improved impl]:")
                 ]
             else:
@@ -94,7 +94,7 @@ def generic_generate_func_impl(
                     Message(role="system", content=prompt),
                     Message(role="assistant", content=add_code_block(prev_func_impl)),
                     Message(role="user", content=problem_context),
-                    Message(role="assistant", content=f"[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{reflections}"),
+                    Message(role="assistant", content=f"[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{self_reflection}"),
                     Message(role="user", content="[improved impl]:")
                 ]
         else:
@@ -108,7 +108,7 @@ def generic_generate_func_impl(
         func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
     else:
         if strategy == "reflexion":
-            prompt = f"{reflexion_completion_instruction}\n{add_code_block(prev_func_impl)}\n\nunit tests:\n{feedback}\n\nhint:\n{reflections}\n\n# improved implementation\n{code_block_instruction}"
+            prompt = f"{reflexion_completion_instruction}\n{add_code_block(prev_func_impl)}\n\nunit tests:\n{feedback}\n\nhint:\n{self_reflection}\n\n# improved implementation\n{code_block_instruction}"
         else:
             prompt = f"{simple_completion_instruction}\n{code_block_instruction}"
         func_bodies = model.generate(prompt, num_comps=num_comps, temperature=temperature)

@@ -78,7 +78,7 @@ def generic_generate_func_impl(
         if strategy == "reflexion":
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}\n\n{first_reflexion_few_shot}"
-                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{reflections}"
+                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{self_reflection}"
                 print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
