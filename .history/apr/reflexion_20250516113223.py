@@ -125,7 +125,7 @@ def run_single_item(item, i, exe, gen, model, pass_at_k, max_iters, prompting, v
                     print(f"REFLECTION!!!!!!!!: {reflection}")
                     cur_func_impl = generate_function(
                         gen, item, model, strategy="reflexion", cur_func_impl=cur_func_impl,
-                        reflections=reflections, is_first_reflection=is_first_reflection,
+                        reflection=reflection, is_first_reflection=is_first_reflection,
                         prompting=prompting, feedback=cur_feedback
                     )
                     implementations.append(cur_func_impl)
