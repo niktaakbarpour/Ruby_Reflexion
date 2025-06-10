@@ -33,7 +33,8 @@ sns.heatmap(
 
 plt.xlabel("Is Solved", fontsize=14)
 plt.ylabel("Bug Execution Outcome", fontsize=14)
+plt.title("Heatmap: Solved vs. Unsolved by Bug Execution Outcome", fontsize=16)
 plt.xticks(fontsize=12)
 plt.yticks(fontsize=12)
 plt.tight_layout()
-plt.savefig("heatmap_output.pdf", format='pdf')
+plt.show()

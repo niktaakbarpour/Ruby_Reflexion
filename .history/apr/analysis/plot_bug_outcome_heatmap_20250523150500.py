@@ -17,23 +17,13 @@ df['is_solved'] = df['is_solved'].astype(str)
 heatmap_data = df.groupby(['bug_exec_outcome', 'is_solved']).size().unstack(fill_value=0)
 
 # Create flare colormap
-flare_cmap = sns.color_palette("flare", as_cmap=True)
+flare_cmap = sns.color_palette("crest", as_cmap=True)
 
 # Plot heatmap
-plt.figure(figsize=(6, 4))  # smaller figure => smaller cells
-sns.heatmap(
-    heatmap_data,
-    annot=True,
-    fmt="d",
-    cmap=flare_cmap,
-    linewidths=0.5,
-    annot_kws={"size": 12},  # larger numbers in cells
-    cbar_kws={"shrink": 0.8}
-)
-
-plt.xlabel("Is Solved", fontsize=14)
-plt.ylabel("Bug Execution Outcome", fontsize=14)
-plt.xticks(fontsize=12)
-plt.yticks(fontsize=12)
+plt.figure(figsize=(10, 6))
+sns.heatmap(heatmap_data, annot=True, fmt="d", cmap=flare_cmap, linewidths=.5)
+plt.title("Heatmap: Solved vs. Unsolved by Bug Execution Outcome")
+plt.xlabel("Is Solved")
+plt.ylabel("Bug Execution Outcome")
 plt.tight_layout()
-plt.savefig("heatmap_output.pdf", format='pdf')
+plt.show()
