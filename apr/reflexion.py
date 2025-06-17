@@ -174,7 +174,7 @@ def run_reflexion(
     is_leetcode: bool = False,
     model_path: str = None
 ) -> None:
-    prompting = "scot"
+    prompting = "cot"
     exe = executor_factory(language, is_leet=is_leetcode)
     gen = generator_factory(language)
     model = model_factory(model_name, model_path)
