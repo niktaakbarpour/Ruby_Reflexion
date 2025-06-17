@@ -84,7 +84,13 @@ def generic_generate_func_impl(
                     Message(role="system", content=prompt),
                     Message(role="user", content=message),
                     Message(role="assistant", content=reflections),
-                    Message(role="user", content="[improved impl]:")
+                    Message(role="user", content=(
+                        "Before writing the improved implementation, please answer:\n"
+                        "1. What specific changes are you going to make to the code based on the reflection?\n"
+                        "2. How exactly will this change address the issue?\n\n"
+                        "Then, write your full improved implementation in Ruby.\n"
+                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
+                    ))
                 ]
             else:
                 prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}\n\n{reflexion_few_shot}"
@@ -92,10 +98,16 @@ def generic_generate_func_impl(
                 print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
-                    Message(role="assistant", content=add_code_block(prev_func_impl)),
-                    Message(role="user", content=problem_context),
+                    Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),
+                    Message(role="user", content=f"[problem description]:\n{problem_context}"),
                     Message(role="assistant", content=f"[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{reflections}"),
-                    Message(role="user", content="[improved impl]:")
+                    Message(role="user", content=(
+                        "Before writing the improved implementation, please answer:\n"
+                        "1. What specific changes are you going to make to the code based on the reflection?\n"
+                        "2. How exactly will this change address the issue?\n\n"
+                        "Then, write your full improved implementation in Ruby.\n"
+                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
+                    ))
                 ]
         else:
             prompt = f"{simple_chat_instruction}\n{code_block_instruction}"

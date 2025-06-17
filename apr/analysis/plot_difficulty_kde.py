@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Load your JSON file
-with open('C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/first_edgeIO_CoTIO_CoT.jsonl', 'r', encoding='utf-8') as f:
+with open('C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/edge_first_edgeIO_CoTIO_CoT.jsonl', 'r', encoding='utf-8') as f:
     data = [json.loads(line) for line in f]
 
 # Load into a DataFrame
@@ -19,7 +19,8 @@ plt.xlabel('Difficulty')
 plt.ylabel('Density')
 plt.legend()
 plt.tight_layout()
-plt.savefig("kde.pdf", format='pdf')
+plt.show()
+# plt.savefig("kde.pdf", format='pdf')
 
 # import json
 # import pandas as pd
