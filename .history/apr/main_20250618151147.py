@@ -8,6 +8,7 @@ from reflexion import run_reflexion
 from reflexion_ucs import run_reflexion_ucs
 from test_acc import run_test_acc
 from utils import read_jsonl, read_jsonl_gz
+from run_reflexion_multi_agent import run_reflexion_multi_agent
 
 
 def get_args():
@@ -54,6 +55,8 @@ def strategy_factory(strategy: str):
         return kwargs_wrapper_gen(run_simple, delete_keys=["expansion_factor", "max_iters"])
     elif strategy == "reflexion":
         return kwargs_wrapper_gen(run_reflexion, delete_keys=["expansion_factor"])
+    elif strategy == "reflexion-multi":
+        return kwargs_wrapper_gen(run_reflexion_multi_agent, delete_keys=["expansion_factor"])
     elif strategy == "immediate-reflexion":
         return kwargs_wrapper_gen(run_immediate_reflexion, delete_keys=["expansion_factor"])
     elif strategy == "immediate-refinement":
@@ -119,7 +122,7 @@ pass@k: {args.pass_at_k}
         verbose=args.verbose,
         expansion_factor=args.expansion_factor,
         is_leetcode=args.is_leetcode,
-        model_path=args.model_path
+        model_path=args.model_path,
     )
 
     print(f"Done! Check out the logs in `{log_path}`")

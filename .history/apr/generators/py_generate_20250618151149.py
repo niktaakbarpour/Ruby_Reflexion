@@ -34,6 +34,14 @@ from .prompt_constants import (
     RB_TEST_VALIDATION_IO_COT_FEW_SHOT,
     RB_TEST_VALIDATION_IO_COT_CHAT_INSTRUCTION,
     RB_TEST_GENERATION_IO_CHAT_INSTRUCTION,
+    RB_REFLEXION_CHAT_INSTRUCTION_TEST_OMIT,
+    RB_REFLEXION_FEW_SHOT_ADD_TEST_OMIT,
+    RB_SELF_REFLECTION_CHAT_INSTRUCTION_TEST_OMIT,
+    RB_SELF_REFLECTION_FEW_SHOT_TEST_OMIT,
+    RB_FIRST_REFLEXION_CHAT_INSTRUCTION_FIRST_OMIT,
+    RB_FIRST_REFLEXION_FEW_SHOT_ADD_FIRST_OMIT,
+    RB_REFLEXION_CHAT_INSTRUCTION_SELF_OMIT,
+    RB_REFLEXION_FEW_SHOT_ADD_SELF_OMIT,
 )
 
 from .rb_parse import parse_code_block, add_code_block
@@ -46,9 +54,11 @@ class PyGenerator(Generator):
             func=func,
             feedback=feedback,
             model=model,
+            self_reflection_chat_instruction_test_omit=RB_SELF_REFLECTION_CHAT_INSTRUCTION_TEST_OMIT,
             self_reflection_chat_instruction=PY_SELF_REFLECTION_CHAT_INSTRUCTION,
             self_reflection_completion_instruction=PY_SELF_REFLECTION_COMPLETION_INSTRUCTION,
             add_code_block=lambda x: add_code_block(x, "ruby"),
+            self_reflection_few_shot_test_omit=RB_SELF_REFLECTION_FEW_SHOT_TEST_OMIT,
             self_reflection_few_shot=PY_SELF_REFLECTION_FEW_SHOT
         )
 
@@ -85,10 +95,16 @@ class PyGenerator(Generator):
             reflections=reflections,
             num_comps=num_comps,
             temperature=temperature,
+            reflexion_chat_instruction_test_omit=RB_REFLEXION_CHAT_INSTRUCTION_TEST_OMIT,
             reflexion_chat_instruction=PY_REFLEXION_CHAT_INSTRUCTION,
             first_reflexion_chat_instruction=PY_FIRST_REFLEXION_CHAT_INSTRUCTION,
             reflexion_few_shot=PY_REFLEXION_FEW_SHOT_ADD,
+            first_reflexion_chat_instruction_first_omit=RB_FIRST_REFLEXION_CHAT_INSTRUCTION_FIRST_OMIT,
+            reflexion_few_shot_test_omit=RB_REFLEXION_FEW_SHOT_ADD_TEST_OMIT,
             first_reflexion_few_shot=PY_FIRST_REFLEXION_FEW_SHOT_ADD,
+            reflexion_few_shot_self_omit=RB_REFLEXION_FEW_SHOT_ADD_SELF_OMIT,
+            first_reflexion_few_shot_first_omit=RB_FIRST_REFLEXION_FEW_SHOT_ADD_FIRST_OMIT,
+            reflexion_chat_instruction_self_omit=RB_REFLEXION_CHAT_INSTRUCTION_SELF_OMIT,
             simple_chat_instruction=PY_SIMPLE_CHAT_INSTRUCTION,
             reflexion_completion_instruction=PY_REFLEXION_COMPLETION_INSTRUCTION,
             simple_completion_instruction=PY_SIMPLE_COMPLETION_INSTRUCTION,
@@ -138,7 +154,7 @@ class PyGenerator(Generator):
             model=model,
             max_num_tests=max_num_tests,
             test_generation_few_shot=RB_TEST_GENERATION_EDGE_FEW_SHOT,
-            test_generation_chat_instruction=RB_TEST_GENERATION_IO_CHAT_INSTRUCTION,
+            test_generation_chat_instruction=RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION,
             test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
             samples=samples
         )

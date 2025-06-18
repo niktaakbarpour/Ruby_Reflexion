@@ -22,6 +22,7 @@ custom_colors = ['#cb4335', '#117a65']  # red-orange for False, greenish-teal fo
 # Plot grouped bar chart with custom colors
 ax = bar_data.plot(kind='bar', figsize=(10, 6), color=custom_colors)
 
+plt.title('Solved vs. Unsolved Problems per Difficulty Range')
 plt.xlabel('Difficulty Range')
 plt.ylabel('Number of Problems')
 plt.legend(title='is_solved', labels=['False', 'True'])
