@@ -88,7 +88,7 @@ def run_single_item(
     cur_pass = 0
     is_first_reflection = True
     is_solved = False
-    implementations, test_feedback = [], []
+    reflections, implementations, test_feedback = [], [], []
     cur_func_impl = ""
 
     while cur_pass < pass_at_k and not is_solved:
@@ -98,14 +98,14 @@ def run_single_item(
                 problem_context=create_problem_template(item, False),
                 model=model,
             )
-
+                        
             samples = [(inp.replace(" ", "\n") + '\n', out)
                 for inp, out in zip(item["sample_inputs"], item["sample_outputs"])]
 
             tests = gen.internal_tests(
                 problem_context=create_problem_template(item, False),
-                func=item["bug_source_code"],
                 inferred_specificaion=inferred_specificaion,
+                func=item["bug_source_code"],
                 model=model,
                 max_num_tests=7,
                 samples=samples,
@@ -116,12 +116,12 @@ def run_single_item(
                 gen,
                 item,
                 model,
-                strategy="refl_omission",
+                strategy="first_refl_omission",
                 cur_func_impl=item["bug_source_code"],
-                problem_context=create_problem_template(item, False),
-                inferred_specificaion=inferred_specificaion,
                 is_first_reflection=is_first_reflection,
-                prompting=prompting
+                prompting=prompting,
+                inferred_specificaion=inferred_specificaion,
+                problem_context=create_problem_template(item, False),
             )
             implementations.append(cur_func_impl)
             is_first_reflection = False
@@ -144,17 +144,27 @@ def run_single_item(
 
             while cur_iter < max_iters:
                 try:
+                    reflection = gen.self_reflection(
+                        cur_func_impl,
+                        cur_feedback,
+                        model,
+                        inferred_specificaion=inferred_specificaion,
+                        problem_context=create_problem_template(item, False),
+                    )
+                    reflections.append(reflection)
+                    print(f"REFLECTION!!!!!!!!: {reflection}")
                     cur_func_impl = generate_function(
                         gen,
                         item,
                         model,
-                        strategy="refl_omission",
+                        strategy="first_refl_omission",
                         cur_func_impl=cur_func_impl,
+                        reflections=reflections,
                         is_first_reflection=is_first_reflection,
                         prompting=prompting,
                         feedback=cur_feedback,
-                        problem_context=create_problem_template(item, False),
                         inferred_specificaion=inferred_specificaion,
+                        problem_context=create_problem_template(item, False),
                     )
                     implementations.append(cur_func_impl)
 
@@ -183,15 +193,15 @@ def run_single_item(
             break
 
     item["is_solved"] = is_solved
+    item["reflections"] = reflections
     item["implementations"] = implementations
     item["test_feedback"] = test_feedback
     item["solution"] = cur_func_impl
-    item["inferred_specificaion"] = inferred_specificaion
 
     return item, num_success
 
 
-def run_refl_omission(
+def run_first_refl_omission(
     dataset: List[dict],
     model_name: str,
     language: str,

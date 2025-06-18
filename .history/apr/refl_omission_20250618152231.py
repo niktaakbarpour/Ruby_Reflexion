@@ -186,7 +186,6 @@ def run_single_item(
     item["implementations"] = implementations
     item["test_feedback"] = test_feedback
     item["solution"] = cur_func_impl
-    item["inferred_specificaion"] = inferred_specificaion
 
     return item, num_success
 
