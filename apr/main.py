@@ -122,7 +122,7 @@ pass@k: {args.pass_at_k}
         verbose=args.verbose,
         expansion_factor=args.expansion_factor,
         is_leetcode=args.is_leetcode,
-        model_path=args.model_path
+        model_path=args.model_path,
     )
 
     print(f"Done! Check out the logs in `{log_path}`")

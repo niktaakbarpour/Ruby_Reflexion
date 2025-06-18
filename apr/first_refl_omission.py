@@ -34,21 +34,9 @@ def create_problem_template(item: dict, include_buggy_code: bool = True) -> str:
     return template
 
 
-def generate_function(gen, item, model, strategy, cur_func_impl, reflections, is_first_reflection, prompting, feedback):
+def generate_function(gen, item, model, strategy, cur_func_impl, reflections, is_first_reflection, prompting, feedback=None):
     problem_context = create_problem_template(item, include_buggy_code=False)
-
-    if prompting == "scot":
-        return gen.scot_func_impl(
-            problem_context=problem_context,
-            model=model,
-            strategy=strategy,
-            is_first_reflection=is_first_reflection,
-            prev_func_impl=cur_func_impl,
-            reflections=reflections,
-            feedback=feedback
-        )
-    else:
-        return gen.func_impl(
+    return gen.func_impl(
             problem_context=problem_context,
             model=model,
             strategy=strategy,
@@ -80,50 +68,20 @@ def run_single_item(
 
     while cur_pass < pass_at_k and not is_solved:
         try:
-
-            inferred_specificaion = gen.infer_specification(
-                problem_context=create_problem_template(item, False),
-                model=model,
-            )
-                        
-            reflection = gen.first_reflection(
-                problem_context=create_problem_template(item, False),
-                inferred_specificaion=inferred_specificaion,
-                func=item["bug_source_code"],
-                model=model
-            )
-            reflections.append(reflection)
-
             samples = [(inp.replace(" ", "\n") + '\n', out)
                 for inp, out in zip(item["sample_inputs"], item["sample_outputs"])]
 
             tests = gen.internal_tests(
                 problem_context=create_problem_template(item, False),
-                inferred_specificaion=inferred_specificaion,
+                func=item["bug_source_code"],
                 model=model,
                 max_num_tests=7,
                 samples=samples,
             )
             print(f"tests_i: {tests}")
 
-            # validated_tests = gen.validate_internal_tests(
-            #     tests=tests,
-            #     problem_context=create_problem_template(item, False),
-            #     func=item["bug_source_code"],
-            #     model=model,
-            #     max_num_tests=5
-            # )
-            # print(f"validated_tests_i: {validated_tests}")
-
             cur_func_impl = generate_function(
-                gen,
-                item,
-                model,
-                strategy="reflexion",
-                cur_func_impl=item["bug_source_code"],
-                problem_context=create_problem_template(item, False),
-                inferred_specificaion=inferred_specificaion,
-                reflections=reflections,
+                gen, item, model, strategy="first_refl_omission", cur_func_impl=item["bug_source_code"],
                 is_first_reflection=is_first_reflection,
                 prompting=prompting
             )
@@ -137,11 +95,7 @@ def run_single_item(
             test_feedback.append(feedback)
 
             if is_passing:
-                is_passing = exe.evaluate(
-                    cur_func_impl,
-                    item["unittest_cases"],
-                    timeout=10
-                )
+                is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
                 if is_passing:
                     is_solved = True
                     num_success += 1
@@ -152,27 +106,13 @@ def run_single_item(
 
             while cur_iter < max_iters:
                 try:
-                    reflection = gen.self_reflection(
-                        problem_context=create_problem_template(item, False),
-                        inferred_specificaion=inferred_specificaion,
-                        cur_func_impl=cur_func_impl,
-                        cur_feedback=cur_feedback,
-                        model=model
-                    )
+                    reflection = gen.self_reflection(cur_func_impl, cur_feedback, model)
                     reflections.append(reflection)
                     print(f"REFLECTION!!!!!!!!: {reflection}")
                     cur_func_impl = generate_function(
-                        gen,
-                        item,
-                        model,
-                        strategy="reflexion",
-                        cur_func_impl=cur_func_impl,
-                        problem_context=create_problem_template(item, False),
-                        inferred_specificaion=inferred_specificaion,
-                        reflections=reflections,
-                        is_first_reflection=is_first_reflection,
-                        prompting=prompting,
-                        feedback=cur_feedback
+                        gen, item, model, strategy="first_refl_omission", cur_func_impl=cur_func_impl,
+                        reflections=reflections, is_first_reflection=is_first_reflection,
+                        prompting=prompting, feedback=cur_feedback
                     )
                     implementations.append(cur_func_impl)
 
@@ -182,11 +122,7 @@ def run_single_item(
                     test_feedback.append(cur_feedback)
 
                     if is_passing or cur_iter == max_iters - 1:
-                        is_passing = exe.evaluate(
-                            cur_func_impl,
-                            item["unittest_cases"],
-                            timeout=10
-                        )
+                        is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
                         if is_passing:
                             is_solved = True
                             num_success += 1
@@ -213,7 +149,7 @@ def run_single_item(
     return item, num_success
 
 
-def run_reflexion(
+def run_first_refl_omission(
     dataset: List[dict],
     model_name: str,
     language: str,

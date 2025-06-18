@@ -31,28 +31,22 @@ def run_simple(
         is_solved = False
         cur_func_impl = ""
 
-        def create_problem_template(item: dict, include_buggy_code: bool = True) -> str:
+        def create_template(json_data):
+            template = f"""\
+            Buggy source code: {json_data["bug_source_code"]}
 
-            template = f"""Problem description: {item['description']}
+            Problem description in textual format, math operations are written in LaTeX: {json_data["description"]}
 
-            Input format: {item['input_spec']}
+            How and in what order the input will be given to the program? It also includes the data range, types, and sizes: {json_data["input_spec"]}
 
-            Output format: {item['output_spec']}
+            How the outputs should be printed. Most of the time, the unit test results are matched with an exact string match or floating point comparison with a precision boundary: {json_data["output_spec"]}
             """
-            if include_buggy_code:
-                template = f"Buggy source code: {item['bug_source_code']}\n\n" + template
-
             return template
 
-        problem_context = create_problem_template(item, include_buggy_code=False)
+        modified_data = create_template(item)
 
         while cur_pass < pass_at_k:
-            cur_func_impl = gen.func_impl(
-                problem_context=problem_context,
-                model=model,
-                strategy="simple",
-                prev_func_impl=cur_func_impl
-            )
+            cur_func_impl = gen.func_impl(modified_data, model, "simple")
             assert isinstance(cur_func_impl, str)
             is_passing = exe.evaluate(cur_func_impl, item["unittest_cases"], timeout=10)
             if is_passing:
