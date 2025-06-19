@@ -6,6 +6,7 @@ from .generator_utils import (
     generic_generate_internal_tests,
     generic_generate_self_reflection,
     generic_generate_scot_func_impl,
+    generic_generate_self_consistency_tests,
     generic_validate_internal_tests,
     generic_infer_specifications,
 )
@@ -173,48 +174,16 @@ class PyGenerator(Generator):
     
     def self_consistency_tests(self, samples: List[str], problem_context: str, inferred_specificaion:str, func: str, model: ModelBase, max_num_tests: int = 7) -> List[str]:
         """Generate test cases using self-consistency prompting strategy."""
-        # Generate test cases with self-consistency method
-        all_tests = generic_generate_internal_tests(
+        return generic_generate_self_consistency_tests(
+            samples=samples,
             problem_context=problem_context,
             model=model,
             max_num_tests=max_num_tests,
             test_generation_few_shot=RB_SELF_CONSISTENCY_TEST_GENERATION_FEW_SHOT,
             test_generation_chat_instruction=RB_SELF_CONSISTENCY_TEST_GENERATION_CHAT_INSTRUCTION,
             test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
-            samples=samples,
             inferred_specificaion=inferred_specificaion,
         )
-        
-        # Filter out inconsistent test cases
-        consistent_tests = []
-        for test in all_tests:
-            try:
-                # Parse the test to check consistency
-                test_data = json.loads(test)
-                
-                # Check if it's a list of test cases
-                if isinstance(test_data, list):
-                    for test_case in test_data:
-                        if isinstance(test_case, dict) and test_case.get("consistency") == "CONSISTENT":
-                            # Extract just the input and output for consistent cases
-                            consistent_test = {
-                                "input": test_case.get("input"),
-                                "output": test_case.get("final_output")
-                            }
-                            consistent_tests.append(json.dumps(consistent_test))
-                # Check if it's a single test case
-                elif isinstance(test_data, dict) and test_data.get("consistency") == "CONSISTENT":
-                    consistent_test = {
-                        "input": test_data.get("input"),
-                        "output": test_data.get("final_output")
-                    }
-                    consistent_tests.append(json.dumps(consistent_test))
-                    
-            except (json.JSONDecodeError, KeyError, TypeError):
-                # If parsing fails, skip this test
-                continue
-        
-        return consistent_tests
     
     def validate_internal_tests(self, tests: List[str], problem_context: str, func: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
         return generic_validate_internal_tests(
