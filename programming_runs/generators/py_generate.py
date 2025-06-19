@@ -1,4 +1,4 @@
-from generators.model import ModelBase, message_to_str
+from generators.model import ModelBase, message_to_str, Message
 from .generator_types import Generator
 from .generator_utils import generic_generate_func_impl, generic_generate_internal_tests, generic_generate_self_reflection
 
@@ -138,7 +138,76 @@ PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are an AI Ruby programming l
 
 PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant that can write unique, diverse, and intuitive Ruby unit tests for functions given the signature and docstring. In this step you should only generate unit tests not function implemention (DO NOT use ".call", pay attention to the example)."""
 
+SELF_CONSISTENCY_TEST_PROMPT = '''You are a software engineer tasked with designing robust test cases to validate the correctness of a Ruby function implementation.
 
+---
+
+## Problem Description
+
+{problem_description}
+
+---
+
+## Task
+
+Generate test cases that this function should pass. For each test case, follow the steps below to ensure the expected output is logically sound and self-consistent.
+
+---
+
+## Instructions
+
+1. **Propose a test case**:
+   - Choose a sample input (an array of integers).
+   - Make an initial guess of the expected output.
+
+2. **Explain your reasoning**:
+   - Walk through the input step by step.
+   - Clearly explain how to arrive at the expected output manually.
+
+3. **Compare your guess to your reasoning**:
+   - If your initial guess and your reasoning result match, label the test case as **CONSISTENT**.
+   - If they differ, label it as **INCONSISTENT**, and revise the expected output accordingly.
+
+4. **Output your work in the following structured format**:
+
+```
+Test Case:
+Input: <your input array>
+Expected Output (initial guess): <your guess>
+Step-by-Step Reasoning: <your step-by-step explanation>
+Final Expected Output (based on reasoning): <your final output>
+Final Decision: CONSISTENT or INCONSISTENT
+```
+
+---
+
+## Coverage Guidelines
+
+Make sure your test cases include a variety of input types, including:
+
+- An array with **one even number**
+- An array with **multiple even numbers**
+- An array with **no even numbers**
+- An array containing **negative numbers**
+- An **empty array**
+
+Generate multiple test cases. Each should follow the structure and be labeled clearly.'''
+
+SELF_CONSISTENCY_FEW_SHOT = '''Example:
+Test Case:
+Input: [1, 2, 3, 4]
+Expected Output (initial guess): 2
+Step-by-Step Reasoning: The array is [1, 2, 3, 4]. The first even number is 2, which appears at index 1. So the function should return 2.
+Final Expected Output (based on reasoning): 2
+Final Decision: CONSISTENT
+
+Test Case:
+Input: [1, 3, 5]
+Expected Output (initial guess): nil
+Step-by-Step Reasoning: The array is [1, 3, 5]. There are no even numbers in the array, so the function should return nil.
+Final Expected Output (based on reasoning): nil
+Final Decision: CONSISTENT
+'''
 
 class PyGenerator(Generator):
     def self_reflection(self, func: str, feedback: str, model: ModelBase) -> str:
@@ -199,6 +268,43 @@ class PyGenerator(Generator):
             # is_syntax_valid=py_is_syntax_valid,
             is_syntax_valid=rb_is_syntax_valid,
         )
+
+    def self_consistency_tests(self, func_sig: str, model: ModelBase, problem_description: str, max_num_tests: int = 5) -> List[str]:
+        """
+        Generates self-consistency test cases for a Ruby function using explicit reasoning and self-verification.
+        Only returns test cases labeled as CONSISTENT.
+        """
+        def parse_self_consistency_tests(output: str) -> List[str]:
+            """
+            Extracts self-consistency test blocks from the model output.
+            """
+            blocks = [block.strip() for block in output.split('Test Case:') if block.strip()]
+            # Optionally, filter for blocks that contain all required fields
+            required_fields = [
+                'Input:',
+                'Expected Output (initial guess):',
+                'Step-by-Step Reasoning:',
+                'Final Expected Output (based on reasoning):',
+                'Final Decision:'
+            ]
+            valid_blocks = [block for block in blocks if all(field in block for field in required_fields)]
+            return valid_blocks
+
+        prompt = f"{SELF_CONSISTENCY_FEW_SHOT}\n\n" + SELF_CONSISTENCY_TEST_PROMPT.format(problem_description=problem_description)
+        if model.is_chat:
+            messages = [
+                Message(role="system", content="You are a helpful assistant for Ruby programming."),
+                Message(role="user", content=prompt + f"\n\nFunction Signature:\n{func_sig}\n")
+            ]
+            output = model.generate_chat(messages=messages, max_tokens=2048)
+        else:
+            output = model.generate(prompt + f"\n\nFunction Signature:\n{func_sig}\n", max_tokens=2048)
+        if isinstance(output, list):
+            output = "\n".join(output)
+        test_cases = parse_self_consistency_tests(output)
+        # Only keep test cases where Final Decision: CONSISTENT
+        consistent_cases = [tc for tc in test_cases if 'Final Decision:' in tc and tc.split('Final Decision:')[-1].strip().upper().startswith('CONSISTENT')]
+        return consistent_cases[:max_num_tests]
 
 DUMMY_FUNC_SIG = "def dummy_func\n"  # Ruby style function declaration
 DUMMY_FUNC_CALL = "dummy_func\nend"  # Added end keyword for Ruby function
