@@ -53,7 +53,7 @@ def generate_function(
         is_first_reflection,
         prompting,
         feedback,
-        # inferred_specificaion,
+        inferred_specificaion,
         num_comps=20
         ):
     problem_context = create_problem_template(item, include_buggy_code=False)
@@ -67,7 +67,7 @@ def generate_function(
             prev_func_impl=cur_func_impl,
             reflections=reflections,
             feedback=feedback,
-            # inferred_specificaion=inferred_specificaion,
+            inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
         )
     else:
@@ -79,7 +79,7 @@ def generate_function(
             prev_func_impl=cur_func_impl,
             reflections=reflections,
             feedback=feedback,
-            # inferred_specificaion=inferred_specificaion,
+            inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
         )
 
@@ -95,7 +95,7 @@ def run_single_item(
         max_iters,
         prompting,
         verbose,
-        # infer_spec
+        infer_spec
     ):
 
     print_v = make_printv(verbose)
@@ -113,15 +113,15 @@ def run_single_item(
 
         try:
 
-            # if infer_spec:
-            #     inferred_specificaion = gen.infer_specification(
-            #         problem_context=create_problem_template(item, False),
-            #         model=model,
-            #     )
+            if infer_spec:
+                inferred_specificaion = gen.infer_specification(
+                    problem_context=create_problem_template(item, False),
+                    model=model,
+                )
                         
             reflection = gen.first_reflection(
                 problem_context=create_problem_template(item, False),
-                # inferred_specificaion=inferred_specificaion,
+                inferred_specificaion=inferred_specificaion,
                 func=item["bug_source_code"],
                 model=model
             )
@@ -132,7 +132,7 @@ def run_single_item(
 
             tests = gen.internal_tests(
                 problem_context=create_problem_template(item, False),
-                # inferred_specificaion=inferred_specificaion,
+                inferred_specificaion=inferred_specificaion,
                 model=model,
                 max_num_tests=7,
                 samples=samples,
@@ -156,7 +156,7 @@ def run_single_item(
                 strategy="reflexion",
                 cur_func_impl=item["bug_source_code"],
                 problem_context=create_problem_template(item, False),
-                # inferred_specificaion=inferred_specificaion,
+                inferred_specificaion=inferred_specificaion,
                 reflections=reflections,
                 is_first_reflection=is_first_reflection,
                 prompting=prompting,
@@ -190,7 +190,7 @@ def run_single_item(
                 try:
                     reflection = gen.self_reflection(
                         problem_context=create_problem_template(item, False),
-                        # inferred_specificaion=inferred_specificaion,
+                        inferred_specificaion=inferred_specificaion,
                         cur_func_impl=cur_func_impl,
                         cur_feedback=cur_feedback,
                         model=model
@@ -204,7 +204,7 @@ def run_single_item(
                         strategy="reflexion",
                         cur_func_impl=cur_func_impl,
                         problem_context=create_problem_template(item, False),
-                        # inferred_specificaion=inferred_specificaion,
+                        inferred_specificaion=inferred_specificaion,
                         reflections=reflections,
                         is_first_reflection=is_first_reflection,
                         prompting=prompting,
@@ -265,12 +265,11 @@ def run_reflexion(
     pass_at_k: int,
     log_path: str,
     verbose: bool,
-    # infer_spec: bool,
+    infer_spec: bool,
     is_leetcode: bool = False,
     model_path: str = None,
 ) -> None:
     prompting = "cot"
-    # infer_spec = False
     exe = executor_factory(language, is_leet=is_leetcode)
     gen = generator_factory(language)
     model = model_factory(model_name, model_path)
@@ -287,17 +286,7 @@ def run_reflexion(
     for i, item in enumerate_resume(dataset, log_path):
         try:
             updated_item, passk = run_single_item(
-            item,
-            i,
-            exe,
-            gen,
-            model,
-            k,
-            n_completions,
-            max_iters,
-            prompting,
-            verbose,
-            # infer_spec
+            item, i, exe, gen, model, k, n_completions, max_iters, prompting, verbose, infer_spec
             )
 
             write_jsonl(log_path, [updated_item], append=True)
@@ -307,8 +296,5 @@ def run_reflexion(
             print(f"Error processing item {i}: {e}. Continuing.")
             continue
 
-    if pass10_list:
-        overall_pass10 = sum(pass10_list) / len(pass10_list)
-        print(f"\n🟢 FINAL pass@{pass_at_k} across all {len(pass10_list)} bugs: {overall_pass10:.3f}")
-    else:
-        print(f"\n⚠️  No bugs were processed, so pass@{pass_at_k} cannot be computed.")
+    overall_pass10 = sum(pass10_list) / len(pass10_list)
+    print(f"\n🟢 FINAL pass@10 across all {len(pass10_list)} bugs: {overall_pass10:.3f}")
