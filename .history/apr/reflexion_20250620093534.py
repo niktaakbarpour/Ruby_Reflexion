@@ -54,7 +54,7 @@ def generate_function(
         prompting,
         feedback,
         inferred_specificaion,
-        num_comps=20
+        num_comps=20 ###change it
         ):
     problem_context = create_problem_template(item, include_buggy_code=False)
 
