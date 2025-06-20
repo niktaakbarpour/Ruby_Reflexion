@@ -57,7 +57,7 @@ def generic_generate_func_impl(
     prev_func_impl,
     reflections,
     is_first_reflection: bool,
-    inferred_specificaion:str,
+    # inferred_specificaion:str,
     feedback,
     num_comps,
     temperature,
@@ -288,7 +288,7 @@ def generic_generate_internal_tests(
     test_generation_few_shot: str,
     test_generation_chat_instruction: str,
     test_generation_completion_instruction: str,
-    inferred_specificaion: str,
+    # inferred_specificaion: str,
     is_react: bool = False,
 ) -> Union[List[Tuple[str, str]], List[List[Tuple[str, str]]]]:
     if model.is_chat:
@@ -367,7 +367,7 @@ def generic_validate_internal_tests(
     test_generation_few_shot: str,
     test_generation_chat_instruction: str,
     test_generation_completion_instruction: str,
-    inferred_specificaion: str,
+    # inferred_specificaion: str,
     is_react: bool = False,
 ) -> List[Tuple[str, str]]:
     """
@@ -429,7 +429,7 @@ def generic_generate_self_reflection(
     self_reflection_completion_instruction: str,
     self_reflection_chat_instruction_test_omit: str,
     self_reflection_few_shot_test_omit: str,
-    inferred_specificaion: str,
+    # inferred_specificaion: str,
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
     strategy: str,
@@ -468,7 +468,7 @@ def generic_generate_first_reflection(
     model: ModelBase,
     self_reflection_chat_instruction: str,
     self_reflection_completion_instruction: str,
-    inferred_specificaion:str,
+    # inferred_specificaion:str,
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
 ) -> str:
@@ -493,7 +493,7 @@ def generic_generate_first_reflection(
     model: ModelBase,
     self_reflection_chat_instruction: str,
     self_reflection_completion_instruction: str,
-    inferred_specificaion: str,
+    # inferred_specificaion: str,
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
 ) -> Union[str, List[str]]:
