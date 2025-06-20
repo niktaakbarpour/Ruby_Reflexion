@@ -52,7 +52,7 @@ from typing import Optional, List, Union
 import re
 
 class PyGenerator(Generator):
-    def self_reflection(self, func: str, feedback: str, model: ModelBase,inferred_specificaion:str) -> str:
+    def self_reflection(self, func: str, feedback: str, model: ModelBase, num_comps:int, inferred_specificaion:str) -> str:
         return generic_generate_self_reflection(
             func=func,
             feedback=feedback,
@@ -63,10 +63,11 @@ class PyGenerator(Generator):
             self_reflection_completion_instruction=PY_SELF_REFLECTION_COMPLETION_INSTRUCTION,
             add_code_block=lambda x: add_code_block(x, "ruby"),
             self_reflection_few_shot_test_omit=RB_SELF_REFLECTION_FEW_SHOT_TEST_OMIT,
-            self_reflection_few_shot=PY_SELF_REFLECTION_FEW_SHOT
+            self_reflection_few_shot=PY_SELF_REFLECTION_FEW_SHOT,
+            num_comps=num_comps
         )
 
-    def first_reflection(self, problem_context: str, func: str, model: ModelBase, inferred_specificaion: Optional[str]) -> str:
+    def first_reflection(self, problem_context: str, func: str, model: ModelBase, num_comps: int, inferred_specificaion: Optional[str]) -> str:
         return generic_generate_first_reflection(
             problem_context=problem_context,
             func=func,
@@ -76,6 +77,7 @@ class PyGenerator(Generator):
             add_code_block=lambda x: add_code_block(x, "ruby"),
             self_reflection_few_shot=PY_FIRST_SELF_REFLECTION_FEW_SHOT,
             inferred_specificaion=inferred_specificaion,
+            num_comps=num_comps
         )
 
 
@@ -85,12 +87,12 @@ class PyGenerator(Generator):
         inferred_specificaion:str,
         model: ModelBase,
         strategy: str,
-        num_comps: int,
         is_first_reflection: bool,
+        num_comps: int,
         prev_func_impl: Optional[str] = None,
         feedback: Optional[str] = None,
         reflections: Optional[str] = None,
-        temperature: float = 0.8,
+        temperature: float = 0.0,
     ) -> Union[str, List[str]]:
         return generic_generate_func_impl(
             problem_context=problem_context,
@@ -126,12 +128,12 @@ class PyGenerator(Generator):
         problem_context: str,
         model: ModelBase,
         strategy: str,
-        num_comps: int,
         is_first_reflection: bool,
+        num_comps: int,
         prev_func_impl: Optional[str] = None,
         feedback: Optional[str] = None,
         reflections: Optional[str] = None,
-        temperature: float = 0.8,
+        temperature: float = 0.0,
     ) -> Union[str, List[str]]:
         return generic_generate_scot_func_impl(
             problem_context=problem_context,
@@ -155,10 +157,11 @@ class PyGenerator(Generator):
             add_code_block=lambda x: add_code_block(x, "ruby"),
         )
 
-    def internal_tests(self, samples: List[str], problem_context: str, inferred_specificaion:str, func: str, model: ModelBase, max_num_tests: int = 7) -> List[str]:
+    def internal_tests(self, samples: List[str], problem_context: str, inferred_specificaion:str, func: str, num_comps: int, model: ModelBase, max_num_tests: int = 7) -> List[str]:
         return generic_generate_internal_tests(
             problem_context=problem_context,
             func=func,
+            num_comps=num_comps,
             model=model,
             max_num_tests=max_num_tests,
             test_generation_few_shot=RB_TEST_GENERATION_EDGE_FEW_SHOT,
@@ -168,22 +171,24 @@ class PyGenerator(Generator):
             inferred_specificaion=inferred_specificaion,
         )
     
-    def validate_internal_tests(self, tests: List[str], problem_context: str, func: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
+    def validate_internal_tests(self, tests: List[str], problem_context: str, func: str, num_comps: int, model: ModelBase, max_num_tests: int = 5) -> List[str]:
         return generic_validate_internal_tests(
             tests=tests,
             problem_context=problem_context,
             func=func,
             model=model,
+            num_comps=num_comps,
             max_num_tests=max_num_tests,
             test_generation_few_shot=RB_TEST_VALIDATION_IO_COT_FEW_SHOT,
             test_generation_chat_instruction=RB_TEST_VALIDATION_IO_COT_CHAT_INSTRUCTION,
             test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
         )
     
-    def infer_specification(self, problem_context: str, model: ModelBase) -> str:
+    def infer_specification(self, problem_context: str, num_comps: int, model: ModelBase) -> str:
         return generic_infer_specifications(
             problem_context=problem_context,
             model=model,
+            num_comps=num_comps,
             infer_specifications_chat_instruction=RB_INFER_SPECIFICATIONS_FEW_SHOT,
             infer_specifications_few_shot=RB_INFER_SPECIFICATIONS_CHAT_INSTRUCTION,
         )

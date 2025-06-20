@@ -53,8 +53,7 @@ def generate_function(
         is_first_reflection,
         prompting,
         feedback,
-        inferred_specificaion,
-        num_comps=1 ###change it
+        inferred_specificaion
         ):
     problem_context = create_problem_template(item, include_buggy_code=False)
 
@@ -68,7 +67,6 @@ def generate_function(
             reflections=reflections,
             feedback=feedback,
             inferred_specificaion=inferred_specificaion,
-            num_comps=num_comps
         )
     else:
         return gen.func_impl(
@@ -80,7 +78,6 @@ def generate_function(
             reflections=reflections,
             feedback=feedback,
             inferred_specificaion=inferred_specificaion,
-            num_comps=num_comps
         )
 
 
@@ -97,11 +94,16 @@ def run_single_item(
         infer_spec
     ):
     print_v = make_printv(verbose)
+    # num_success = 0
+    # cur_pass = 0
     is_first_reflection = True
+    # is_solved = False
+    # reflections, implementations, test_feedback = [], [], []
+    # cur_func_impl = ""
     success_count = 0
     item["attempt_results"] = []
-    iteration_pass_matrix = [[] for _ in range(max_iters)]
 
+    # while cur_pass < pass_at_k and not is_solved:
     for attempt_id in range(pass_at_k):
         is_solved = False
         reflections, implementations, test_feedback = [], [], []
@@ -136,7 +138,6 @@ def run_single_item(
                 samples=samples,
             )
             print(f"tests_i: {tests}")
-            formatted_tests = [{"input": inp, "output": out} for inp, out in tests]
 
             # validated_tests = gen.validate_internal_tests(
             #     tests=tests,
@@ -147,7 +148,7 @@ def run_single_item(
             # )
             # print(f"validated_tests_i: {validated_tests}")
 
-            func_impls = generate_function(
+            cur_func_impl = generate_function(
                 gen,
                 item,
                 model,
@@ -157,29 +158,28 @@ def run_single_item(
                 inferred_specificaion=inferred_specificaion,
                 reflections=reflections,
                 is_first_reflection=is_first_reflection,
-                prompting=prompting,
-                num_comps=20
+                prompting=prompting
             )
-
+            implementations.append(cur_func_impl)
             is_first_reflection = False
 
-            for cur_func_impl in func_impls:
-                implementations.append(cur_func_impl)
-                result = exe.execute(cur_func_impl, formatted_tests)
-                is_passing = result["is_passing"]
-                feedback = result["feedback"]
-                test_feedback.append(feedback)
-                iteration_pass_matrix[0].append(is_passing)
+            formatted_tests = [{"input": inp, "output": out} for inp, out in tests]
+            result = exe.execute(cur_func_impl, formatted_tests)
+            is_passing = result["is_passing"]
+            feedback = result["feedback"]
+            test_feedback.append(feedback)
 
+            if is_passing:
+                is_solved = exe.evaluate(
+                # is_passing = exe.evaluate(
+                    cur_func_impl,
+                    item["unittest_cases"],
+                    timeout=10
+                )
                 if is_passing:
-                    passed_all = exe.evaluate(
-                        cur_func_impl,
-                        item["unittest_cases"],
-                        timeout=10
-                    )
-                    if passed_all:
-                        success_count += 1
-                        is_solved = True
+                    is_solved = True
+                    # num_success += 1
+                    break
 
             cur_iter = 1
             cur_feedback = feedback
@@ -212,7 +212,6 @@ def run_single_item(
 
                     result = exe.execute(cur_func_impl, formatted_tests)
                     is_passing = result["is_passing"]
-                    iteration_pass_matrix[cur_iter].append(is_passing)
                     cur_feedback = result["feedback"]
                     test_feedback.append(cur_feedback)
 
@@ -245,14 +244,9 @@ def run_single_item(
     item["test_feedback"] = test_feedback
     item["solution"] = cur_func_impl
     item["success_count"] = success_count
-    item[f"pass@{pass_at_k}"] = codex_pass_at_k(pass_at_k, success_count, pass_at_k)
+    item["pass@10"] = codex_pass_at_k(20, success_count, 10)
 
-    for iter_idx, results in enumerate(iteration_pass_matrix):
-        c = sum(results)
-        item[f"pass@10_iter{iter_idx}"] = codex_pass_at_k(pass_at_k, c, 10)
-
-    return item, item[f"pass@{pass_at_k}"]
-
+    return item, success_count
 
 
 def run_reflexion(
@@ -284,7 +278,7 @@ def run_reflexion(
                 item, i, exe, gen, model, pass_at_k, max_iters, prompting, verbose, infer_spec
             )
             write_jsonl(log_path, [updated_item], append=True)
-            pass10_list.append(updated_item[f"pass@{pass_at_k}"])
+            pass10_list.append(updated_item["pass@10"])
             print_v(f"completed {i+1}/{num_items}: pass@10 so far = {round(sum(pass10_list)/(i+1), 3)}")
         except Exception as e:
             print(f"Error processing item {i}: {e}. Continuing.")

@@ -90,7 +90,7 @@ class PyGenerator(Generator):
         prev_func_impl: Optional[str] = None,
         feedback: Optional[str] = None,
         reflections: Optional[str] = None,
-        temperature: float = 0.8,
+        temperature: float = 0.0,
     ) -> Union[str, List[str]]:
         return generic_generate_func_impl(
             problem_context=problem_context,
@@ -131,7 +131,7 @@ class PyGenerator(Generator):
         prev_func_impl: Optional[str] = None,
         feedback: Optional[str] = None,
         reflections: Optional[str] = None,
-        temperature: float = 0.8,
+        temperature: float = 0.0,
     ) -> Union[str, List[str]]:
         return generic_generate_scot_func_impl(
             problem_context=problem_context,
