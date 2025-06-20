@@ -158,7 +158,7 @@ def run_single_item(
                 reflections=reflections,
                 is_first_reflection=is_first_reflection,
                 prompting=prompting,
-                num_comps=20
+                num_comps=pass_at_k
             )
 
             is_first_reflection = False
