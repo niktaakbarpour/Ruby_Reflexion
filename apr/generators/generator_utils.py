@@ -421,6 +421,49 @@ def generic_validate_internal_tests(
 
     return []
 
+def generic_generate_debate_patch_evaluation(
+    buggy_code: str,
+    proposed_patch: str,
+    problem_context: str,
+    model: ModelBase,
+    debate_chat_instruction: str,
+    debate_few_shot: str,
+) -> List[dict]:
+    """Generate debate rounds for patch evaluation using two-agent debate strategy."""
+    if model.is_chat:
+        prompt = f"{debate_chat_instruction}\n{debate_few_shot}"
+        message = f"""[buggy code]:
+{buggy_code}
+
+[proposed patch]:
+{proposed_patch}
+
+[problem context]:
+{problem_context}
+
+[debate rounds]:"""
+        print_messages(prompt, message)
+        messages = [
+            Message(role="system", content=prompt),
+            Message(role="user", content=message)
+        ]
+        output = model.generate_chat(messages=messages, max_tokens=2048)
+        print(f"OUTPUT DEBATE EVALUATION!!!!!!: {output}")
+        try:
+            # Extract the debate rounds from the response
+            debate_rounds = extract_json_fuzzy(output)
+            if isinstance(debate_rounds, list):
+                return debate_rounds
+            else:
+                print(f"Debate evaluation failed: Expected list, got {type(debate_rounds)}")
+                return []
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Debate evaluation failed: {e}")
+            return []
+    else:
+        # For non-chat models, return empty debate
+        return []
+
 def generic_generate_self_reflection(
     func: str,
     feedback: str,
