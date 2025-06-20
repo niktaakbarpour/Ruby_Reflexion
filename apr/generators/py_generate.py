@@ -8,6 +8,7 @@ from .generator_utils import (
     generic_generate_scot_func_impl,
     generic_validate_internal_tests,
     generic_infer_specifications,
+    generic_generate_debate_patch_evaluation,
 )
 from .prompt_constants import (
     RB_INFER_SPECIFICATIONS_FEW_SHOT,
@@ -45,6 +46,8 @@ from .prompt_constants import (
     RB_FIRST_REFLEXION_FEW_SHOT_ADD_FIRST_OMIT,
     RB_REFLEXION_CHAT_INSTRUCTION_SELF_OMIT,
     RB_REFLEXION_FEW_SHOT_ADD_SELF_OMIT,
+    RB_DEBATE_PATCH_EVALUATION_CHAT_INSTRUCTION,
+    RB_DEBATE_PATCH_EVALUATION_FEW_SHOT,
 )
 
 from .rb_parse import parse_code_block, add_code_block
@@ -167,7 +170,18 @@ class PyGenerator(Generator):
             samples=samples,
             inferred_specificaion=inferred_specificaion,
         )
-    
+
+    def debate_patch_evaluation(self, buggy_code: str, proposed_patch: str, problem_context: str, model: ModelBase) -> List[dict]:
+        """Generate debate rounds for patch evaluation using two-agent debate strategy."""
+        return generic_generate_debate_patch_evaluation(
+            buggy_code=buggy_code,
+            proposed_patch=proposed_patch,
+            problem_context=problem_context,
+            model=model,
+            debate_chat_instruction=RB_DEBATE_PATCH_EVALUATION_CHAT_INSTRUCTION,
+            debate_few_shot=RB_DEBATE_PATCH_EVALUATION_FEW_SHOT,
+        )
+
     def validate_internal_tests(self, tests: List[str], problem_context: str, func: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
         return generic_validate_internal_tests(
             tests=tests,
