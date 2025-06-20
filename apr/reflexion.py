@@ -270,6 +270,7 @@ def run_reflexion(
     model_path: str = None,
 ) -> None:
     prompting = "cot"
+    infer_spec = False
     exe = executor_factory(language, is_leet=is_leetcode)
     gen = generator_factory(language)
     model = model_factory(model_name, model_path)
@@ -296,5 +297,8 @@ def run_reflexion(
             print(f"Error processing item {i}: {e}. Continuing.")
             continue
 
-    overall_pass10 = sum(pass10_list) / len(pass10_list)
-    print(f"\n🟢 FINAL pass@10 across all {len(pass10_list)} bugs: {overall_pass10:.3f}")
+    if pass10_list:
+        overall_pass10 = sum(pass10_list) / len(pass10_list)
+        print(f"\n🟢 FINAL pass@{pass_at_k} across all {len(pass10_list)} bugs: {overall_pass10:.3f}")
+    else:
+        print(f"\n⚠️  No bugs were processed, so pass@{pass_at_k} cannot be computed.")
