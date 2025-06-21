@@ -1309,41 +1309,31 @@ Edge Cases: a = b, a = 1 or b = 1, a much larger than b.
 """
 
 RB_SELF_CONSISTENCY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:  
-- The buggy source code,  
-- The problem description,  
-- The input format,  
-- The expected output format,  
-- The pre-run execution outcome.
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The expected output format, which specifies how the program's output should be structured, and
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
 
-**Role**: Software engineer. Your task is to apply the **self-consistency method** to generate and validate test cases for a correct Ruby implementation.
 
-Please organize the test cases into the following category:
+Each test case must be generated in two phases:  
+1. **Input Generation**: Based on the input format and problem requirements, generate a valid and meaningful input.  
+2. **Output Validation via Self-Consistency**: Propose an initial output guess, then manually derive the correct output through step-by-step reasoning. Compare the two to assess consistency.  
 
-**1. Self-Consistency for Expected Outputs**:  
-- **Objective**: Validate that expected outputs are logically sound by comparing initial guesses against reasoned results.  
-- Steps for each test:
-  - Propose input and initial output guess.
-  - Provide step-by-step reasoning.
-  - Derive final output.
-  - Label as `"CONSISTENT"` or `"INCONSISTENT"`.
+**Instructions**:  
+- Return a list of dictionaries in valid JSON format. Each item must include:
+  - `"input"`: an array of integers,  
+  - `"initial_guess"`: initial predicted output,  
+  - `"reasoning"`: manual reasoning steps based on intended behavior,  
+  - `"final_output"`: output derived through reasoning,  
+  - `"consistency"`: `"CONSISTENT"` or `"INCONSISTENT"`  
 
-**Instructions**:
-- Format as a list of dictionaries, each with:
-  - `"input"`: Array of integers  
-  - `"initial_guess"`: Initial predicted output  
-  - `"reasoning"`: Manual reasoning steps  
-  - `"final_output"`: Correct output after reasoning  
-  - `"consistency"`: `"CONSISTENT"` or `"INCONSISTENT"`
-
-- Do **NOT** include:
-  - Function implementations  
-  - Test runners or harnesses  
-  - Commentary or extra prose
-
-- Ensure:
-  - Inputs follow the problem's format and constraints  
-  - Outputs reflect the intended correct behavior  
-  - Return test cases as a valid JSON array"""
+- Do **not** include function implementations, test harnesses
+- Inputs must adhere to the problem constraints.  
+- Outputs must reflect the correct behavior, not the buggy implementation.  
+- Output only the structured test cases as a JSON array.
+- Do not output any extra explanation — only the test cases in structured format.
+"""
 
 RB_SELF_CONSISTENCY_TEST_GENERATION_FEW_SHOT = """Example 1:
 [problem context]:
