@@ -289,6 +289,7 @@ def generic_generate_internal_tests(
     test_generation_chat_instruction: str,
     test_generation_completion_instruction: str,
     inferred_specificaion: str,
+    num_comps: int,
     is_react: bool = False,
 ) -> Union[List[Tuple[str, str]], List[List[Tuple[str, str]]]]:
     if model.is_chat:
@@ -305,12 +306,12 @@ def generic_generate_internal_tests(
                 Message(role="system", content=prompt),
                 Message(role="user", content=message)
             ]
-        outputs = model.generate_chat(messages=messages, max_tokens=1024)
+        outputs = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature, max_tokens=1024)
         if isinstance(outputs, str):
             outputs = [outputs]
     else:
         prompt = f"{test_generation_completion_instruction}\nunit tests:"
-        outputs = model.generate(prompt, max_tokens=1024)
+        outputs = model.generate(prompt, num_comps=num_comps, temperature=temperature, max_tokens=1024)
         if isinstance(outputs, str):
             outputs = [outputs]
 
@@ -332,7 +333,7 @@ def generic_generate_internal_tests(
         else:
             all_tests.append([])
 
-    return all_tests[0]
+    return all_tests[0] if num_comps == 1 else all_tests
 
 
 def extract_validated_tests_from_cot_response(
@@ -369,6 +370,7 @@ def generic_validate_internal_tests(
     test_generation_completion_instruction: str,
     inferred_specificaion: str,
     is_react: bool = False,
+    num_comps: int = 1  # <--- Added here
 ) -> List[Tuple[str, str]]:
     """
     Validates internal test cases using the provided model.
@@ -403,7 +405,7 @@ def generic_validate_internal_tests(
 
         # If batched, pass output as list; else pass as string
         validated = extract_validated_tests_from_cot_response(
-            output
+            [output] if num_comps > 1 else output
         )
 
         unit_tests = [{"input": inp, "output": out} for inp, out in validated]
@@ -433,6 +435,7 @@ def generic_generate_self_reflection(
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
     strategy: str,
+    num_comps: int = 1
 ) -> Union[str, List[str]]:
     is_reflexion = strategy in {"reflexion", "first_refl_omission", "self_refl_omission"}
     
@@ -456,10 +459,16 @@ def generic_generate_self_reflection(
             Message(role="system", content=system_content),
             Message(role="user", content=user_content)
         ]
-        return model.generate_chat(messages=messages)
+
+        if num_comps > 1:
+            return [model.generate_chat(messages=messages) for _ in range(num_comps)]
+        else:
+            return model.generate_chat(messages=messages)
 
     # For non-chat models (completion-based)
     prompt = f"{self_reflection_completion_instruction}\n{add_code_block(func)}\n\n{feedback}\n\nExplanation:"
+    if num_comps > 1:
+        return [model.generate(prompt) for _ in range(num_comps)]
     return model.generate(prompt)
 
 def generic_generate_first_reflection(
@@ -496,6 +505,7 @@ def generic_generate_first_reflection(
     inferred_specificaion: str,
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
+    num_comps: int = 1  # <--- Added
 ) -> Union[str, List[str]]:
     if model.is_chat:
         system_content = self_reflection_chat_instruction
@@ -513,71 +523,18 @@ def generic_generate_first_reflection(
             Message(role="user", content=user_content)
         ]
 
-        response = model.generate_chat(messages=messages)
-        print(f"RESPONSE!!!!!!: {response}")
-        return response
-      
+        if num_comps > 1:
+            responses = [model.generate_chat(messages=messages) for _ in range(num_comps)]
+            for i, r in enumerate(responses):
+                print(f"RESPONSE {i + 1}!!!!!!: {r}")
+            return responses
+        else:
+            response = model.generate_chat(messages=messages)
+            print(f"RESPONSE!!!!!!: {response}")
+            return response
+
     # Non-chat model (completion-based)
     prompt = f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:"
+    if num_comps > 1:
+        return [model.generate(prompt) for _ in range(num_comps)]
     return model.generate(prompt)
-def generic_generate_self_consistency_tests(
-    samples: List[str],
-    problem_context: str,
-    model: ModelBase,
-    max_num_tests: int,
-    self_consistency_test_generation_few_shot: str,
-    self_consistency_test_generation_chat_instruction: str,
-    inferred_specificaion:str,
-    is_react: bool = False,
-) -> List[str]:
-    """Generate test cases using self-consistency prompting strategy and filter out inconsistent ones."""
-    if model.is_chat:
-        if is_react:
-            messages = [
-                Message(role="system", content=self_consistency_test_generation_chat_instruction),
-                Message(role="user", content=f"{self_consistency_test_generation_few_shot}\n\n[think]:")
-            ]
-        else:
-            prompt = f"{self_consistency_test_generation_chat_instruction}\n{self_consistency_test_generation_few_shot}"
-            message = f"[problem context]:\n{problem_context}\n\n[test case samples]:\n{samples}\n\n[unit tests]:"
-            print_messages(prompt, message)
-            messages = [
-                Message(role="system", content=prompt),
-                Message(role="user", content=message)
-            ]
-        output = model.generate_chat(messages=messages, max_tokens=1024)
-        print(f"OUTPUT SELF-CONSISTENCY GENERATION!!!!!!: {output}")
-        try:
-            unit_tests = extract_json_fuzzy(output)
-        except (json.JSONDecodeError, ValueError) as e:
-            print(f"Self-consistency test generation failed: {e}")
-            return []
-    else:
-        # Self-consistency test generation is designed for chat models
-        print("Self-consistency test generation requires a chat model")
-        return []
-
-    # Filter out inconsistent test cases
-    consistent_tests = []
-    if isinstance(unit_tests, list):
-        for test_case in unit_tests:
-            if isinstance(test_case, dict) and test_case.get("consistency") == "CONSISTENT":
-                # Extract just the input and output for consistent cases
-                consistent_test = {
-                    "input": test_case.get("input"),
-                    "output": test_case.get("final_output")
-                }
-                consistent_tests.append(consistent_test)
-    elif isinstance(unit_tests, dict) and unit_tests.get("consistency") == "CONSISTENT":
-        # Single test case
-        consistent_test = {
-            "input": unit_tests.get("input"),
-            "output": unit_tests.get("final_output")
-        }
-        consistent_tests.append(consistent_test)
-
-    # Return consistent tests in the expected format
-    return sample_n_random([
-        (t["input"], t["output"])
-        for t in consistent_tests if isinstance(t, dict) and "input" in t and "output" in t
-    ], max_num_tests)

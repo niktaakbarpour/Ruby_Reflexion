@@ -516,68 +516,7 @@ def generic_generate_first_reflection(
         response = model.generate_chat(messages=messages)
         print(f"RESPONSE!!!!!!: {response}")
         return response
-      
+
     # Non-chat model (completion-based)
     prompt = f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:"
     return model.generate(prompt)
-def generic_generate_self_consistency_tests(
-    samples: List[str],
-    problem_context: str,
-    model: ModelBase,
-    max_num_tests: int,
-    self_consistency_test_generation_few_shot: str,
-    self_consistency_test_generation_chat_instruction: str,
-    inferred_specificaion:str,
-    is_react: bool = False,
-) -> List[str]:
-    """Generate test cases using self-consistency prompting strategy and filter out inconsistent ones."""
-    if model.is_chat:
-        if is_react:
-            messages = [
-                Message(role="system", content=self_consistency_test_generation_chat_instruction),
-                Message(role="user", content=f"{self_consistency_test_generation_few_shot}\n\n[think]:")
-            ]
-        else:
-            prompt = f"{self_consistency_test_generation_chat_instruction}\n{self_consistency_test_generation_few_shot}"
-            message = f"[problem context]:\n{problem_context}\n\n[test case samples]:\n{samples}\n\n[unit tests]:"
-            print_messages(prompt, message)
-            messages = [
-                Message(role="system", content=prompt),
-                Message(role="user", content=message)
-            ]
-        output = model.generate_chat(messages=messages, max_tokens=1024)
-        print(f"OUTPUT SELF-CONSISTENCY GENERATION!!!!!!: {output}")
-        try:
-            unit_tests = extract_json_fuzzy(output)
-        except (json.JSONDecodeError, ValueError) as e:
-            print(f"Self-consistency test generation failed: {e}")
-            return []
-    else:
-        # Self-consistency test generation is designed for chat models
-        print("Self-consistency test generation requires a chat model")
-        return []
-
-    # Filter out inconsistent test cases
-    consistent_tests = []
-    if isinstance(unit_tests, list):
-        for test_case in unit_tests:
-            if isinstance(test_case, dict) and test_case.get("consistency") == "CONSISTENT":
-                # Extract just the input and output for consistent cases
-                consistent_test = {
-                    "input": test_case.get("input"),
-                    "output": test_case.get("final_output")
-                }
-                consistent_tests.append(consistent_test)
-    elif isinstance(unit_tests, dict) and unit_tests.get("consistency") == "CONSISTENT":
-        # Single test case
-        consistent_test = {
-            "input": unit_tests.get("input"),
-            "output": unit_tests.get("final_output")
-        }
-        consistent_tests.append(consistent_test)
-
-    # Return consistent tests in the expected format
-    return sample_n_random([
-        (t["input"], t["output"])
-        for t in consistent_tests if isinstance(t, dict) and "input" in t and "output" in t
-    ], max_num_tests)
