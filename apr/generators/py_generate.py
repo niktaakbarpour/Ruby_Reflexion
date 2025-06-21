@@ -179,9 +179,8 @@ class PyGenerator(Generator):
             problem_context=problem_context,
             model=model,
             max_num_tests=max_num_tests,
-            test_generation_few_shot=RB_SELF_CONSISTENCY_TEST_GENERATION_FEW_SHOT,
-            test_generation_chat_instruction=RB_SELF_CONSISTENCY_TEST_GENERATION_CHAT_INSTRUCTION,
-            test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
+            self_consistency_test_generation_few_shot=RB_SELF_CONSISTENCY_TEST_GENERATION_FEW_SHOT,
+            self_consistency_test_generation_chat_instruction=RB_SELF_CONSISTENCY_TEST_GENERATION_CHAT_INSTRUCTION,
             inferred_specificaion=inferred_specificaion,
         )
     

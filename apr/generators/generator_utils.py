@@ -476,9 +476,8 @@ def generic_generate_self_consistency_tests(
     problem_context: str,
     model: ModelBase,
     max_num_tests: int,
-    test_generation_few_shot: str,
-    test_generation_chat_instruction: str,
-    test_generation_completion_instruction: str,
+    self_consistency_test_generation_few_shot: str,
+    self_consistency_test_generation_chat_instruction: str,
     inferred_specificaion:str,
     is_react: bool = False,
 ) -> List[str]:
@@ -486,11 +485,11 @@ def generic_generate_self_consistency_tests(
     if model.is_chat:
         if is_react:
             messages = [
-                Message(role="system", content=test_generation_chat_instruction),
-                Message(role="user", content=f"{test_generation_few_shot}\n\n[think]:")
+                Message(role="system", content=self_consistency_test_generation_chat_instruction),
+                Message(role="user", content=f"{self_consistency_test_generation_few_shot}\n\n[think]:")
             ]
         else:
-            prompt = f"{test_generation_chat_instruction}\n{test_generation_few_shot}"
+            prompt = f"{self_consistency_test_generation_chat_instruction}\n{self_consistency_test_generation_few_shot}"
             message = f"[problem context]:\n{problem_context}\n\n[test case samples]:\n{samples}\n\n[unit tests]:"
             print_messages(prompt, message)
             messages = [
@@ -505,9 +504,9 @@ def generic_generate_self_consistency_tests(
             print(f"Self-consistency test generation failed: {e}")
             return []
     else:
-        prompt = f"{test_generation_completion_instruction}\nunit tests:"
-        output = model.generate(prompt, max_tokens=1024)
-        unit_tests = []
+        # Self-consistency test generation is designed for chat models
+        print("Self-consistency test generation requires a chat model")
+        return []
 
     # Filter out inconsistent test cases
     consistent_tests = []
