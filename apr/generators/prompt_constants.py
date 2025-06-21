@@ -1307,3 +1307,87 @@ Input Assumptions: Two integers a and b, both ≥ 1.
 Expected Behavior: Return the largest integer that divides both a and b without remainder.
 Edge Cases: a = b, a = 1 or b = 1, a much larger than b.
 """
+
+RB_SELF_CONSISTENCY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:  
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The expected output format, which specifies how the program's output should be structured, and
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
+
+Each test case must be generated in two phases:  
+1. **Input Generation**: Based on the input format and problem requirements, generate a valid and meaningful input.  
+2. **Output Validation via Self-Consistency**: Propose an initial output guess, then manually derive the correct output through step-by-step reasoning. Compare the two to assess consistency.  
+
+**Instructions**:  
+- Return a list of dictionaries in valid JSON format. Each item must include:
+  - `"input"`: an array of integers,  
+  - `"initial_guess"`: initial predicted output,  
+  - `"reasoning"`: manual reasoning steps based on intended behavior,  
+  - `"final_output"`: output derived through reasoning,  
+  - `"consistency"`: `"CONSISTENT"` or `"INCONSISTENT"`  
+
+- Do **not** include function implementations, test harnesses
+- Inputs must adhere to the problem constraints.  
+- Outputs must reflect the correct behavior, not the buggy implementation.  
+- Output only the structured test cases as a JSON array.
+- Do not output any extra explanation — only the test cases in structured format.
+"""
+
+RB_SELF_CONSISTENCY_TEST_GENERATION_FEW_SHOT = """Example 1:
+[problem context]:
+Problem description: Write a function that finds the sum of all even numbers in an array.
+Input format: An array of integers
+Output format: The sum of all even numbers in the array
+A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code runs but produces incorrect output.)
+
+[test cases]:
+[
+  {
+    "input": [1, 2, 3, 4, 5],
+    "initial_guess": 6,
+    "reasoning": "Looking at the array [1, 2, 3, 4, 5], the even numbers are 2 and 4. The sum of 2 + 4 = 6.",
+    "final_output": 6,
+    "consistency": "CONSISTENT"
+  },
+  {
+    "input": [1, 3, 5, 7],
+    "initial_guess": 0,
+    "reasoning": "Looking at the array [1, 3, 5, 7], there are no even numbers. The sum of no even numbers is 0.",
+    "final_output": 0,
+    "consistency": "CONSISTENT"
+  },
+  {
+    "input": [2, 4, 6, 8],
+    "initial_guess": 15,
+    "reasoning": "Looking at the array [2, 4, 6, 8], all numbers are even. The sum should be 2 + 4 + 6 + 8 = 20, not 15.",
+    "final_output": 20,
+    "consistency": "INCONSISTENT"
+  }
+]
+
+Example 2:
+[problem context]:
+Problem description: Write a function that counts the number of vowels in a string.
+Input format: A string of lowercase letters
+Output format: The count of vowels (a, e, i, o, u)
+A pre-run execution outcome of buggy source code: RUNTIME_ERROR (The code encounters an error during execution.)
+
+[test cases]:
+[
+  {
+    "input": "hello",
+    "initial_guess": 2,
+    "reasoning": "In 'hello', the vowels are 'e' and 'o'. So the count is 2.",
+    "final_output": 2,
+    "consistency": "CONSISTENT"
+  },
+  {
+    "input": "xyz",
+    "initial_guess": 0,
+    "reasoning": "In 'xyz', there are no vowels. So the count is 0.",
+    "final_output": 0,
+    "consistency": "CONSISTENT"
+  }
+]"""
