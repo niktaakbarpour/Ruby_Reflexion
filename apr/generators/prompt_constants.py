@@ -1307,3 +1307,155 @@ Input Assumptions: Two integers a and b, both ≥ 1.
 Expected Behavior: Return the largest integer that divides both a and b without remainder.
 Edge Cases: a = b, a = 1 or b = 1, a much larger than b.
 """
+
+RB_DEBATE_PATCH_EVALUATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant tasked with collaboratively evaluating and refining a proposed code patch through an iterative debate process. The provided context includes:  
+- The buggy source code,  
+- The proposed patch,  
+- The problem description,  
+- The input and output specifications,  
+- The pre- and post-patch behavior.
+
+**Role**: Participate in a two-agent debate to assess the correctness and robustness of the patch.  
+- **Proposer**: Argues in favor of the current patch, explains its logic, and revises it when necessary.  
+- **Challenger**: Identifies flaws, edge cases, or potential failure points in the patch.
+
+**Instructions**:
+- Simulate a turn-based dialogue between Proposer and Challenger.
+- Each round must include:
+  - `"role"`: `"Proposer"` or `"Challenger"`  
+  - `"message"`: A concise argument, explanation, critique, or revision  
+- The debate continues until the Challenger acknowledges no remaining issues.
+
+- Do **NOT** include:
+  - Test case generation  
+  - Explanatory prose outside of the debate messages  
+  - Final implementation code outside of Proposer's revised suggestions
+
+- Ensure:
+  - The debate explores both correctness and edge case coverage  
+  - Revisions are justified and clearly address prior challenges  
+  - Output is a structured JSON array of debate rounds"""
+
+RB_DEBATE_PATCH_EVALUATION_FEW_SHOT = """Example 1:
+[buggy code]:
+```ruby
+def sum_even_numbers(arr)
+  total = 0
+  arr.each do |num|
+    if num % 2 == 0
+      total = num  # Bug: should be total += num
+    end
+  end
+  total
+end
+```
+
+[proposed patch]:
+```ruby
+def sum_even_numbers(arr)
+  total = 0
+  arr.each do |num|
+    if num % 2 == 0
+      total += num  # Fixed: accumulate instead of overwrite
+    end
+  end
+  total
+end
+```
+
+[problem context]:
+Problem description: Write a function that finds the sum of all even numbers in an array.
+Input format: An array of integers
+Output format: The sum of all even numbers in the array
+Pre-patch behavior: Returns the last even number instead of the sum
+Post-patch behavior: Should return the correct sum of all even numbers
+
+[debate rounds]:
+[
+  {
+    "role": "Proposer",
+    "message": "The patch fixes the critical bug by changing `total = num` to `total += num`. This ensures we accumulate even numbers instead of overwriting the total with each even number found."
+  },
+  {
+    "role": "Challenger", 
+    "message": "What about edge cases? What if the array is empty or contains no even numbers? The current patch doesn't handle these scenarios explicitly."
+  },
+  {
+    "role": "Proposer",
+    "message": "Good point. The current implementation actually handles these edge cases correctly: empty array returns 0 (initial value), and arrays with no even numbers also return 0. The logic is robust for these scenarios."
+  },
+  {
+    "role": "Challenger",
+    "message": "What about negative numbers? The current logic treats negative even numbers correctly, but we should verify the function works with mixed positive/negative arrays."
+  },
+  {
+    "role": "Proposer",
+    "message": "The modulo operator `%` works correctly with negative numbers in Ruby. For example, -2 % 2 == 0, so negative even numbers will be included in the sum. The patch is correct for all integer inputs."
+  },
+  {
+    "role": "Challenger",
+    "message": "The patch looks correct. It fixes the main bug and handles edge cases properly. No further issues identified."
+  }
+]
+
+Example 2:
+[buggy code]:
+```ruby
+def count_vowels(str)
+  count = 0
+  str.each_char do |char|
+    if char == 'a' || char == 'e' || char == 'i' || char == 'o' || char == 'u'
+      count += 1
+    end
+  end
+  count
+end
+```
+
+[proposed patch]:
+```ruby
+def count_vowels(str)
+  count = 0
+  str.each_char do |char|
+    if char.downcase == 'a' || char.downcase == 'e' || char.downcase == 'i' || char.downcase == 'o' || char.downcase == 'u'
+      count += 1
+    end
+  end
+  count
+end
+```
+
+[problem context]:
+Problem description: Write a function that counts the number of vowels in a string.
+Input format: A string of letters (case-insensitive)
+Output format: The count of vowels (a, e, i, o, u)
+Pre-patch behavior: Only counts lowercase vowels
+Post-patch behavior: Should count both uppercase and lowercase vowels
+
+[debate rounds]:
+[
+  {
+    "role": "Proposer",
+    "message": "The patch adds `char.downcase` to each vowel comparison, making the function case-insensitive. This ensures both uppercase and lowercase vowels are counted correctly."
+  },
+  {
+    "role": "Challenger",
+    "message": "The patch is inefficient. We're calling `downcase` multiple times for each character. We should convert the character once and then compare."
+  },
+  {
+    "role": "Proposer",
+    "message": "You're absolutely right. Here's a more efficient version: `char.downcase` once per character, then compare. The revised patch should be: `lower_char = char.downcase; if lower_char == 'a' || lower_char == 'e' || lower_char == 'i' || lower_char == 'o' || lower_char == 'u'`"
+  },
+  {
+    "role": "Challenger",
+    "message": "What about empty strings or strings with no vowels? The current logic should handle these correctly, but we should confirm."
+  },
+  {
+    "role": "Proposer",
+    "message": "Yes, the logic handles these correctly: empty string returns 0 (initial count), and strings with no vowels also return 0. The function is robust for these edge cases."
+  },
+  {
+    "role": "Challenger",
+    "message": "The revised patch is correct and efficient. It handles case-insensitivity properly and all edge cases. No further issues."
+  }
+]"""
