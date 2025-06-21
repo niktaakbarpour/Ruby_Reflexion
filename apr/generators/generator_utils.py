@@ -57,7 +57,7 @@ def generic_generate_func_impl(
     prev_func_impl,
     reflections,
     is_first_reflection: bool,
-    inferred_specificaion:str,
+    # inferred_specificaion:str,
     feedback,
     num_comps,
     temperature,
@@ -288,7 +288,7 @@ def generic_generate_internal_tests(
     test_generation_few_shot: str,
     test_generation_chat_instruction: str,
     test_generation_completion_instruction: str,
-    inferred_specificaion: str,
+    # inferred_specificaion: str,
     is_react: bool = False,
 ) -> Union[List[Tuple[str, str]], List[List[Tuple[str, str]]]]:
     if model.is_chat:
@@ -367,7 +367,7 @@ def generic_validate_internal_tests(
     test_generation_few_shot: str,
     test_generation_chat_instruction: str,
     test_generation_completion_instruction: str,
-    inferred_specificaion: str,
+    # inferred_specificaion: str,
     is_react: bool = False,
 ) -> List[Tuple[str, str]]:
     """
@@ -429,7 +429,7 @@ def generic_generate_self_reflection(
     self_reflection_completion_instruction: str,
     self_reflection_chat_instruction_test_omit: str,
     self_reflection_few_shot_test_omit: str,
-    inferred_specificaion: str,
+    # inferred_specificaion: str,
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
     strategy: str,
@@ -468,7 +468,7 @@ def generic_generate_first_reflection(
     model: ModelBase,
     self_reflection_chat_instruction: str,
     self_reflection_completion_instruction: str,
-    inferred_specificaion:str,
+    # inferred_specificaion:str,
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
 ) -> str:
@@ -493,7 +493,7 @@ def generic_generate_first_reflection(
     model: ModelBase,
     self_reflection_chat_instruction: str,
     self_reflection_completion_instruction: str,
-    inferred_specificaion: str,
+    # inferred_specificaion: str,
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
 ) -> Union[str, List[str]]:
@@ -520,6 +520,7 @@ def generic_generate_first_reflection(
     # Non-chat model (completion-based)
     prompt = f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:"
     return model.generate(prompt)
+
 def generic_generate_self_consistency_tests(
     samples: List[str],
     problem_context: str,
@@ -581,3 +582,28 @@ def generic_generate_self_consistency_tests(
         (t["input"], t["output"])
         for t in consistent_tests if isinstance(t, dict) and "input" in t and "output" in t
     ], max_num_tests)
+  
+  
+
+def generic_infer_specifications(
+    problem_context: str,
+    model: ModelBase,
+    infer_specifications_chat_instruction: str,
+    infer_specifications_few_shot: str,
+) -> Union[str, List[str]]:
+    if model.is_chat:
+        system_content = f"{infer_specifications_chat_instruction}\n{infer_specifications_few_shot}"
+        user_content = (
+            f"[problem context]:\n{problem_context}\n\n[inferred specifications]:"
+        )
+
+        print_messages(system_content, user_content)
+
+        messages = [
+            Message(role="system", content=system_content),
+            Message(role="user", content=user_content)
+        ]
+
+        response = model.generate_chat(messages=messages)
+        return response
+

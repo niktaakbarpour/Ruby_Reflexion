@@ -39,7 +39,7 @@ def get_args():
     parser.add_argument("--verbose", action='store_true',
                         help="To print live logs")
     parser.add_argument("--model_path", type=str, help="Downloaded models path.")
-    parser.add_argument("--infer_spec", type=bool, help="Do infer specifications or not.")
+    # parser.add_argument("--infer_spec", type=bool, help="Do infer specifications or not.")
     # TODO: implement this
     # parser.add_argument("--is_resume", action='store_true', help="To resume run")
     # parser.add_argument("--resume_dir", type=str, help="If resume, the logging directory", default="")
@@ -135,7 +135,7 @@ pass@k: {args.pass_at_k}
         expansion_factor=args.expansion_factor,
         is_leetcode=args.is_leetcode,
         model_path=args.model_path,
-        infer_spec=args.infer_spec
+        # infer_spec=args.infer_spec
     )
 
     print(f"Done! Check out the logs in `{log_path}`")

@@ -56,12 +56,17 @@ import re
 import json
 
 class PyGenerator(Generator):
-    def self_reflection(self, func: str, feedback: str, model: ModelBase,inferred_specificaion:str) -> str:
+    def self_reflection(self,
+                        func: str,
+                        feedback: str,
+                        model: ModelBase,
+                        # inferred_specificaion:str
+                    ) -> str:
         return generic_generate_self_reflection(
             func=func,
             feedback=feedback,
             model=model,
-            inferred_specificaion=inferred_specificaion,
+            # inferred_specificaion=inferred_specificaion,
             self_reflection_chat_instruction_test_omit=RB_SELF_REFLECTION_CHAT_INSTRUCTION_TEST_OMIT,
             self_reflection_chat_instruction=PY_SELF_REFLECTION_CHAT_INSTRUCTION,
             self_reflection_completion_instruction=PY_SELF_REFLECTION_COMPLETION_INSTRUCTION,
@@ -70,7 +75,12 @@ class PyGenerator(Generator):
             self_reflection_few_shot=PY_SELF_REFLECTION_FEW_SHOT
         )
 
-    def first_reflection(self, problem_context: str, func: str, model: ModelBase, inferred_specificaion: Optional[str]) -> str:
+    def first_reflection(self,
+                         problem_context: str,
+                         func: str,
+                         model: ModelBase,
+                        #  inferred_specificaion: Optional[str]
+                         ) -> str:
         return generic_generate_first_reflection(
             problem_context=problem_context,
             func=func,
@@ -79,14 +89,14 @@ class PyGenerator(Generator):
             self_reflection_completion_instruction=PY_SELF_REFLECTION_COMPLETION_INSTRUCTION,
             add_code_block=lambda x: add_code_block(x, "ruby"),
             self_reflection_few_shot=PY_FIRST_SELF_REFLECTION_FEW_SHOT,
-            inferred_specificaion=inferred_specificaion,
+            # inferred_specificaion=inferred_specificaion,
         )
 
 
     def func_impl(
         self,
         problem_context: str,
-        inferred_specificaion:str,
+        # inferred_specificaion:str,
         model: ModelBase,
         strategy: str,
         num_comps: int,
@@ -94,7 +104,7 @@ class PyGenerator(Generator):
         prev_func_impl: Optional[str] = None,
         feedback: Optional[str] = None,
         reflections: Optional[str] = None,
-        temperature: float = 0.8,
+        temperature: float = 1.0,
     ) -> Union[str, List[str]]:
         return generic_generate_func_impl(
             problem_context=problem_context,
@@ -106,7 +116,7 @@ class PyGenerator(Generator):
             reflections=reflections,
             num_comps=num_comps,
             temperature=temperature,
-            inferred_specificaion=inferred_specificaion,
+            # inferred_specificaion=inferred_specificaion,
             reflexion_chat_instruction_test_omit=RB_REFLEXION_CHAT_INSTRUCTION_TEST_OMIT,
             reflexion_chat_instruction=PY_REFLEXION_CHAT_INSTRUCTION,
             first_reflexion_chat_instruction=PY_FIRST_REFLEXION_CHAT_INSTRUCTION,
@@ -135,7 +145,7 @@ class PyGenerator(Generator):
         prev_func_impl: Optional[str] = None,
         feedback: Optional[str] = None,
         reflections: Optional[str] = None,
-        temperature: float = 0.8,
+        temperature: float = 1.0,
     ) -> Union[str, List[str]]:
         return generic_generate_scot_func_impl(
             problem_context=problem_context,
@@ -159,7 +169,13 @@ class PyGenerator(Generator):
             add_code_block=lambda x: add_code_block(x, "ruby"),
         )
 
-    def internal_tests(self, samples: List[str], problem_context: str, inferred_specificaion:str, func: str, model: ModelBase, max_num_tests: int = 7) -> List[str]:
+    def internal_tests(self,
+                       samples: List[str],
+                       problem_context: str,
+                    #    inferred_specificaion:str,
+                       func: str,
+                       model: ModelBase,
+                       max_num_tests: int = 7) -> List[str]:
         return generic_generate_internal_tests(
             problem_context=problem_context,
             func=func,
@@ -169,7 +185,7 @@ class PyGenerator(Generator):
             test_generation_chat_instruction=RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION,
             test_generation_completion_instruction=PY_TEST_GENERATION_COMPLETION_INSTRUCTION,
             samples=samples,
-            inferred_specificaion=inferred_specificaion,
+            # inferred_specificaion=inferred_specificaion,
         )
     
     def self_consistency_tests(self, samples: List[str], problem_context: str, inferred_specificaion:str, func: str, model: ModelBase, max_num_tests: int = 7) -> List[str]:
