@@ -157,7 +157,10 @@ def run_single_item(
     # )
     # print(f"validated_tests_i: {validated_tests}")
 
-    func_impls = generate_function(
+    func_impls = List[str] = []
+    batch_size = 10
+    for b in range(0, n_completions, batch_size):
+        impls = generate_function(
         gen,
         item,
         model,
@@ -169,8 +172,10 @@ def run_single_item(
         is_first_reflection=is_first_reflection,
         prompting=prompting,
         feedback=None,
-        num_comps=n_completions   
+        num_comps=batch_size   
     )
+        func_impls.extend(impls)
+    
 
     is_first_reflection = False
 
@@ -184,17 +189,18 @@ def run_single_item(
         if is_passing and exe.evaluate(cur_impl, item["unittest_cases"], timeout=10):
             success_count += 1
             is_solved = True
+            continue
 
         cur_func_impl = cur_impl
         cur_iter = 1
         cur_feedback = feedback
 
-        while cur_iter < max_iters:
+        while not is_solved and cur_iter < max_iters:
             reflection = gen.self_reflection(
                 problem_context=create_problem_template(item, False),
                 # inferred_specificaion=inferred_specificaion,
-                cur_func_impl=cur_func_impl,
-                cur_feedback=cur_feedback,
+                func=cur_func_impl,
+                feedback=cur_feedback,
                 model=model
             )
             reflections.append(reflection)
