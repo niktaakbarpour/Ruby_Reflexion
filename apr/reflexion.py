@@ -6,11 +6,22 @@ from generators import generator_factory, model_factory
 from math import comb
 
 def codex_pass_at_k(n: int, c: int, k: int) -> float:
+    """
+    Exact formula from the OpenAI blog:
+      pass@k = 1 − C(n − c, k) / C(n, k)
+    where c is number of correct completions out of n.
+
+    Edge‐cases:
+      if c == 0: pass@k = 0
+      if c > n − k: pass@k = 1 (every k‐subset must have ≥1 correct)
+    """
     if c == 0:
         return 0.0
-    if c >= n:
+    if c > n - k:
         return 1.0
+    # now n - c >= k, so comb(n - c, k) is valid
     return 1.0 - comb(n - c, k) / comb(n, k)
+
 
 
 def create_problem_template(item: dict, include_buggy_code: bool = True) -> str:
@@ -49,6 +60,7 @@ def generate_function(
         model,
         strategy,
         cur_func_impl,
+        problem_context,
         reflections,
         is_first_reflection,
         prompting,
@@ -101,145 +113,127 @@ def run_single_item(
     print_v = make_printv(verbose)
     is_first_reflection = True
     success_count = 0
-    item["attempt_results"] = []
     iteration_pass_matrix = [[] for _ in range(max_iters)]
 
-    for attempt_id in range(pass_at_k):
-        is_solved = False
-        reflections, implementations, test_feedback = [], [], []
-        cur_func_impl = item["bug_source_code"]
-        is_first_reflection = True
-        cur_feedback = None
+    is_solved = False
+    reflections, implementations, test_feedback = [], [], []
+    cur_func_impl = item["bug_source_code"]
+    is_first_reflection = True
+    cur_feedback = None
 
-        try:
+    # if infer_spec:
+    #     inferred_specificaion = gen.infer_specification(
+    #         problem_context=create_problem_template(item, False),
+    #         model=model,
+    #     )
+                
+    reflection = gen.first_reflection(
+        problem_context=create_problem_template(item, False),
+        # inferred_specificaion=inferred_specificaion,
+        func=item["bug_source_code"],
+        model=model
+    )
+    reflections.append(reflection)
 
-            # if infer_spec:
-            #     inferred_specificaion = gen.infer_specification(
-            #         problem_context=create_problem_template(item, False),
-            #         model=model,
-            #     )
-                        
-            reflection = gen.first_reflection(
+    samples = [(inp.replace(" ", "\n") + '\n', out)
+        for inp, out in zip(item["sample_inputs"], item["sample_outputs"])]
+
+    tests = gen.internal_tests(
+        problem_context=create_problem_template(item, False),
+        # inferred_specificaion=inferred_specificaion,
+        model=model,
+        max_num_tests=7,
+        samples=samples,
+    )
+    print(f"tests_i: {tests}")
+    formatted_tests = [{"input": inp, "output": out} for inp, out in tests]
+
+    # validated_tests = gen.validate_internal_tests(
+    #     tests=tests,
+    #     problem_context=create_problem_template(item, False),
+    #     func=item["bug_source_code"],
+    #     model=model,
+    #     max_num_tests=5
+    # )
+    # print(f"validated_tests_i: {validated_tests}")
+
+    func_impls = generate_function(
+        gen,
+        item,
+        model,
+        strategy="reflexion",
+        cur_func_impl=item["bug_source_code"],
+        problem_context=create_problem_template(item, False),
+        # inferred_specificaion=inferred_specificaion,
+        reflections=reflections,
+        is_first_reflection=is_first_reflection,
+        prompting=prompting,
+        feedback=None,
+        num_comps=n_completions   
+    )
+
+    is_first_reflection = False
+
+    for cur_impl in func_impls:
+        implementations.append(cur_impl)
+        result = exe.execute(cur_impl, formatted_tests)
+        is_passing = result["is_passing"]
+        feedback = result["feedback"]
+        test_feedback.append(feedback)
+        iteration_pass_matrix[0].append(is_passing)
+        if is_passing and exe.evaluate(cur_impl, item["unittest_cases"], timeout=10):
+            success_count += 1
+            is_solved = True
+
+        cur_func_impl = cur_impl
+        cur_iter = 1
+        cur_feedback = feedback
+
+        while cur_iter < max_iters:
+            reflection = gen.self_reflection(
                 problem_context=create_problem_template(item, False),
                 # inferred_specificaion=inferred_specificaion,
-                func=item["bug_source_code"],
+                cur_func_impl=cur_func_impl,
+                cur_feedback=cur_feedback,
                 model=model
             )
             reflections.append(reflection)
-
-            samples = [(inp.replace(" ", "\n") + '\n', out)
-                for inp, out in zip(item["sample_inputs"], item["sample_outputs"])]
-
-            tests = gen.internal_tests(
-                problem_context=create_problem_template(item, False),
-                # inferred_specificaion=inferred_specificaion,
-                model=model,
-                max_num_tests=7,
-                samples=samples,
-            )
-            print(f"tests_i: {tests}")
-            formatted_tests = [{"input": inp, "output": out} for inp, out in tests]
-
-            # validated_tests = gen.validate_internal_tests(
-            #     tests=tests,
-            #     problem_context=create_problem_template(item, False),
-            #     func=item["bug_source_code"],
-            #     model=model,
-            #     max_num_tests=5
-            # )
-            # print(f"validated_tests_i: {validated_tests}")
-
-            func_impls = generate_function(
+            print(f"REFLECTION!!!!!!!!: {reflection}")
+            next_impls = generate_function(
                 gen,
                 item,
                 model,
                 strategy="reflexion",
-                cur_func_impl=item["bug_source_code"],
+                cur_func_impl=cur_func_impl,
                 problem_context=create_problem_template(item, False),
                 # inferred_specificaion=inferred_specificaion,
                 reflections=reflections,
                 is_first_reflection=is_first_reflection,
                 prompting=prompting,
-                num_comps=20
+                feedback=cur_feedback,
+                num_comps=1
             )
+            cur_func_impl = next_impls[0]
+            implementations.append(cur_func_impl)
 
-            is_first_reflection = False
+            result = exe.execute(cur_func_impl, formatted_tests)
+            is_passing = result["is_passing"]
+            iteration_pass_matrix[cur_iter].append(is_passing)
+            cur_feedback = result["feedback"]
+            test_feedback.append(cur_feedback)
 
-            for cur_func_impl in func_impls:
-                implementations.append(cur_func_impl)
-                result = exe.execute(cur_func_impl, formatted_tests)
-                is_passing = result["is_passing"]
-                feedback = result["feedback"]
-                test_feedback.append(feedback)
-                iteration_pass_matrix[0].append(is_passing)
-
+            if is_passing or cur_iter == max_iters - 1:
+                is_passing = exe.evaluate(
+                    cur_func_impl,
+                    item["unittest_cases"],
+                    timeout=10
+                )
                 if is_passing:
-                    passed_all = exe.evaluate(
-                        cur_func_impl,
-                        item["unittest_cases"],
-                        timeout=10
-                    )
-                    if passed_all:
-                        success_count += 1
-                        is_solved = True
+                    is_solved = True
+                    success_count += 1
+                break
 
-            cur_iter = 1
-            cur_feedback = feedback
-
-            while cur_iter < max_iters:
-                try:
-                    reflection = gen.self_reflection(
-                        problem_context=create_problem_template(item, False),
-                        # inferred_specificaion=inferred_specificaion,
-                        cur_func_impl=cur_func_impl,
-                        cur_feedback=cur_feedback,
-                        model=model
-                    )
-                    reflections.append(reflection)
-                    print(f"REFLECTION!!!!!!!!: {reflection}")
-                    cur_func_impl = generate_function(
-                        gen,
-                        item,
-                        model,
-                        strategy="reflexion",
-                        cur_func_impl=cur_func_impl,
-                        problem_context=create_problem_template(item, False),
-                        # inferred_specificaion=inferred_specificaion,
-                        reflections=reflections,
-                        is_first_reflection=is_first_reflection,
-                        prompting=prompting,
-                        feedback=cur_feedback
-                    )
-                    implementations.append(cur_func_impl)
-
-                    result = exe.execute(cur_func_impl, formatted_tests)
-                    is_passing = result["is_passing"]
-                    iteration_pass_matrix[cur_iter].append(is_passing)
-                    cur_feedback = result["feedback"]
-                    test_feedback.append(cur_feedback)
-
-                    if is_passing or cur_iter == max_iters - 1:
-                        is_passing = exe.evaluate(
-                            cur_func_impl,
-                            item["unittest_cases"],
-                            timeout=10
-                        )
-                        if is_passing:
-                            is_solved = True
-                            success_count += 1
-                        break
-
-                    cur_iter += 1
-                except Exception as e:
-                    print(f"Error in iteration {cur_iter} for item {i}: {e}")
-                    cur_iter += 1
-                    continue
-
-            # cur_pass += 1
-
-        except Exception as e:
-            print(f"Skipping item {i} due to error: {e}")
-            break
+            cur_iter += 1
 
     item["is_solved"] = is_solved
     item["reflections"] = reflections
