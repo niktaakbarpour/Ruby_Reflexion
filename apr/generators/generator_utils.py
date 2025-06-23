@@ -425,6 +425,7 @@ def generic_generate_self_reflection(
     func: str,
     feedback: str,
     model: ModelBase,
+    problem_context: str,
     self_reflection_chat_instruction: str,
     self_reflection_completion_instruction: str,
     self_reflection_chat_instruction_test_omit: str,
@@ -441,12 +442,12 @@ def generic_generate_self_reflection(
             system_content = self_reflection_chat_instruction
             if self_reflection_few_shot:
                 system_content += f"\n{self_reflection_few_shot}"
-            user_content = f"[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:"
+            user_content = f"[problem context]:\n{problem_context}\n\n[function impl]:\n{add_code_block(func)}\n\n[unit test results]:\n{feedback}\n\n[self-reflection]:"
         elif strategy == "test_gen_omission":
             system_content = self_reflection_chat_instruction_test_omit
             if self_reflection_few_shot_test_omit:
                 system_content += f"\n{self_reflection_few_shot_test_omit}"
-            user_content = f"[function impl]:\n{add_code_block(func)}\n\n[self-reflection]:"
+            user_content = f"[problem context]:\n{problem_context}\n\n[function impl]:\n{add_code_block(func)}\n\n[self-reflection]:"
         else:
             raise ValueError(f"Unknown strategy: {strategy}")
 

@@ -53,6 +53,7 @@ import re
 
 class PyGenerator(Generator):
     def self_reflection(self,
+                        problem_context: str,
                         func: str,
                         feedback: str,
                         model: ModelBase,
@@ -62,6 +63,7 @@ class PyGenerator(Generator):
             func=func,
             feedback=feedback,
             model=model,
+            problem_context=problem_context,
             # inferred_specificaion=inferred_specificaion,
             self_reflection_chat_instruction_test_omit=RB_SELF_REFLECTION_CHAT_INSTRUCTION_TEST_OMIT,
             self_reflection_chat_instruction=PY_SELF_REFLECTION_CHAT_INSTRUCTION,
@@ -169,12 +171,10 @@ class PyGenerator(Generator):
                        samples: List[str],
                        problem_context: str,
                     #    inferred_specificaion:str,
-                       func: str,
                        model: ModelBase,
                        max_num_tests: int = 7) -> List[str]:
         return generic_generate_internal_tests(
             problem_context=problem_context,
-            func=func,
             model=model,
             max_num_tests=max_num_tests,
             test_generation_few_shot=RB_TEST_GENERATION_EDGE_FEW_SHOT,
@@ -184,7 +184,13 @@ class PyGenerator(Generator):
             # inferred_specificaion=inferred_specificaion,
         )
     
-    def validate_internal_tests(self, tests: List[str], problem_context: str, func: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
+    def validate_internal_tests(self,
+                                tests: List[str],
+                                problem_context: str,
+                                func: str,
+                                model: ModelBase,
+                                max_num_tests: int = 5
+                                ) -> List[str]:
         return generic_validate_internal_tests(
             tests=tests,
             problem_context=problem_context,
