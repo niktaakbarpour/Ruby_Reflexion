@@ -70,7 +70,7 @@ def generate_function(
     problem_context = create_problem_template(item, include_buggy_code=False)
 
     if prompting == "scot":
-        out = gen.scot_func_impl(
+        return gen.scot_func_impl(
             problem_context=problem_context,
             model=model,
             strategy=strategy,
@@ -82,7 +82,7 @@ def generate_function(
             num_comps=num_comps
         )
     else:
-        out = gen.func_impl(
+        return gen.func_impl(
             problem_context=problem_context,
             model=model,
             strategy=strategy,
@@ -93,11 +93,6 @@ def generate_function(
             # inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
         )
-    
-    if isinstance(out, list):
-        return out
-    else:
-        return [out]
 
 
 def run_single_item(
