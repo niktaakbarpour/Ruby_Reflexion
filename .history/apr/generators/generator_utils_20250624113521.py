@@ -85,41 +85,39 @@ def generic_generate_func_impl(
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}\n\n{first_reflexion_few_shot}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{reflections}"
-                user_content = "\n\n".join([
-                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
-                    f"[problem description]:\n{problem_context}",
-                    f"[hint for changing the implementation]:\n{reflections}",
+                print_messages(prompt, message)
+                messages = [
+                    Message(role="system", content=prompt),
+                    Message(role="user", content=message),
+                    Message(role="assistant", content=reflections),
+                    Message(role="user", content=(
                         "Before writing the improved implementation, please answer:\n"
                         "1. What specific changes are you going to make to the code based on the reflection?\n"
                         "2. How exactly will this change address the issue?\n\n"
                         "Then, write your full improved implementation in Ruby.\n"
                         "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                ])
-                messages = [
-                    Message(role="system", content=prompt),
-                    Message(role="user", content=user_content),
+                    ))
                 ]
             else:
                 prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}\n\n{reflexion_few_shot}"
-                user_content = "\n\n".join([
-                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
-                    f"[problem description]:\n{problem_context}",
-                    f"[unit test results from previous impl]:\n{feedback}",
-                    f"[hint for changing the implementation]:\n{reflections}",
+                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
+                print_messages(prompt, message)
+                messages = [
+                    Message(role="system", content=prompt),
+                    Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),
+                    Message(role="user", content=f"[problem description]:\n{problem_context}"),
+                    Message(role="assistant", content=f"[unit test results from previous impl]:\n{feedback}\n\n[hint for changing the implementation]:\n{reflections}"),
+                    Message(role="user", content=(
                         "Before writing the improved implementation, please answer:\n"
                         "1. What specific changes are you going to make to the code based on the reflection?\n"
                         "2. How exactly will this change address the issue?\n\n"
                         "Then, write your full improved implementation in Ruby.\n"
                         "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                ])
-                messages = [
-                    Message(role="system", content=prompt),
-                    Message(role="user", content=user_content),
+                    ))
                 ]
-                print_messages(prompt, user_content)
         elif strategy == "simple":
             prompt = f"{simple_chat_instruction}\n{code_block_instruction}"
-            
+            print_messages(prompt, "[improved impl]:")
             messages = [
                 Message(role="system", content=prompt),
                 Message(role="user", content=f"[problem description]:\n{problem_context}"),
@@ -129,7 +127,7 @@ def generic_generate_func_impl(
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}\n\n{first_reflexion_few_shot}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{reflections}"
-                
+                print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
                     Message(role="user", content=message),
@@ -145,7 +143,7 @@ def generic_generate_func_impl(
             else:
                 prompt = f"{reflexion_chat_instruction_test_omit}\n{code_block_instruction}\n\n{reflexion_few_shot_test_omit}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
                     Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),
@@ -163,7 +161,7 @@ def generic_generate_func_impl(
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction_first_omit}\n{code_block_instruction}\n\n{first_reflexion_few_shot_first_omit}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
                     Message(role="user", content=message),
@@ -178,7 +176,7 @@ def generic_generate_func_impl(
             else:
                 prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}\n\n{reflexion_few_shot}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
                     Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),
@@ -196,7 +194,7 @@ def generic_generate_func_impl(
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}\n\n{first_reflexion_few_shot}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{reflections}"
-                
+                print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
                     Message(role="user", content=message),
@@ -212,7 +210,7 @@ def generic_generate_func_impl(
             else:
                 prompt = f"{reflexion_chat_instruction_self_omit}\n{code_block_instruction}\n\n{reflexion_few_shot_self_omit}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
                     Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),
@@ -230,7 +228,7 @@ def generic_generate_func_impl(
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction_first_omit}\n{code_block_instruction}\n\n{first_reflexion_few_shot_first_omit}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
                     Message(role="user", content=message),
@@ -245,7 +243,7 @@ def generic_generate_func_impl(
             else:
                 prompt = f"{reflexion_chat_instruction_self_omit}\n{code_block_instruction}\n\n{reflexion_few_shot_self_omit}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                print_messages(prompt, message)
                 messages = [
                     Message(role="system", content=prompt),
                     Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),

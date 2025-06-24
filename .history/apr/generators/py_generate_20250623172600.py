@@ -106,8 +106,6 @@ class PyGenerator(Generator):
         reflections: Optional[str] = None,
         temperature: float = 1.0,
     ) -> Union[str, List[str]]:
-        if isinstance(reflections, list):
-            reflections = "\n".join(f"{i+1}. {r.strip()}" for i, r in enumerate(reflections))
         return generic_generate_func_impl(
             problem_context=problem_context,
             model=model,

@@ -65,12 +65,12 @@ def generate_function(
         prompting,
         feedback,
         # inferred_specificaion,
-        num_comps=1 #n
+        num_comps=20 #n
         ):
     problem_context = create_problem_template(item, include_buggy_code=False)
 
     if prompting == "scot":
-        out = gen.scot_func_impl(
+        return gen.scot_func_impl(
             problem_context=problem_context,
             model=model,
             strategy=strategy,
@@ -82,7 +82,7 @@ def generate_function(
             num_comps=num_comps
         )
     else:
-        out = gen.func_impl(
+        return gen.func_impl(
             problem_context=problem_context,
             model=model,
             strategy=strategy,
@@ -93,11 +93,6 @@ def generate_function(
             # inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
         )
-    
-    if isinstance(out, list):
-        return out
-    else:
-        return [out]
 
 
 def run_single_item(
@@ -150,15 +145,7 @@ def run_single_item(
         samples=samples,
     )
     print(f"tests_i: {tests}")
-    # formatted_tests = [{"input": inp, "output": out} for inp, out in tests]
-    formatted_tests = [
-    {
-        "input": ' '.join(inp.strip().split()) + '\n',
-        "output": ''.join(out).strip() if isinstance(out, list) else out.strip()
-    }
-    for inp, out in tests
-]
-
+    formatted_tests = [{"input": inp, "output": out} for inp, out in tests]
     print(f"formatted_tests: {formatted_tests}")
 
     # validated_tests = gen.validate_internal_tests(
@@ -171,7 +158,7 @@ def run_single_item(
     # print(f"validated_tests_i: {validated_tests}")
 
     func_impls = []
-    batch_size = 1
+    batch_size = 5
     for b in range(0, n_completions, batch_size):
         impls = generate_function(
         gen,
@@ -298,7 +285,7 @@ def run_reflexion(
     num_items = len(dataset)
 
     total_success = resume_success_count(dataset)
-    n_completions = 1 #n
+    n_completions = 20 #n
     k = pass_at_k
     pass10_list = []
 

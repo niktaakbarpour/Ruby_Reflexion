@@ -116,7 +116,6 @@ def generic_generate_func_impl(
                     Message(role="system", content=prompt),
                     Message(role="user", content=user_content),
                 ]
-                print_messages(prompt, user_content)
         elif strategy == "simple":
             prompt = f"{simple_chat_instruction}\n{code_block_instruction}"
             
@@ -259,6 +258,7 @@ def generic_generate_func_impl(
                         "Ensure that your code actually reflects the reasoning above and addresses the problem."
                     ))
                 ]
+        print_messages(prompt, message)
         func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
     else:
         if strategy == "reflexion":
