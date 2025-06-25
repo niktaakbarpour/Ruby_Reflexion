@@ -121,7 +121,7 @@ def run_single_item(
     iteration_pass_matrix = [[] for _ in range(max_iters)]
     iteration_unit_pass_matrix = [[] for _ in range(max_iters)]
     solved_iter = None
-    ever_unit_ok = False
+
     is_solved = False
     reflections, implementations, test_feedback = [], [], []
     cur_func_impl = item["bug_source_code"]
@@ -210,12 +210,12 @@ def run_single_item(
             item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
         unit_ok = exe.evaluate(cur_impl, item["hidden_unit_tests"], timeout=10)
-        ever_unit_ok = ever_unit_ok or unit_ok
         print(f"unit_ok first: {unit_ok}")
         test_feedback.append(f"unit_tests_passed={unit_ok}")
         iteration_unit_pass_matrix[0].append(unit_ok)
         if unit_ok and is_passing:
             solved_iter = 0
+            success_count += 1
             is_solved = True
             break
 
@@ -268,20 +268,16 @@ def run_single_item(
                 timeout=10
             )
             print(f"unit_ok 2: {unit_ok}")
-            ever_unit_ok = ever_unit_ok or unit_ok
             iteration_unit_pass_matrix[cur_iter].append(unit_ok)
 
             if is_passing or cur_iter == max_iters - 1:
                 if unit_ok:
                     solved_iter = cur_iter
                     is_solved = True
+                    success_count += 1
                 break
 
             cur_iter += 1
-
-    if ever_unit_ok:
-        success_count += 1
-        is_solved = True
 
     item["is_solved"] = is_solved
     item["reflections"] = reflections
