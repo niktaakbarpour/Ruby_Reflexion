@@ -2,7 +2,7 @@ from typing import List
 from utils import enumerate_resume, make_printv, write_jsonl, resume_success_count
 from executors import executor_factory
 from generators import generator_factory, model_factory
-import json
+
 from math import comb
 
 def codex_pass_at_k(n: int, c: int, k: int) -> float:
@@ -205,10 +205,6 @@ def run_single_item(
         test_feedback.append(feedback)
         iteration_pass_matrix[0].append(is_passing)
         cur_func_impl = cur_impl
-
-        if isinstance(item["hidden_unit_tests"], str):
-            item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
-
         unit_ok = exe.evaluate(cur_impl, item["hidden_unit_tests"], timeout=10)
         print(f"unit_ok first: {unit_ok}")
         test_feedback.append(f"unit_tests_passed={unit_ok}")
@@ -259,9 +255,6 @@ def run_single_item(
             print(f"is_passing2: {is_passing}")
             print(f"feedback2: {cur_feedback}")
 
-            if isinstance(item["hidden_unit_tests"], str):
-                item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
-
             unit_ok = exe.evaluate(
                 cur_func_impl,
                 item["hidden_unit_tests"],
@@ -289,7 +282,6 @@ def run_single_item(
     item[f"pass@{pass_at_k}"] = codex_pass_at_k(n_completions, success_count, pass_at_k)
 
 
-    print(f"solved_iteration: {solved_iter}")
     print(f"is_solvedF: {is_solved}")
     print(f"success_count: {success_count}")
     print(f"pass@{pass_at_k}: {codex_pass_at_k(n_completions, success_count, pass_at_k)}")

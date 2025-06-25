@@ -82,11 +82,7 @@ class RbExecutor:
             bool: True if all test cases pass, False otherwise.
         """
         ruby_script_path = "/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby"
-        if test_cases and not isinstance(test_cases[0], dict):
-            test_cases = [
-                {"input": inp, "output": out}
-                for inp, out in test_cases
-            ]
+
         for test in test_cases:
             test_input = test["input"]
             
