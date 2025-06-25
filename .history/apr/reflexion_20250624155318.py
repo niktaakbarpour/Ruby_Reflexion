@@ -2,7 +2,7 @@ from typing import List
 from utils import enumerate_resume, make_printv, write_jsonl, resume_success_count
 from executors import executor_factory
 from generators import generator_factory, model_factory
-import json
+
 from math import comb
 
 def codex_pass_at_k(n: int, c: int, k: int) -> float:
@@ -113,14 +113,12 @@ def run_single_item(
         verbose,
         # infer_spec
     ):
-    print(f"GOING for I: {i}")
 
     print_v = make_printv(verbose)
     is_first_reflection = True
     success_count = 0
     iteration_pass_matrix = [[] for _ in range(max_iters)]
     iteration_unit_pass_matrix = [[] for _ in range(max_iters)]
-    solved_iter = None
 
     is_solved = False
     reflections, implementations, test_feedback = [], [], []
@@ -200,30 +198,24 @@ def run_single_item(
         result = exe.execute(cur_impl, formatted_tests)
         is_passing = result["is_passing"]
         feedback = result["feedback"]
-        print(f"is_passing: {is_passing}")
-        print(f"feedback: {feedback}")
         test_feedback.append(feedback)
         iteration_pass_matrix[0].append(is_passing)
+        if is_passing:
+            cur_func_impl = cur_impl
+            unit_ok = exe.evaluate(cur_impl, item["hidden_unit_tests"], timeout=10)
+            test_feedback.append(f"unit_tests_passed={unit_ok}")
+            iteration_unit_pass_matrix[0].append(unit_ok)
+            if unit_ok:
+                success_count += 1
+                is_solved = True
+            continue
+
         cur_func_impl = cur_impl
-
-        if isinstance(item["hidden_unit_tests"], str):
-            item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
-
-        unit_ok = exe.evaluate(cur_impl, item["hidden_unit_tests"], timeout=10)
-        print(f"unit_ok first: {unit_ok}")
-        test_feedback.append(f"unit_tests_passed={unit_ok}")
-        iteration_unit_pass_matrix[0].append(unit_ok)
-        if unit_ok and is_passing:
-            solved_iter = 0
-            success_count += 1
-            is_solved = True
-            break
-
         cur_iter = 1
         cur_feedback = feedback
 
         while not is_solved and cur_iter < max_iters:
-            print(f"cur_iter: {cur_iter}")
+            print("IN LOOP")
             reflection = gen.self_reflection(
                 problem_context=create_problem_template(item, False),
                 # inferred_specificaion=inferred_specificaion,
@@ -256,23 +248,15 @@ def run_single_item(
             iteration_pass_matrix[cur_iter].append(is_passing)
             cur_feedback = result["feedback"]
             test_feedback.append(cur_feedback)
-            print(f"is_passing2: {is_passing}")
-            print(f"feedback2: {cur_feedback}")
-
-            if isinstance(item["hidden_unit_tests"], str):
-                item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
-
-            unit_ok = exe.evaluate(
-                cur_func_impl,
-                item["hidden_unit_tests"],
-                timeout=10
-            )
-            print(f"unit_ok 2: {unit_ok}")
-            iteration_unit_pass_matrix[cur_iter].append(unit_ok)
 
             if is_passing or cur_iter == max_iters - 1:
+                unit_ok = exe.evaluate(
+                    cur_func_impl,
+                    item["hidden_unit_tests"],
+                    timeout=10
+                )
+                iteration_unit_pass_matrix[0].append(unit_ok)
                 if unit_ok:
-                    solved_iter = cur_iter
                     is_solved = True
                     success_count += 1
                 break
@@ -285,26 +269,17 @@ def run_single_item(
     item["test_feedback"] = test_feedback
     item["solution"] = cur_func_impl
     item["success_count"] = success_count
-    item["solved_iteration"] = solved_iter
     item[f"pass@{pass_at_k}"] = codex_pass_at_k(n_completions, success_count, pass_at_k)
-
-
-    print(f"solved_iteration: {solved_iter}")
-    print(f"is_solvedF: {is_solved}")
-    print(f"success_count: {success_count}")
-    print(f"pass@{pass_at_k}: {codex_pass_at_k(n_completions, success_count, pass_at_k)}")
-    
 
     for iter_idx, results in enumerate(iteration_pass_matrix):
         c = sum(results)
         item[f"pass@{pass_at_k}_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
-        print(f"pass@{pass_at_k}_iter{iter_idx}: {codex_pass_at_k(n_completions, c, pass_at_k)}")
 
     for iter_idx, results in enumerate(iteration_unit_pass_matrix):
         c = sum(results)
-        item[f"pass@{pass_at_k}_unit_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
-        print(f"pass@{pass_at_k}_unit_iter{iter_idx}: {codex_pass_at_k(n_completions, c, pass_at_k)}")
-
+        item[f"pass@{pass_at_k}_unit_iter{iter_idx}"] = codex_pass_at_k(
+            n_completions, c, pass_at_k
+        )
     return item, item[f"pass@{pass_at_k}"]
 
 
