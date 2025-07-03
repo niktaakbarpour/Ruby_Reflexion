@@ -1137,7 +1137,7 @@ RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI Ruby programming lan
 
 **Role**: As a tester, your goal is to create comprehensive and diverse test cases that evaluate the correctness and robustness of the Ruby function under various scenarios.
 
-Create two test cases for each of these three categories:
+Create test two cases for each of these three categories:
 
 **1. Basic Test Cases**:
 - **Objective**: Verify the function’s fundamental correctness under standard conditions.
@@ -1169,7 +1169,7 @@ RB_TEST_GENERATION_IO_CHAT_INSTRUCTION = """You are an AI Ruby programming langu
 
 Each test case must be generated in two phases:
 1. **Input Generation**: Based on the input format and problem requirements, generate a meaningful and valid input.
-2. **Output Derivation**: Given the generated input and the intended behavior described in the problem statement, use chain of thoughts to infer the expected correct output. Do not replicate the buggy behavior — your output must reflect the correct solution.
+2. **Output Derivation**: Given the generated input and the intended behavior described in the problem statement, infer the expected correct output. Do not replicate the buggy behavior — your output must reflect the correct solution.
 
 **Instructions**:
 - Return a list of dictionaries in JSON format. Each item must include:
