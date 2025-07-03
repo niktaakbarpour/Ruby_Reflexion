@@ -1137,7 +1137,7 @@ RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI Ruby programming lan
 
 **Role**: As a tester, your goal is to create comprehensive and diverse test cases that evaluate the correctness and robustness of the Ruby function under various scenarios.
 
-Create two test cases for each of these three categories:
+Create test two cases for each of these three categories:
 
 **1. Basic Test Cases**:
 - **Objective**: Verify the function’s fundamental correctness under standard conditions.
