@@ -2,7 +2,9 @@ import os
 import argparse
 from immediate_refinement import run_immediate_refinement
 from immediate_reflexion import run_immediate_reflexion
-
+import time
+import psutil
+import pynvml
 from simple import run_simple
 from reflexion import run_reflexion
 from reflexion_ucs import run_reflexion_ucs
@@ -81,6 +83,14 @@ def strategy_factory(strategy: str):
         raise ValueError(f"Strategy `{strategy}` is not supported")
 
 
+def log_resources(prefix=""):
+    pynvml.nvmlInit()
+    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+    gpu_mem = pynvml.nvmlDeviceGetMemoryInfo(handle).used / 1024**2
+    cpu = psutil.cpu_percent(interval=1)
+    ram = psutil.Process().memory_info().rss / 1024**2
+    print(f"{prefix} GPU memory: {gpu_mem:.2f} MB | CPU usage: {cpu}% | RAM usage: {ram:.2f} MB")
+
 def main(args):
     # check if the root dir exists and create it if not
     if not os.path.exists(args.root_dir):
@@ -124,6 +134,8 @@ pass@k: {args.pass_at_k}
     print(f"Loaded {len(dataset)} examples")
     # start the run
     # evaluate with pass@k
+    start_time = time.time()
+    log_resources("[START]")
     run_strategy(
         dataset=dataset,
         model_name=args.model,
@@ -138,6 +150,9 @@ pass@k: {args.pass_at_k}
         # infer_spec=args.infer_spec
     )
 
+    end_time = time.time()
+    log_resources("[END]")
+    print(f"Total time: {end_time - start_time:.2f} seconds")
     print(f"Done! Check out the logs in `{log_path}`")
 
 
