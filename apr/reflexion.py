@@ -125,7 +125,6 @@ def run_single_item(
     is_solved = False
     reflections, implementations, test_feedback = [], [], []
     cur_func_impl = item["bug_source_code"]
-    is_first_reflection = True
     cur_feedback = None
 
     # if infer_spec:

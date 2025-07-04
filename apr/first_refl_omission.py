@@ -124,7 +124,6 @@ def run_single_item(
     is_solved = False
     reflections, implementations, test_feedback = [], [], []
     cur_func_impl = item["bug_source_code"]
-    #cur_func_impl = ""
     cur_feedback = None
     """
     while cur_pass < pass_at_k and not is_solved:
@@ -228,9 +227,11 @@ def run_single_item(
             print(f"Skipping item {i} due to error: {e}")
             break
     """
-    samples = [(inp.replace(" ", "\n") + '\n', out)
-        for inp, out in zip(item["prob_desc_sample_inputs"], item["prob_desc_sample_outputs"])]
+    inputs = json.loads(item["prob_desc_sample_inputs"])
+    outputs = json.loads(item["prob_desc_sample_outputs"])
 
+    samples = [{"input": inp + '\n', "output": out} for inp, out in zip(inputs, outputs)]
+    
     tests = gen.internal_tests(
         problem_context=create_problem_template(item, False),
         # inferred_specificaion=inferred_specificaion,
@@ -286,7 +287,7 @@ def run_single_item(
         if isinstance(item["hidden_unit_tests"], str):
             item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
-        unit_ok = exe.evaluate(cur_impl, item["hidden_unit_tests"], timeout=10)
+        unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
         ever_unit_ok = ever_unit_ok or unit_ok
         print("File first_refl_omission:",f"unit_ok first: {unit_ok}")
         test_feedback.append(f"unit_tests_passed={unit_ok}")
@@ -339,11 +340,7 @@ def run_single_item(
             if isinstance(item["hidden_unit_tests"], str):
                 item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
-            unit_ok = exe.evaluate(
-                cur_func_impl,
-                item["hidden_unit_tests"],
-                timeout=10
-            )
+            unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
             print("File first_refl_omission:",f"unit_ok 2: {unit_ok}")
             ever_unit_ok = ever_unit_ok or unit_ok
             iteration_unit_pass_matrix[cur_iter].append(unit_ok)
@@ -369,7 +366,8 @@ def run_single_item(
     item["success_count"] = success_count
     item["solved_iteration"] = solved_iter
     item[f"pass@{pass_at_k}"] = codex_pass_at_k(n_completions, success_count, pass_at_k)
-
+    item["final_unit_ok"] = unit_ok
+    item["final_unit_test_results"] = unit_test_results
 
     print("File first_refl_omission:",f"solved_iteration: {solved_iter}")
     print("File first_refl_omission:",f"is_solvedF: {is_solved}")
@@ -442,5 +440,3 @@ def run_first_refl_omission(
         print("File first_refl_omission:",f"\n🟢 FINAL pass@{pass_at_k} across all {len(pass_list)} bugs: {overall_pass:.3f}")
     else:
         print("File first_refl_omission:",f"\n⚠️  No bugs were processed, so pass@{pass_at_k} cannot be computed.")
-
-# TEMP: triggering commit for review
