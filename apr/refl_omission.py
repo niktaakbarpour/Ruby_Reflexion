@@ -125,7 +125,7 @@ def run_single_item(
     #cur_pass = 0
     is_first_reflection = True
     is_solved = False
-    implementations, test_feedback = [], []
+    reflections, implementations, test_feedback = [], [], []
     cur_func_impl = item["bug_source_code"]
     cur_feedback = None
 
@@ -221,8 +221,10 @@ def run_single_item(
             print(f"Skipping item {i} due to error: {e}")
             break
     """
-    samples = [(inp.replace(" ", "\n") + '\n', out)
-            for inp, out in zip(item["prob_desc_sample_inputs"], item["prob_desc_sample_outputs"])]
+    inputs = json.loads(item["prob_desc_sample_inputs"])
+    outputs = json.loads(item["prob_desc_sample_outputs"])
+
+    samples = [{"input": inp + '\n', "output": out} for inp, out in zip(inputs, outputs)]
 
     tests = gen.internal_tests(
         problem_context=create_problem_template(item, False),
@@ -241,7 +243,7 @@ def run_single_item(
     ]
 
     print("File refl_omission: ",f"formatted_tests: {formatted_tests}")
-
+    reflections.append(None)
     func_impls = []
     batch_size = 1
     for b in range(0, n_completions, batch_size):
@@ -253,7 +255,7 @@ def run_single_item(
         cur_func_impl=item["bug_source_code"],
         problem_context=create_problem_template(item, False),
         # inferred_specificaion=inferred_specificaion,
-        #reflections=reflections,
+        reflections=reflections,
         is_first_reflection=is_first_reflection,
         prompting=prompting,
         feedback=None,
@@ -277,7 +279,7 @@ def run_single_item(
         if isinstance(item["hidden_unit_tests"], str):
             item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
-        unit_ok = exe.evaluate(cur_impl, item["hidden_unit_tests"], timeout=10)
+        unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
         ever_unit_ok = ever_unit_ok or unit_ok
         print("File refl_omission: ",f"unit_ok first: {unit_ok}")
         test_feedback.append(f"unit_tests_passed={unit_ok}")
@@ -301,7 +303,7 @@ def run_single_item(
                 strategy="reflexion"
             )
             reflections.append(reflection)"""
-            print("File refl_omission: ",f"REFLECTION!!!!!!!!: {reflection}")
+            # print("File refl_omission: ",f"REFLECTION!!!!!!!!: {reflection}")
             next_impls = generate_function(
                 gen,
                 item,
@@ -310,7 +312,7 @@ def run_single_item(
                 cur_func_impl=cur_func_impl,
                 problem_context=create_problem_template(item, False),
                 # inferred_specificaion=inferred_specificaion,
-                #reflections=reflections,
+                reflections=reflections,
                 is_first_reflection=is_first_reflection,
                 prompting=prompting,
                 feedback=cur_feedback,
@@ -330,11 +332,7 @@ def run_single_item(
             if isinstance(item["hidden_unit_tests"], str):
                 item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
-            unit_ok = exe.evaluate(
-                cur_func_impl,
-                item["hidden_unit_tests"],
-                timeout=10
-            )
+            unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
             print("File refl_omission: ",f"unit_ok 2: {unit_ok}")
             ever_unit_ok = ever_unit_ok or unit_ok
             iteration_unit_pass_matrix[cur_iter].append(unit_ok)
@@ -359,7 +357,9 @@ def run_single_item(
     item["success_count"] = success_count
     item["solved_iteration"] = solved_iter
     item[f"pass@{pass_at_k}"] = codex_pass_at_k(n_completions, success_count, pass_at_k)
-
+    item["final_unit_ok"] = unit_ok
+    item["final_unit_test_results"] = unit_test_results
+    
     print("File refl_omission: ",f"solved_iteration: {solved_iter}")
     print("File refl_omission: ",f"is_solvedF: {is_solved}")
     print("File refl_omission: ",f"success_count: {success_count}")

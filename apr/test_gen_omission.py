@@ -68,29 +68,30 @@ def generate_function(
     problem_context = create_problem_template(item, include_buggy_code=False)
 
     if prompting == "scot":
-        return gen.scot_func_impl(
+        out = gen.scot_func_impl(
             problem_context=problem_context,
             model=model,
             strategy=strategy,
-            #inferred_specificaion=inferred_specificaion,
             is_first_reflection=is_first_reflection,
             prev_func_impl=cur_func_impl,
             reflections=reflections,
-            feedback=feedback
+            feedback=feedback,
+            # inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
         )
     else:
-        return gen.func_impl(
+        out = gen.func_impl(
             problem_context=problem_context,
             model=model,
             strategy=strategy,
-            #inferred_specificaion=inferred_specificaion,
             is_first_reflection=is_first_reflection,
             prev_func_impl=cur_func_impl,
             reflections=reflections,
-            feedback=feedback
+            feedback=feedback,
+            # inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
         )
+
     if isinstance(out, list):
         return out
     else:
@@ -127,7 +128,7 @@ def run_single_item(
     cur_func_impl = item["bug_source_code"]
     is_first_reflection = True
     cur_feedback = None
-    prompting= "cot"
+    
     """
     while cur_pass < pass_at_k and not is_solved:
         try:
@@ -288,7 +289,7 @@ def run_single_item(
         if isinstance(item["hidden_unit_tests"], str):
             item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
-        unit_ok = exe.evaluate(cur_impl, item["hidden_unit_tests"], timeout=10)
+        unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
         ever_unit_ok = ever_unit_ok or unit_ok
         print("File test_gen_omission:",f"unit_ok first: {unit_ok}")
         test_feedback.append(f"unit_tests_passed={unit_ok}")
@@ -309,7 +310,7 @@ def run_single_item(
                 func=cur_func_impl,
                 feedback=cur_feedback,
                 model=model,
-                strategy="reflexion"
+                strategy="test_gen_omission"
             )
             reflections.append(reflection)
             print("File test_gen_omission:",f"REFLECTION!!!!!!!!: {reflection}")
@@ -317,7 +318,7 @@ def run_single_item(
                 gen,
                 item,
                 model,
-                strategy="reflexion",
+                strategy="test_gen_omission",
                 cur_func_impl=cur_func_impl,
                 problem_context=create_problem_template(item, False),
                 # inferred_specificaion=inferred_specificaion,
@@ -341,11 +342,7 @@ def run_single_item(
             if isinstance(item["hidden_unit_tests"], str):
                 item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
-            unit_ok = exe.evaluate(
-                cur_func_impl,
-                item["hidden_unit_tests"],
-                timeout=10
-            )
+            unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
             print("File test_gen_omission:",f"unit_ok 2: {unit_ok}")
             ever_unit_ok = ever_unit_ok or unit_ok
             iteration_unit_pass_matrix[cur_iter].append(unit_ok)
@@ -371,7 +368,8 @@ def run_single_item(
     item["success_count"] = success_count
     item["solved_iteration"] = solved_iter
     item[f"pass@{pass_at_k}"] = codex_pass_at_k(n_completions, success_count, pass_at_k)
-
+    item["final_unit_ok"] = unit_ok
+    item["final_unit_test_results"] = unit_test_results
 
     print("File test_gen_omission:",f"solved_iteration: {solved_iter}")
     print("File test_gen_omission:",f"is_solvedF: {is_solved}")

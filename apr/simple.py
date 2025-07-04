@@ -89,7 +89,7 @@ def generate_function(
             strategy=strategy,
             is_first_reflection=is_first_reflection,
             prev_func_impl=cur_func_impl,
-            #sreflections=reflections,
+            #reflections=reflections,
             feedback=feedback,
             # inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
@@ -210,7 +210,7 @@ def run_single_item(
         if isinstance(item["hidden_unit_tests"], str):
             item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
-        unit_ok = exe.evaluate(cur_impl, item["hidden_unit_tests"], timeout=10)
+        unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
         ever_unit_ok = ever_unit_ok or unit_ok
         print("File simple: ",f"unit_ok first: {unit_ok}")
         test_feedback.append(f"unit_tests_passed={unit_ok}")
