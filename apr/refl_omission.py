@@ -300,7 +300,7 @@ def run_single_item(
                 func=cur_func_impl,
                 feedback=cur_feedback,
                 model=model,
-                strategy="reflexion"
+                strategy="refl_omission"
             )
             reflections.append(reflection)"""
             # print("File refl_omission: ",f"REFLECTION!!!!!!!!: {reflection}")
@@ -308,7 +308,7 @@ def run_single_item(
                 gen,
                 item,
                 model,
-                strategy="reflexion",
+                strategy="refl_omission",
                 cur_func_impl=cur_func_impl,
                 problem_context=create_problem_template(item, False),
                 # inferred_specificaion=inferred_specificaion,
