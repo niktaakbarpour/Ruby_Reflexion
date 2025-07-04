@@ -267,6 +267,65 @@ class DeepSeekCoder(HFModelBase):
         if out.endswith(eos_token):
             out = out[:-len(eos_token)]  # Remove EOS token if present
         return out.strip()
+class DeepSeekR1(HFModelBase):
+    def __init__(self, model_path=None):
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        import torch
+
+        model_id = model_path or "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+
+        # Check if CUDA is available
+        use_cuda = torch.cuda.is_available()
+
+        # Initialize quantization_config as None
+        quantization_config = None
+
+        # Try to import BitsAndBytesConfig only if CUDA is available
+        if use_cuda:
+            try:
+                from transformers import BitsAndBytesConfig
+                quantization_config = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_quant_type="nf4",
+                )
+            except ImportError:
+                print("bitsandbytes is not installed. Running in full precision.")
+
+        else:
+            print("CUDA not available. Running in full precision (CPU mode).")
+
+        # Load model
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.bfloat16 if use_cuda else torch.float32,
+            device_map="auto" if use_cuda else None,
+            quantization_config=quantization_config,
+            trust_remote_code=True
+        )
+
+        # Load tokenizer
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_id,
+            trust_remote_code=True
+        )
+
+        super().__init__(model_id, model, tokenizer)
+
+    def prepare_prompt(self, messages: List[Message]):
+        """
+        Use tokenizer's built-in chat formatting for DeepSeek V3
+        """
+        from dataclasses import asdict
+        formatted = [asdict(m) for m in messages]
+
+        return self.tokenizer.apply_chat_template(
+            formatted,
+            add_generation_prompt=True,
+            return_tensors="pt"
+        ).to(self.model.device)
+
+    def extract_output(self, output: str) -> str:
+        return output.strip()
 
 class CodeLlama(HFModelBase):
     B_INST, E_INST = "[INST]", "[/INST]"
