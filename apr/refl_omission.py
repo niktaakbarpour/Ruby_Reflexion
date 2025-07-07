@@ -59,7 +59,7 @@ def generate_function(
         strategy,
         cur_func_impl,
         problem_context,
-        #reflections,
+        reflections,
         is_first_reflection,
         prompting,
         feedback,
@@ -75,7 +75,7 @@ def generate_function(
             strategy=strategy,
             is_first_reflection=is_first_reflection,
             prev_func_impl=cur_func_impl,
-            #reflections=reflections,
+            reflections=reflections,
             feedback=feedback,
             # inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
@@ -87,7 +87,7 @@ def generate_function(
             strategy=strategy,
             is_first_reflection=is_first_reflection,
             prev_func_impl=cur_func_impl,
-            #reflections=reflections,
+            reflections=reflections,
             feedback=feedback,
             # inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
@@ -243,7 +243,7 @@ def run_single_item(
     ]
 
     print("File refl_omission: ",f"formatted_tests: {formatted_tests}")
-    reflections.append(None)
+    reflections.append("")
     func_impls = []
     batch_size = 1
     for b in range(0, n_completions, batch_size):
