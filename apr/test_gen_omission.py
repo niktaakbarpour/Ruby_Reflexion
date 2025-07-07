@@ -58,6 +58,7 @@ def generate_function(
         model,
         strategy,
         cur_func_impl,
+        problem_context,
         reflections,
         is_first_reflection,
         prompting,
