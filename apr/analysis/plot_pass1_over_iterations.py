@@ -1,45 +1,44 @@
 import json
 import matplotlib.pyplot as plt
 
-file_path = "../results/reflexion_edge_pass_at1_iter11.jsonl"  # Make sure this matches your actual file name
+# List of input files and corresponding labels
+file_info = [
+    ("../results/reflexion_edge_pass_at1_iter11.jsonl", "RAMP"),
+    ("../results/self_refl_omit_edge_pass_at1_iter11.jsonl", "RAMP-self_refl"),
+    ("../results/first_refl_omit_edge_pass_at1_iter11.jsonl", "RAMP-self_first")
+]
 
-success_cumulative = [0] * 11  # Iter 0 to 10
-total_objects = 0
+num_iters = 11
+plt.figure(figsize=(8, 5))
 
-with open(file_path, "r", encoding="utf-8") as f:
-    for line in f:
-        obj = json.loads(line)
-        total_objects += 1
+for file_path, label in file_info:
+    success_cumulative = [0] * num_iters
+    total_objects = 0
 
-        # Track if any earlier iteration passed
-        solved = False
-        for i in range(11):
-            key = f"pass@1_unit_iter{i}"
-            if not solved and obj.get(key) == 1.0:
-                # Mark this iteration and all future ones as successful
-                for j in range(i, 11):
-                    success_cumulative[j] += 1
-                solved = True  # Only count first successful iter
-                break
+    with open(file_path, "r", encoding="utf-8") as f:
+        for line in f:
+            obj = json.loads(line)
+            total_objects += 1
 
-print("Total objects:", total_objects)
-print("Cumulative success counts per iteration:", success_cumulative)
+            solved = False
+            for i in range(num_iters):
+                key = f"pass@1_unit_iter{i}"
+                if not solved and obj.get(key) == 1.0:
+                    for j in range(i, num_iters):
+                        success_cumulative[j] += 1
+                    solved = True
+                    break
 
-# Compute cumulative pass@1 rates
-pass_rates = [count / total_objects for count in success_cumulative]
-print("Cumulative pass@1 rates:", pass_rates)
+    pass_rates = [count / total_objects for count in success_cumulative]
+    plt.plot(range(num_iters), pass_rates, marker='o', linewidth=2, label=label)
 
-# Plot
-plt.figure(figsize=(7, 4))
-plt.plot(range(11), pass_rates, marker='o', linewidth=2, label='Ruby')
-plt.xticks(range(11))
-plt.ylim(min(pass_rates) - 0.01, 0.3)
+# Customize plot
+plt.xticks(range(num_iters))
+plt.ylim(0.15, 0.3)
 plt.grid(True, linestyle=':', alpha=0.5)
 plt.xlabel("Iteration")
 plt.ylabel("Cumulative Pass@1")
-plt.title("Cumulative Pass@1 over Iterations")
 plt.legend()
 plt.tight_layout()
+# plt.savefig("Cumulative_Comparison.png", format='png')
 plt.show()
-
-
