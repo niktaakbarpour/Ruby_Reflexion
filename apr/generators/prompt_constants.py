@@ -1140,7 +1140,7 @@ RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI Ruby programming lan
 Please organize the test cases into the following three categories:
 
 **1. Basic Test Cases**:
-- **Objective**: Verify the function’s fundamental correctness under standard conditions.
+- **Objective**: Verify the function's fundamental correctness under standard conditions.
 - Include typical input values expected from everyday use.
 
 **2. Edge Test Cases**:
@@ -1148,7 +1148,7 @@ Please organize the test cases into the following three categories:
 - These should test boundary conditions and rare cases that could reveal hidden bugs.
 
 **3. Large Scale Test Cases**:
-- **Objective**: Evaluate the function’s behavior and performance under large or computationally intensive inputs.
+- **Objective**: Evaluate the function's behavior and performance under large or computationally intensive inputs.
 - Ensure the function handles high-volume data without crashing or slowing down.
 
 **Instructions**:
@@ -1219,7 +1219,7 @@ RB_TEST_VALIDATION_IO_CHAT_INSTRUCTION = """You are an AI Ruby programming langu
 - Directly return your verdict.
 
 **Your response must include**:
-- A final decision: “✅ Correct output” or “❌ Incorrect output”.
+- A final decision: "✅ Correct output" or "❌ Incorrect output".
 - If incorrect, provide the corrected test case in the same JSON format (with both `"input"` and corrected `"output"`).
 
 - Do not refer to or describe the buggy implementation.
@@ -1247,7 +1247,7 @@ Each test case will be validated in two steps:
 **Instructions**:
 - Your response should include:
   - Step-by-step reasoning,
-  - A final verdict: “✅ Correct output” or “❌ Incorrect output”,
+  - A final verdict: "✅ Correct output" or "❌ Incorrect output",
   - If the output is incorrect, provide the corrected test case in the same JSON format (with both `"input"` and corrected `"output"`).
 
 - Do not rerun or describe the buggy implementation.
@@ -1335,59 +1335,98 @@ Each test case must be generated in two phases:
 - Do not output any extra explanation — only the test cases in structured format.
 """
 
-RB_SELF_CONSISTENCY_TEST_GENERATION_FEW_SHOT = """Example 1:
-[problem context]:
-Problem description: Write a function that finds the sum of all even numbers in an array.
-Input format: An array of integers
-Output format: The sum of all even numbers in the array
-A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code runs but produces incorrect output.)
+RB_SELF_CONSISTENCY_INPUT_GENERATION_CHAT_INSTRUCTION = """You are an AI assistant tasked with generating valid and meaningful inputs for programming problems. Given a problem context, generate a single input that adheres to the input format and constraints described in the problem.
 
-[test cases]:
-[
-  {
-    "input": [1, 2, 3, 4, 5],
-    "initial_guess": 6,
-    "reasoning": "Looking at the array [1, 2, 3, 4, 5], the even numbers are 2 and 4. The sum of 2 + 4 = 6.",
-    "final_output": 6,
-    "consistency": "CONSISTENT"
-  },
-  {
-    "input": [1, 3, 5, 7],
-    "initial_guess": 0,
-    "reasoning": "Looking at the array [1, 3, 5, 7], there are no even numbers. The sum of no even numbers is 0.",
-    "final_output": 0,
-    "consistency": "CONSISTENT"
-  },
-  {
-    "input": [2, 4, 6, 8],
-    "initial_guess": 15,
-    "reasoning": "Looking at the array [2, 4, 6, 8], all numbers are even. The sum should be 2 + 4 + 6 + 8 = 20, not 15.",
-    "final_output": 20,
-    "consistency": "INCONSISTENT"
-  }
-]
+**Instructions:**
+- Generate only one input at a time
+- Ensure the input is valid according to the problem constraints
+- Return the input in the appropriate format (array, string, number, etc.)
+- Do not include any explanation or additional text
+- Return only the input value"""
+
+RB_SELF_CONSISTENCY_INITIAL_GUESS_CHAT_INSTRUCTION = """You are an AI assistant tasked with proposing an initial output guess for a given input and problem context. Based on the problem description and the provided input, make your best guess for what the expected output should be.
+
+**Instructions:**
+- Consider the problem requirements and input format
+- Make an educated guess for the expected output
+- Return only the expected output value
+- Do not include any explanation or reasoning
+- Return only the output value"""
+
+RB_SELF_CONSISTENCY_REASONING_CHAT_INSTRUCTION = """You are an AI assistant tasked with deriving the correct output through step-by-step reasoning. Given a problem context and input, carefully work through the logic to determine the correct output.
+
+**Instructions:**
+- Show your step-by-step reasoning process
+- Consider all edge cases and constraints
+- End your reasoning with "Final output: [value]"
+- Be thorough in your analysis
+- Ensure your final output is correct according to the problem requirements"""
+
+RB_SELF_CONSISTENCY_INPUT_GENERATION_FEW_SHOT = """Example 1:
+[problem context]:
+Write a function that finds the sum of all even numbers in an array.
+Input format: An array of integers
+
+[input]:
+[1, 2, 3, 4, 5]
 
 Example 2:
 [problem context]:
-Problem description: Write a function that counts the number of vowels in a string.
+Write a function that counts the number of vowels in a string.
 Input format: A string of lowercase letters
-Output format: The count of vowels (a, e, i, o, u)
-A pre-run execution outcome of buggy source code: RUNTIME_ERROR (The code encounters an error during execution.)
 
-[test cases]:
-[
-  {
-    "input": "hello",
-    "initial_guess": 2,
-    "reasoning": "In 'hello', the vowels are 'e' and 'o'. So the count is 2.",
-    "final_output": 2,
-    "consistency": "CONSISTENT"
-  },
-  {
-    "input": "xyz",
-    "initial_guess": 0,
-    "reasoning": "In 'xyz', there are no vowels. So the count is 0.",
-    "final_output": 0,
-    "consistency": "CONSISTENT"
-  }
-]"""
+[input]:
+"hello"
+"""
+
+RB_SELF_CONSISTENCY_INITIAL_GUESS_FEW_SHOT = """Example 1:
+[problem context]:
+Write a function that finds the sum of all even numbers in an array.
+Input format: An array of integers
+
+[input]:
+[1, 2, 3, 4, 5]
+
+[initial guess]:
+6
+
+Example 2:
+[problem context]:
+Write a function that counts the number of vowels in a string.
+Input format: A string of lowercase letters
+
+[input]:
+"hello"
+
+[initial guess]:
+2
+"""
+
+RB_SELF_CONSISTENCY_REASONING_FEW_SHOT = """Example 1:
+[problem context]:
+Write a function that finds the sum of all even numbers in an array.
+Input format: An array of integers
+
+[input]:
+[1, 2, 3, 4, 5]
+
+Step-by-step reasoning:
+Step 1: Look at the array [1, 2, 3, 4, 5]
+Step 2: Identify even numbers: 2 and 4
+Step 3: Calculate sum: 2 + 4 = 6
+Final output: 6
+
+Example 2:
+[problem context]:
+Write a function that counts the number of vowels in a string.
+Input format: A string of lowercase letters
+
+[input]:
+"hello"
+
+Step-by-step reasoning:
+Step 1: Look at the string "hello"
+Step 2: Identify vowels: 'e' and 'o'
+Step 3: Count vowels: 2
+Final output: 2
+"""

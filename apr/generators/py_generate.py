@@ -46,12 +46,16 @@ from .prompt_constants import (
     RB_FIRST_REFLEXION_FEW_SHOT_ADD_FIRST_OMIT,
     RB_REFLEXION_CHAT_INSTRUCTION_SELF_OMIT,
     RB_REFLEXION_FEW_SHOT_ADD_SELF_OMIT,
-    RB_SELF_CONSISTENCY_TEST_GENERATION_FEW_SHOT,
-    RB_SELF_CONSISTENCY_TEST_GENERATION_CHAT_INSTRUCTION,
+    RB_SELF_CONSISTENCY_INPUT_GENERATION_CHAT_INSTRUCTION,
+    RB_SELF_CONSISTENCY_INPUT_GENERATION_FEW_SHOT,
+    RB_SELF_CONSISTENCY_INITIAL_GUESS_CHAT_INSTRUCTION,
+    RB_SELF_CONSISTENCY_INITIAL_GUESS_FEW_SHOT,
+    RB_SELF_CONSISTENCY_REASONING_CHAT_INSTRUCTION,
+    RB_SELF_CONSISTENCY_REASONING_FEW_SHOT,
 )
 
 from .rb_parse import parse_code_block, add_code_block
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Tuple
 import re
 import json
 
@@ -189,15 +193,17 @@ class PyGenerator(Generator):
         )
     
     def self_consistency_tests(self, samples: List[str], problem_context: str, inferred_specificaion:str, func: str, model: ModelBase, max_num_tests: int = 7) -> List[str]:
-        """Generate test cases using self-consistency prompting strategy."""
+        """Generate test cases using three-phase self-consistency prompting strategy."""
         return generic_generate_self_consistency_tests(
-            samples=samples,
             problem_context=problem_context,
             model=model,
             max_num_tests=max_num_tests,
-            self_consistency_test_generation_few_shot=RB_SELF_CONSISTENCY_TEST_GENERATION_FEW_SHOT,
-            self_consistency_test_generation_chat_instruction=RB_SELF_CONSISTENCY_TEST_GENERATION_CHAT_INSTRUCTION,
-            inferred_specificaion=inferred_specificaion,
+            input_generation_chat_instruction=RB_SELF_CONSISTENCY_INPUT_GENERATION_CHAT_INSTRUCTION,
+            input_generation_few_shot=RB_SELF_CONSISTENCY_INPUT_GENERATION_FEW_SHOT,
+            initial_guess_chat_instruction=RB_SELF_CONSISTENCY_INITIAL_GUESS_CHAT_INSTRUCTION,
+            initial_guess_few_shot=RB_SELF_CONSISTENCY_INITIAL_GUESS_FEW_SHOT,
+            reasoning_chat_instruction=RB_SELF_CONSISTENCY_REASONING_CHAT_INSTRUCTION,
+            reasoning_few_shot=RB_SELF_CONSISTENCY_REASONING_FEW_SHOT,
         )
     
     def validate_internal_tests(self, tests: List[str], problem_context: str, func: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:

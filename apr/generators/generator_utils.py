@@ -521,69 +521,70 @@ def generic_generate_first_reflection(
     prompt = f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:"
     return model.generate(prompt)
 
+# --- Three-phase self-consistency test generation ---
+def generate_self_consistency_input(problem_context: str, model: ModelBase, input_generation_chat_instruction: str, input_generation_few_shot: str) -> str:
+    """Generate a single valid input for the problem using the model."""
+    prompt = f"{input_generation_chat_instruction}\n{input_generation_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:"
+    messages = [
+        Message(role="system", content=input_generation_chat_instruction),
+        Message(role="user", content=f"{input_generation_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:")
+    ]
+    output = model.generate_chat(messages=messages, max_tokens=256)
+    if isinstance(output, list):
+        output = output[0] if output else ""
+    return output.strip()
+
+def generate_self_consistency_initial_guess(problem_context: str, input_value: str, model: ModelBase, initial_guess_chat_instruction: str, initial_guess_few_shot: str) -> str:
+    """Generate the initial output guess for a given input and problem context."""
+    prompt = f"{initial_guess_chat_instruction}\n{initial_guess_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\n[initial guess]:"
+    messages = [
+        Message(role="system", content=initial_guess_chat_instruction),
+        Message(role="user", content=f"{initial_guess_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\n[initial guess]:")
+    ]
+    output = model.generate_chat(messages=messages, max_tokens=256)
+    if isinstance(output, list):
+        output = output[0] if output else ""
+    return output.strip()
+
+def generate_self_consistency_reasoning(problem_context: str, input_value: str, model: ModelBase, reasoning_chat_instruction: str, reasoning_few_shot: str) -> str:
+    """Generate the step-by-step reasoning and final output for a given input and problem context."""
+    prompt = f"{reasoning_chat_instruction}\n{reasoning_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\nStep-by-step reasoning:"
+    messages = [
+        Message(role="system", content=reasoning_chat_instruction),
+        Message(role="user", content=f"{reasoning_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\nStep-by-step reasoning:")
+    ]
+    output = model.generate_chat(messages=messages, max_tokens=512)
+    if isinstance(output, list):
+        output = output[0] if output else ""
+    return output.strip()
+
 def generic_generate_self_consistency_tests(
-    samples: List[str],
     problem_context: str,
     model: ModelBase,
     max_num_tests: int,
-    self_consistency_test_generation_few_shot: str,
-    self_consistency_test_generation_chat_instruction: str,
-    inferred_specificaion:str,
-    is_react: bool = False,
+    input_generation_chat_instruction: str,
+    input_generation_few_shot: str,
+    initial_guess_chat_instruction: str,
+    initial_guess_few_shot: str,
+    reasoning_chat_instruction: str,
+    reasoning_few_shot: str,
 ) -> List[str]:
-    """Generate test cases using self-consistency prompting strategy and filter out inconsistent ones."""
-    if model.is_chat:
-        if is_react:
-            messages = [
-                Message(role="system", content=self_consistency_test_generation_chat_instruction),
-                Message(role="user", content=f"{self_consistency_test_generation_few_shot}\n\n[think]:")
-            ]
-        else:
-            prompt = f"{self_consistency_test_generation_chat_instruction}\n{self_consistency_test_generation_few_shot}"
-            message = f"[problem context]:\n{problem_context}\n\n[test case samples]:\n{samples}\n\n[unit tests]:"
-            print_messages(prompt, message)
-            messages = [
-                Message(role="system", content=prompt),
-                Message(role="user", content=message)
-            ]
-        output = model.generate_chat(messages=messages, max_tokens=1024)
-        print(f"OUTPUT SELF-CONSISTENCY GENERATION!!!!!!: {output}")
-        try:
-            unit_tests = extract_json_fuzzy(output)
-        except (json.JSONDecodeError, ValueError) as e:
-            print(f"Self-consistency test generation failed: {e}")
-            return []
-    else:
-        # Self-consistency test generation is designed for chat models
-        print("Self-consistency test generation requires a chat model")
-        return []
+    """Orchestrate the three-phase self-consistency test generation process."""
+    tests = []
+    attempts = 0
+    while len(tests) < max_num_tests and attempts < max_num_tests * 2:
+        input_value = generate_self_consistency_input(problem_context, model, input_generation_chat_instruction, input_generation_few_shot)
+        initial_guess = generate_self_consistency_initial_guess(problem_context, input_value, model, initial_guess_chat_instruction, initial_guess_few_shot)
+        reasoning = generate_self_consistency_reasoning(problem_context, input_value, model, reasoning_chat_instruction, reasoning_few_shot)
+        # Extract final output from reasoning
+        match = re.search(r"Final output:\s*(.*)", reasoning)
+        final_output = match.group(1).strip() if match else ""
+        consistency = "CONSISTENT" if initial_guess.strip() == final_output else "INCONSISTENT"
+        if consistency == "CONSISTENT":
+            tests.append(f"({input_value}, {final_output})")
+        attempts += 1
+    return tests
 
-    # Filter out inconsistent test cases
-    consistent_tests = []
-    if isinstance(unit_tests, list):
-        for test_case in unit_tests:
-            if isinstance(test_case, dict) and test_case.get("consistency") == "CONSISTENT":
-                # Extract just the input and output for consistent cases
-                consistent_test = {
-                    "input": test_case.get("input"),
-                    "output": test_case.get("final_output")
-                }
-                consistent_tests.append(consistent_test)
-    elif isinstance(unit_tests, dict) and unit_tests.get("consistency") == "CONSISTENT":
-        # Single test case
-        consistent_test = {
-            "input": unit_tests.get("input"),
-            "output": unit_tests.get("final_output")
-        }
-        consistent_tests.append(consistent_test)
-
-    # Return consistent tests in the expected format
-    return sample_n_random([
-        (t["input"], t["output"])
-        for t in consistent_tests if isinstance(t, dict) and "input" in t and "output" in t
-    ], max_num_tests)
-  
-  
 
 def generic_infer_specifications(
     problem_context: str,
