@@ -210,7 +210,7 @@ class PyGenerator(Generator):
             reasoning_few_shot=RB_SELF_CONSISTENCY_REASONING_FEW_SHOT,
         )
     
-def validate_internal_tests(self,
+    def validate_internal_tests(self,
                                 tests: List[str],
                                 problem_context: str,
                                 func: str,
