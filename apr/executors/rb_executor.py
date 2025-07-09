@@ -69,59 +69,87 @@ class RbExecutor:
         }
 
 
-    def evaluate(self, func: str, test_cases: list, timeout: int = 5) -> bool:
+    def evaluate(self, func: str, test_cases: list, timeout: int = 5) -> Tuple[bool, List[dict]]:
         """
-        Evaluates a Ruby function against multiple test cases.
-
-        Args:
-            func (str): The Ruby function as a string.
-            test_cases (list): A list of dictionaries containing "input" and "output".
-            timeout (int): Timeout for execution (in seconds).
+        Evaluates a Ruby function against multiple test cases and returns
+        per-test results along with detailed debug printouts.
 
         Returns:
-            bool: True if all test cases pass, False otherwise.
+            - overall_pass (bool): True if all test cases pass.
+            - detailed_results (List[dict]): List of test results with input, expected, actual, and pass/fail.
         """
         ruby_script_path = "/cvmfs/soft.computecanada.ca/easybuild/software/2020/avx2/Core/ruby/2.7.1/bin/ruby"
+        detailed_results = []
+        overall_pass = True
+
+        if test_cases and not isinstance(test_cases[0], dict):
+            test_cases = [{"input": inp, "output": out} for inp, out in test_cases]
 
         for test in test_cases:
             test_input = test["input"]
-            
-            # Normalize expected output, which could be a list or a single string
+
             expected_output = test["output"]
             if isinstance(expected_output, list):
-                expected_output = ''.join(expected_output).strip()  # If it's a list, join it into a single string
+                expected_output = ''.join(expected_output).strip()
             else:
-                expected_output = expected_output.strip()  # If it's a string, just strip it
+                expected_output = expected_output.strip()
 
             try:
                 result = subprocess.run(
-                    [ruby_script_path, "-e", func],  # Run the Ruby function
-                    input=test_input,  # Pass input via stdin
+                    [ruby_script_path, "-e", func],
+                    input=test_input,
                     capture_output=True,
                     text=True,
                     timeout=timeout,
                 )
 
-                actual_output = result.stdout.strip()  # Normalize actual output
+                actual_output = result.stdout.strip()
 
-                # Debugging output
+                # Debug prints
                 print(f"actual_output: {actual_output}")
                 print(f"expected_output: {expected_output}")
 
-                if actual_output != expected_output:
+                passed = actual_output == expected_output
+                if not passed:
                     print("Test failed")
-                    return False  # Fail if any test case doesn't match
+                    overall_pass = False
+                else:
+                    print("Test passed")
+
+                detailed_results.append({
+                    "input": test_input.strip(),
+                    "expected": expected_output,
+                    "actual": actual_output,
+                    "passed": passed
+                })
 
             except subprocess.TimeoutExpired:
                 print(f"Timeout for input: {test_input}")
-                return False  # Fail if the process times out
+                detailed_results.append({
+                    "input": test_input.strip(),
+                    "expected": expected_output,
+                    "actual": "",
+                    "passed": False,
+                    "error": "Timeout"
+                })
+                overall_pass = False
 
             except Exception as e:
                 print(f"Error executing Ruby code: {e}")
-                return False  # Fail on any other exception
-        
-        print("All tests passed")
-        return True  # Pass only if all test cases succeed
+                detailed_results.append({
+                    "input": test_input.strip(),
+                    "expected": expected_output,
+                    "actual": "",
+                    "passed": False,
+                    "error": str(e)
+                })
+                overall_pass = False
+
+        if overall_pass:
+            print("All tests passed")
+
+        return overall_pass, detailed_results
+
 
 
 

@@ -15,6 +15,7 @@ cd $SLURM_SUBMIT_DIR
 
 # Load CUDA
 module load cuda
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # Set CUDA_HOME if necessary
 #export CUDA_HOME=/usr/local/cuda-11.3  # Replace with your actual CUDA path

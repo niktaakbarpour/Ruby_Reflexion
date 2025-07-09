@@ -61,15 +61,19 @@ import json
 
 class PyGenerator(Generator):
     def self_reflection(self,
+                        problem_context: str,
                         func: str,
                         feedback: str,
                         model: ModelBase,
+                        strategy: str
                         # inferred_specificaion:str
                     ) -> str:
         return generic_generate_self_reflection(
             func=func,
             feedback=feedback,
             model=model,
+            problem_context=problem_context,
+            strategy=strategy,
             # inferred_specificaion=inferred_specificaion,
             self_reflection_chat_instruction_test_omit=RB_SELF_REFLECTION_CHAT_INSTRUCTION_TEST_OMIT,
             self_reflection_chat_instruction=PY_SELF_REFLECTION_CHAT_INSTRUCTION,
@@ -110,6 +114,8 @@ class PyGenerator(Generator):
         reflections: Optional[str] = None,
         temperature: float = 1.0,
     ) -> Union[str, List[str]]:
+        if isinstance(reflections, list):
+            reflections = "\n".join(f"{i+1}. {r.strip()}" for i, r in enumerate(reflections))
         return generic_generate_func_impl(
             problem_context=problem_context,
             model=model,
@@ -177,12 +183,10 @@ class PyGenerator(Generator):
                        samples: List[str],
                        problem_context: str,
                     #    inferred_specificaion:str,
-                       func: str,
                        model: ModelBase,
                        max_num_tests: int = 7) -> List[str]:
         return generic_generate_internal_tests(
             problem_context=problem_context,
-            func=func,
             model=model,
             max_num_tests=max_num_tests,
             test_generation_few_shot=RB_TEST_GENERATION_EDGE_FEW_SHOT,
@@ -206,7 +210,13 @@ class PyGenerator(Generator):
             reasoning_few_shot=RB_SELF_CONSISTENCY_REASONING_FEW_SHOT,
         )
     
-    def validate_internal_tests(self, tests: List[str], problem_context: str, func: str, model: ModelBase, max_num_tests: int = 5) -> List[str]:
+def validate_internal_tests(self,
+                                tests: List[str],
+                                problem_context: str,
+                                func: str,
+                                model: ModelBase,
+                                max_num_tests: int = 5
+                                ) -> List[str]:
         return generic_validate_internal_tests(
             tests=tests,
             problem_context=problem_context,
