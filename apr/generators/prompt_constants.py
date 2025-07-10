@@ -1129,7 +1129,6 @@ PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language
 In this step you should only generate sample input and output not function implemention and not test suite."""
 
 RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:
-- The buggy source code,
 - The problem description, which explains the intended behavior of the program,
 - The input format, which describes the structure, range, and constraints of inputs,
 - The expected output format, which specifies how the program's output should be structured, and

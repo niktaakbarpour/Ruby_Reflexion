@@ -33,6 +33,19 @@ python main.py \
   --language "rb" \
   --model "deepseek-ai/deepseek-coder-6.7b-instruct" \
   --model_path "/scratch/st-fhendija-1/nikta/deep_model" \
-  --pass_at_k "3" \
+  --pass_at_k "1" \
   --max_iters "3" \
+  --verbose | tee ./logs/reflexion_deepseek
+
+
+python main.py \
+  --run_name "2test_reflexion_edge_pass_at1_iter11" \
+  --root_dir "root" \
+  --dataset_path ./benchmarks/compact_ruby.jsonl \
+  --strategy "reflexion" \
+  --language "rb" \
+  --model "deepseek-ai/deepseek-coder-6.7b-instruct" \
+  --model_path "/scratch/st-fhendija-1/nikta/deep_model" \
+  --pass_at_k "1" \
+  --max_iters "11" \
   --verbose | tee ./logs/reflexion_deepseek
