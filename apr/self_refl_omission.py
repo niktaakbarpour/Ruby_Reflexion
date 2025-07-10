@@ -299,8 +299,9 @@ def run_single_item(
         
         unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
         ever_unit_ok = ever_unit_ok or unit_ok
+        print("File self_refl_omission:",f"unit_test_results first: {unit_test_results}")
         print("File self_refl_omission:",f"unit_ok first: {unit_ok}")
-        test_feedback.append(f"unit_tests_passed={unit_ok}")
+
         iteration_unit_pass_matrix[0].append(unit_ok)
         if unit_ok and is_passing:
             solved_iter = 0
@@ -308,7 +309,7 @@ def run_single_item(
             break
 
         cur_iter = 1
-        cur_feedback = feedback
+        cur_feedback = test_feedback
 
         while not is_solved and cur_iter < max_iters:
             print("File self_refl_omission:",f"cur_iter: {cur_iter}")
@@ -351,6 +352,7 @@ def run_single_item(
 
             unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
             print("File self_refl_omission:",f"unit_ok 2: {unit_ok}")
+            print("File self_refl_omission:",f"unit_test_results 2: {unit_test_results}")
             ever_unit_ok = ever_unit_ok or unit_ok
             iteration_unit_pass_matrix[cur_iter].append(unit_ok)
 
