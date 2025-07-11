@@ -470,31 +470,6 @@ def generic_generate_first_reflection(
     # inferred_specificaion:str,
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
-) -> str:
-    if model.is_chat:
-        system_content = self_reflection_chat_instruction
-        if self_reflection_few_shot:
-            system_content += f"\n{self_reflection_few_shot}"
-        user_content = f"[incorrect function impl]:\n{add_code_block(func)}\n\n[problem context]:\n{problem_context}\n\n[self-reflection]:"
-        print_messages(system_content, user_content)
-        messages = [
-            Message(role="system", content=system_content),
-            Message(role="user", content=user_content)
-        ]
-        response = model.generate_chat(messages=messages)
-        print(f"RESPONSE!!!!!!: {response}")
-        return response
-    return model.generate(f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:")
-
-def generic_generate_first_reflection(
-    problem_context: str,
-    func: str,
-    model: ModelBase,
-    self_reflection_chat_instruction: str,
-    self_reflection_completion_instruction: str,
-    # inferred_specificaion: str,
-    add_code_block: Callable[[str], str],
-    self_reflection_few_shot: Optional[str],
 ) -> Union[str, List[str]]:
     if model.is_chat:
         system_content = self_reflection_chat_instruction
@@ -515,10 +490,114 @@ def generic_generate_first_reflection(
         response = model.generate_chat(messages=messages)
         print(f"RESPONSE!!!!!!: {response}")
         return response
-
+      
     # Non-chat model (completion-based)
     prompt = f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:"
     return model.generate(prompt)
+
+# --- Three-phase self-consistency test generation ---
+def generate_self_consistency_input(problem_context: str, model: ModelBase, input_generation_chat_instruction: str, input_generation_few_shot: str):
+    """Generate a list of valid inputs for the problem using the model."""
+    prompt = f"{input_generation_chat_instruction}\n{input_generation_few_shot}\n\n[problem context]:\n{problem_context}\n\n[inputs]:"
+    messages = [
+        Message(role="system", content=input_generation_chat_instruction),
+        Message(role="user", content=f"{input_generation_few_shot}\n\n[problem context]:\n{problem_context}\n\n[inputs]:")
+    ]
+    output = model.generate_chat(messages=messages, max_tokens=256)
+    if isinstance(output, list):
+        output = output[0] if output else ""
+    # Try to parse as JSON array
+    try:
+        inputs = json.loads(output)
+    except Exception:
+        # fallback: try to eval as Python list
+        try:
+            inputs = eval(output)
+        except Exception:
+            inputs = []
+    return inputs
+
+def generate_self_consistency_initial_guess(problem_context: str, input_value: str, model: ModelBase, initial_guess_chat_instruction: str, initial_guess_few_shot: str) -> str:
+    """Generate the initial output guess for a given input and problem context. Returns only the output value (not a JSON pair)."""
+    prompt = f"{initial_guess_chat_instruction}\n{initial_guess_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\n[initial guess]:"
+    messages = [
+        Message(role="system", content=initial_guess_chat_instruction),
+        Message(role="user", content=f"{initial_guess_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\n[initial guess]:")
+    ]
+    output = model.generate_chat(messages=messages, max_tokens=256)
+    if isinstance(output, list):
+        output = output[0] if output else ""
+    return output.strip()
+
+def generate_self_consistency_reasoning(problem_context: str, input_value: str, model: ModelBase, reasoning_chat_instruction: str, reasoning_few_shot: str) -> str:
+    """Generate the step-by-step reasoning and final output for a given input and problem context. Returns only the final output value (not a JSON pair)."""
+    prompt = f"{reasoning_chat_instruction}\n{reasoning_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\nStep-by-step reasoning:"
+    messages = [
+        Message(role="system", content=reasoning_chat_instruction),
+        Message(role="user", content=f"{reasoning_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\nStep-by-step reasoning:")
+    ]
+    output = model.generate_chat(messages=messages, max_tokens=512)
+    if isinstance(output, list):
+        output = output[0] if output else ""
+    # Extract only the final output value from the reasoning
+    match = re.search(r"Final output:\s*(.*)", output)
+    final_output = match.group(1).strip() if match else ""
+    return final_output
+
+def generic_generate_self_consistency_tests(
+    problem_context: str,
+    model: ModelBase,
+    max_num_tests: int,
+    input_generation_chat_instruction: str,
+    input_generation_few_shot: str,
+    initial_guess_chat_instruction: str,
+    initial_guess_few_shot: str,
+    reasoning_chat_instruction: str,
+    reasoning_few_shot: str,
+) -> list:
+    """Orchestrate the three-phase self-consistency test generation process (improved: generate all inputs first).
+    Now stores (input, output) pairs where output is just the value, not a JSON object.
+    Ensures at least max_num_tests unique inputs if possible, with up to 3 retries."""
+    tests = []
+    # Step 1: Generate a list of unique inputs, retry if not enough
+    unique_inputs = set()
+    retries = 0
+    max_retries = 3
+    while len(unique_inputs) < max_num_tests and retries < max_retries:
+        input_values = generate_self_consistency_input(
+            problem_context, model, input_generation_chat_instruction, input_generation_few_shot
+        )
+        if isinstance(input_values, list):
+            for inp in input_values:
+                unique_inputs.add(str(inp))  # Use str to ensure hashability
+        retries += 1
+    if len(unique_inputs) < max_num_tests:
+        print(f"Warning: Only {len(unique_inputs)} unique test inputs generated, but {max_num_tests} requested.")
+    # Convert back to original input type if possible (eval if needed)
+    input_values = []
+    for inp in unique_inputs:
+        try:
+            val = eval(inp)
+        except Exception:
+            val = inp
+        input_values.append(val)
+    # Shuffle and sample up to max_num_tests unique inputs
+    random.shuffle(input_values)
+    input_values = input_values[:max_num_tests]
+    # Step 2: For each input, generate initial guess and reasoning, collect consistent tests
+    for input_value in input_values:
+        initial_guess = generate_self_consistency_initial_guess(
+            problem_context, input_value, model, initial_guess_chat_instruction, initial_guess_few_shot
+        )
+        final_output = generate_self_consistency_reasoning(
+            problem_context, input_value, model, reasoning_chat_instruction, reasoning_few_shot
+        )
+        consistency = "CONSISTENT" if initial_guess.strip() == final_output else "INCONSISTENT"
+        if consistency == "CONSISTENT":
+            tests.append((input_value, final_output))
+        if len(tests) >= max_num_tests:
+            break
+    return tests
 
 
 def generic_infer_specifications(
@@ -542,3 +621,4 @@ def generic_infer_specifications(
 
         response = model.generate_chat(messages=messages)
         return response
+

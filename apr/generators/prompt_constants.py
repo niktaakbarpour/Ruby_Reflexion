@@ -1139,7 +1139,7 @@ RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI Ruby programming lan
 Create two test cases for each of these three categories:
 
 **1. Basic Test Cases**:
-- **Objective**: Verify the function’s fundamental correctness under standard conditions.
+- **Objective**: Verify the function's fundamental correctness under standard conditions.
 - Include typical input values expected from everyday use.
 
 **2. Edge Test Cases**:
@@ -1147,7 +1147,7 @@ Create two test cases for each of these three categories:
 - These should test boundary conditions and rare cases that could reveal hidden bugs.
 
 **3. Large Scale Test Cases**:
-- **Objective**: Evaluate the function’s behavior and performance under large or computationally intensive inputs.
+- **Objective**: Evaluate the function's behavior and performance under large or computationally intensive inputs.
 - Ensure the function handles high-volume data without crashing or slowing down.
 
 **Instructions**:
@@ -1218,7 +1218,7 @@ RB_TEST_VALIDATION_IO_CHAT_INSTRUCTION = """You are an AI Ruby programming langu
 - Directly return your verdict.
 
 **Your response must include**:
-- A final decision: “✅ Correct output” or “❌ Incorrect output”.
+- A final decision: "✅ Correct output" or "❌ Incorrect output".
 - If incorrect, provide the corrected test case in the same JSON format (with both `"input"` and corrected `"output"`).
 
 - Do not refer to or describe the buggy implementation.
@@ -1246,7 +1246,7 @@ Each test case will be validated in two steps:
 **Instructions**:
 - Your response should include:
   - Step-by-step reasoning,
-  - A final verdict: “✅ Correct output” or “❌ Incorrect output”,
+  - A final verdict: "✅ Correct output" or "❌ Incorrect output",
   - If the output is incorrect, provide the corrected test case in the same JSON format (with both `"input"` and corrected `"output"`).
 
 - Do not rerun or describe the buggy implementation.
@@ -1305,4 +1305,160 @@ Function Intent: Find the greatest common divisor of two integers.
 Input Assumptions: Two integers a and b, both ≥ 1.
 Expected Behavior: Return the largest integer that divides both a and b without remainder.
 Edge Cases: a = b, a = 1 or b = 1, a much larger than b.
+"""
+
+RB_SELF_CONSISTENCY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:  
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The expected output format, which specifies how the program's output should be structured, and
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
+
+Each test case must be generated in two phases:  
+1. **Input Generation**: Based on the input format and problem requirements, generate a valid and meaningful input.  
+2. **Output Validation via Self-Consistency**: Propose an initial output guess, then manually derive the correct output through step-by-step reasoning. Compare the two to assess consistency.  
+
+**Instructions**:  
+- Return a list of dictionaries in valid JSON format. Each item must include:
+  - `"input"`: an array of integers,  
+  - `"initial_guess"`: initial predicted output,  
+  - `"reasoning"`: manual reasoning steps based on intended behavior,  
+  - `"final_output"`: output derived through reasoning,  
+  - `"consistency"`: `"CONSISTENT"` or `"INCONSISTENT"`  
+
+- Do **not** include function implementations, test harnesses
+- Inputs must adhere to the problem constraints.  
+- Outputs must reflect the correct behavior, not the buggy implementation.  
+- Output only the structured test cases as a JSON array.
+- Do not output any extra explanation — only the test cases in structured format.
+"""
+
+RB_SELF_CONSISTENCY_INPUT_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language assistant tasked with validating the correctness of test cases based on the provided problem context, which includes:
+
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The expected output format, which specifies how the program's output should be structured,
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
+**Instructions:**
+- Generate multiple diverse and valid inputs at a time (at least 5, if possible)
+- Ensure all inputs are valid according to the problem constraints
+- Return the inputs as a list/array in the appropriate format (array, string, number, etc.)
+- Do not include any explanation or additional text
+- Return only the list/array of input values
+"""
+RB_SELF_CONSISTENCY_INITIAL_GUESS_CHAT_INSTRUCTION = """You are an AI assistant tasked with generating one valid and meaningful output for programming problem based on the input. Given a problem context, generate a output that adhere to the input format and constraints described in the problem context which includes:
+
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The input value,
+- The expected output format, which specifies how the program's output should be structured,
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
+**Instructions:**
+- Consider the problem requirements and input format
+- Make an educated guess for the expected output
+- Return only the expected output value
+- Do not include any explanation or reasoning
+- Return only the output value"""
+
+RB_SELF_CONSISTENCY_REASONING_CHAT_INSTRUCTION = """You are an AI assistant tasked with generating one valid and meaningful output for programming problem based on the input. Given a problem context, generate a output that adhere to the input format and constraints described in the problem context which includes:
+
+- The buggy source code,
+- The problem description, which explains the intended behavior of the program,
+- The input format, which describes the structure, range, and constraints of inputs,
+- The input value,
+- The expected output format, which specifies how the program's output should be structured,
+- The pre-run execution outcome, which describes how the buggy code currently behaves.
+
+**Instructions:**
+- Show your step-by-step reasoning process
+- Consider all edge cases and constraints
+- After your reasoning, include a separate '[output]:' block containing only the output value on its own line
+- Be thorough in your analysis
+- Ensure your output is correct according to the problem requirements
+- Return only the Step by Step Reasoning and the output value"""
+
+RB_SELF_CONSISTENCY_INPUT_GENERATION_FEW_SHOT = """Example 1:
+[problem context]:
+Write a function that finds the sum of all even numbers in an array.
+Input format: An array of integers
+
+[inputs]:
+[
+  [1, 2, 3, 4, 5],
+  [10, 11, 12, 13],
+  [0, -2, -4, 7],
+  [100],
+  [2, 4, 6, 8, 10]
+]
+
+Example 2:
+[problem context]:
+Write a function that counts the number of vowels in a string.
+Input format: A string of lowercase letters
+
+[inputs]:
+[
+  "hello",
+  "world",
+  "aeiou",
+  "bcdfg",
+  "programming"
+]
+"""
+
+RB_SELF_CONSISTENCY_INITIAL_GUESS_FEW_SHOT = """Example 1:
+[problem context]:
+Write a function that finds the sum of all even numbers in an array.
+Input format: An array of integers
+
+[input]:
+[1, 2, 3, 4, 5]
+
+[initial guess]:
+6
+
+Example 2:
+[problem context]:
+Write a function that counts the number of vowels in a string.
+Input format: A string of lowercase letters
+
+[input]:
+"hello"
+
+[initial guess]:
+2
+"""
+
+RB_SELF_CONSISTENCY_REASONING_FEW_SHOT = """Example 1:
+[problem context]:
+Write a function that finds the sum of all even numbers in an array.
+Input format: An array of integers
+
+[Step by step reasoning]:
+Step 1: Look at the array [1, 2, 3, 4, 5]
+Step 2: Identify even numbers: 2 and 4
+Step 3: Calculate sum: 2 + 4 = 6
+Final output: 6
+
+[output]:
+6
+
+Example 2:
+[problem context]:
+Write a function that counts the number of vowels in a string.
+Input format: A string of lowercase letters
+
+[Step by step reasoning]:
+Step 1: Look at the string \"hello\"
+Step 2: Identify vowels: 'e' and 'o'
+Step 3: Count vowels: 2
+Final output: 2
+
+[output]:
+2
 """
