@@ -542,22 +542,25 @@ def generate_self_consistency_reasoning(problem_context: str, input_value: str, 
     ]
     print(f"[DEBUG] Reasoning Prompt:\n{prompt}")
     output = model.generate_chat(messages=messages, max_tokens=1024)
+    print(f"[DEBUG] Raw reasoning output: {repr(output)}")
     if isinstance(output, list):
         output = output[0] if output else ""
-    
-    print(f"[DEBUG] Raw reasoning output: {repr(output)}")
-    
     # Extract only the final output value from the reasoning
-    # Look for [output]: pattern as specified in the prompt format
-    match = re.search(r"\[output\]:\s*(.*?)(?:\n|$)", output, re.DOTALL)
-    if match:
-        final_output = match.group(1).strip()
-        print(f"[DEBUG] Found [output]: pattern, extracted: {repr(final_output)}")
-    else:
-        # Fallback: try to find any output-like pattern
-        match = re.search(r"Final output:\s*(.*?)(?:\n|$)", output, re.DOTALL)
-        final_output = match.group(1).strip() if match else ""
-        print(f"[DEBUG] No [output]: pattern found, fallback result: {repr(final_output)}")
+    # Try multiple patterns for robustness
+    patterns = [
+        r"\[output\]:\s*(.*?)(?:\n|$)",
+        r"Output:?\s*(.*?)(?:\n|$)",
+        r"\[Output\]:\s*(.*?)(?:\n|$)",
+    ]
+    final_output = ""
+    for pat in patterns:
+        match = re.search(pat, output, re.IGNORECASE | re.DOTALL)
+        if match:
+            final_output = match.group(1).strip()
+            print(f"[DEBUG] Found output pattern '{pat}', extracted: {repr(final_output)}")
+            break
+    if not final_output:
+        print(f"[DEBUG] No output pattern found, fallback result: ''")
     return final_output
 
 def generic_generate_self_consistency_tests(
