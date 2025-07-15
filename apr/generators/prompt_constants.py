@@ -1335,9 +1335,8 @@ Each test case must be generated in two phases:
 - Do not output any extra explanation — only the test cases in structured format.
 """
 
-RB_SELF_CONSISTENCY_INPUT_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language assistant tasked with validating the correctness of test cases based on the provided problem context, which includes:
+RB_SELF_CONSISTENCY_INPUT_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language assistant tasked with generating the inputs of test cases based on the provided problem context, which includes:
 
-- The buggy source code,
 - The problem description, which explains the intended behavior of the program,
 - The input format, which describes the structure, range, and constraints of inputs,
 - The expected output format, which specifies how the program's output should be structured,
@@ -1350,9 +1349,8 @@ RB_SELF_CONSISTENCY_INPUT_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby pr
 - Do not include any explanation or additional text
 - Return only the list/array of input values
 """
-RB_SELF_CONSISTENCY_INITIAL_GUESS_CHAT_INSTRUCTION = """You are an AI assistant tasked with generating one valid and meaningful output for programming problem based on the input. Given a problem context, generate a output that adhere to the input format and constraints described in the problem context which includes:
+RB_SELF_CONSISTENCY_INITIAL_GUESS_CHAT_INSTRUCTION = """You are an AI assistant tasked with generating one correct output for programming problem based on the input. Given a problem context, generate a correct output that adhere to the input format and constraints described in the problem context which includes:
 
-- The buggy source code,
 - The problem description, which explains the intended behavior of the program,
 - The input format, which describes the structure, range, and constraints of inputs,
 - The input value,
@@ -1366,9 +1364,8 @@ RB_SELF_CONSISTENCY_INITIAL_GUESS_CHAT_INSTRUCTION = """You are an AI assistant 
 - Do not include any explanation or reasoning
 - Return only the output value"""
 
-RB_SELF_CONSISTENCY_REASONING_CHAT_INSTRUCTION = """You are an AI assistant tasked with generating one valid and meaningful output for programming problem based on the input. Given a problem context, generate a output that adhere to the input format and constraints described in the problem context which includes:
+RB_SELF_CONSISTENCY_REASONING_CHAT_INSTRUCTION = """You are an AI assistant tasked with generating one correct output for programming problem based on the input. Given a problem context, generate a correct output that adhere to the input format and constraints described in the problem context which includes:
 
-- The buggy source code,
 - The problem description, which explains the intended behavior of the program,
 - The input format, which describes the structure, range, and constraints of inputs,
 - The input value,
@@ -1376,90 +1373,87 @@ RB_SELF_CONSISTENCY_REASONING_CHAT_INSTRUCTION = """You are an AI assistant task
 - The pre-run execution outcome, which describes how the buggy code currently behaves.
 
 **Instructions:**
-- Show your step-by-step reasoning process
-- Consider all edge cases and constraints
-- After your reasoning, include a separate '[output]:' block containing only the output value on its own line
-- Be thorough in your analysis
-- Ensure your output is correct according to the problem requirements
+- Show your step-by-step reasoning process within 4 steps in [step by step reasoning] block while keeping your reasoning as brief as possible.
+- After your reasoning, include a separate [output] block containing **only** the output value without any other explanation
+- Ensure your answer fits within the response limit.
+- Ensure your output is correct according to the problem requirements and and it is always included at the end after [output].
 - Return only the Step by Step Reasoning and the output value"""
 
 RB_SELF_CONSISTENCY_INPUT_GENERATION_FEW_SHOT = """Example 1:
-[problem context]:
-Write a function that finds the sum of all even numbers in an array.
-Input format: An array of integers
+  [problem context]:
+  Write a function that finds the sum of all even numbers in an array.
+  Input format: An array of integers
 
-[inputs]:
-[
-  [1, 2, 3, 4, 5],
-  [10, 11, 12, 13],
-  [0, -2, -4, 7],
-  [100],
-  [2, 4, 6, 8, 10]
-]
+  [inputs]:
+  [
+    [1, 2, 3, 4, 5],
+    [10, 11, 12, 13],
+    [0, -2, -4, 7],
+    [100],
+    [2, 4, 6, 8, 10]
+  ]
 
 Example 2:
-[problem context]:
-Write a function that counts the number of vowels in a string.
-Input format: A string of lowercase letters
+  [problem context]:
+  Write a function that counts the number of vowels in a string.
+  Input format: A string of lowercase letters
 
-[inputs]:
-[
-  "hello",
-  "world",
-  "aeiou",
-  "bcdfg",
-  "programming"
-]
+  [inputs]:
+  [
+    "hello",
+    "world",
+    "aeiou",
+    "bcdfg",
+    "programming"
+  ]
 """
 
 RB_SELF_CONSISTENCY_INITIAL_GUESS_FEW_SHOT = """Example 1:
-[problem context]:
-Write a function that finds the sum of all even numbers in an array.
-Input format: An array of integers
+  [problem context]:
+  Write a function that finds the sum of all even numbers in an array.
+  Input format: An array of integers
 
-[input]:
-[1, 2, 3, 4, 5]
+  [input]:
+  [1, 2, 3, 4, 5]
 
-[initial guess]:
-6
+  [initial guess]:
+  6
 
 Example 2:
-[problem context]:
-Write a function that counts the number of vowels in a string.
-Input format: A string of lowercase letters
+  [problem context]:
+  Write a function that counts the number of vowels in a string.
+  Input format: A string of lowercase letters
 
-[input]:
-"hello"
+  [input]:
+  "hello"
 
-[initial guess]:
-2
+  [initial guess]:
+  2
 """
 
 RB_SELF_CONSISTENCY_REASONING_FEW_SHOT = """Example 1:
-[problem context]:
-Write a function that finds the sum of all even numbers in an array.
-Input format: An array of integers
+  [problem context]:
+  Write a function that finds the sum of all even numbers in an array.
+  Input format: An array of integers
 
-[Step by step reasoning]:
-Step 1: Look at the array [1, 2, 3, 4, 5]
-Step 2: Identify even numbers: 2 and 4
-Step 3: Calculate sum: 2 + 4 = 6
-Final output: 6
+  [step by step reasoning]:
+  Step 1: Look at the array [1, 2, 3, 4, 5]
+  Step 2: Identify even numbers: 2 and 4
+  Step 3: Calculate sum: 2 + 4 = 6
 
-[output]:
-6
+  [output]:
+  6
 
 Example 2:
-[problem context]:
-Write a function that counts the number of vowels in a string.
-Input format: A string of lowercase letters
+  [problem context]:
+  Write a function that counts the number of vowels in a string.
+  Input format: A string of lowercase letters
 
-[Step by step reasoning]:
-Step 1: Look at the string \"hello\"
-Step 2: Identify vowels: 'e' and 'o'
-Step 3: Count vowels: 2
-Final output: 2
+  [step by step reasoning]:
+  Step 1: Look at the string \"hello\"
+  Step 2: Identify vowels: 'e' and 'o'
+  Step 3: Count vowels: 2
 
-[output]:
-2
+  [output]:
+  2
 """

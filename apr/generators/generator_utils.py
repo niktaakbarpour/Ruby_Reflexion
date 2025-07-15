@@ -503,7 +503,9 @@ def generate_self_consistency_input(problem_context: str, model: ModelBase, inpu
         Message(role="system", content=input_generation_chat_instruction),
         Message(role="user", content=f"{input_generation_few_shot}\n\n[problem context]:\n{problem_context}\n\n[inputs]:")
     ]
+    print(f"[DEBUG] Input Generation Prompt:\n{prompt}")
     output = model.generate_chat(messages=messages, max_tokens=256)
+    print(f"[DEBUG] Raw input generation output: {repr(output)}")
     if isinstance(output, list):
         output = output[0] if output else ""
     # Try to parse as JSON array
@@ -524,7 +526,9 @@ def generate_self_consistency_initial_guess(problem_context: str, input_value: s
         Message(role="system", content=initial_guess_chat_instruction),
         Message(role="user", content=f"{initial_guess_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\n[initial guess]:")
     ]
+    print(f"[DEBUG] Initial Guess Prompt:\n{prompt}")
     output = model.generate_chat(messages=messages, max_tokens=256)
+    print(f"[DEBUG] Raw initial guess output: {repr(output)}")
     if isinstance(output, list):
         output = output[0] if output else ""
     return output.strip()
@@ -536,12 +540,24 @@ def generate_self_consistency_reasoning(problem_context: str, input_value: str, 
         Message(role="system", content=reasoning_chat_instruction),
         Message(role="user", content=f"{reasoning_few_shot}\n\n[problem context]:\n{problem_context}\n\n[input]:\n{input_value}\n\nStep-by-step reasoning:")
     ]
-    output = model.generate_chat(messages=messages, max_tokens=512)
+    print(f"[DEBUG] Reasoning Prompt:\n{prompt}")
+    output = model.generate_chat(messages=messages, max_tokens=1024)
     if isinstance(output, list):
         output = output[0] if output else ""
+    
+    print(f"[DEBUG] Raw reasoning output: {repr(output)}")
+    
     # Extract only the final output value from the reasoning
-    match = re.search(r"Final output:\s*(.*)", output)
-    final_output = match.group(1).strip() if match else ""
+    # Look for [output]: pattern as specified in the prompt format
+    match = re.search(r"\[output\]:\s*(.*?)(?:\n|$)", output, re.DOTALL)
+    if match:
+        final_output = match.group(1).strip()
+        print(f"[DEBUG] Found [output]: pattern, extracted: {repr(final_output)}")
+    else:
+        # Fallback: try to find any output-like pattern
+        match = re.search(r"Final output:\s*(.*?)(?:\n|$)", output, re.DOTALL)
+        final_output = match.group(1).strip() if match else ""
+        print(f"[DEBUG] No [output]: pattern found, fallback result: {repr(final_output)}")
     return final_output
 
 def generic_generate_self_consistency_tests(
@@ -557,7 +573,9 @@ def generic_generate_self_consistency_tests(
 ) -> list:
     """Orchestrate the three-phase self-consistency test generation process (improved: generate all inputs first).
     Now stores (input, output) pairs where output is just the value, not a JSON object.
-    Ensures at least max_num_tests unique inputs if possible, with up to 3 retries."""
+    Ensures at least max_num_tests unique inputs if possible, with up to 3 retries.
+    Adds debug prints to help diagnose why no tests are being generated.
+    """
     tests = []
     # Step 1: Generate a list of unique inputs, retry if not enough
     unique_inputs = set()
@@ -567,10 +585,12 @@ def generic_generate_self_consistency_tests(
         input_values = generate_self_consistency_input(
             problem_context, model, input_generation_chat_instruction, input_generation_few_shot
         )
+        print(f"[DEBUG] Model generated input_values (attempt {retries+1}): {input_values}")
         if isinstance(input_values, list):
             for inp in input_values:
                 unique_inputs.add(str(inp))  # Use str to ensure hashability
         retries += 1
+    print(f"[DEBUG] Unique inputs collected: {len(unique_inputs)} -> {unique_inputs}")
     if len(unique_inputs) < max_num_tests:
         print(f"Warning: Only {len(unique_inputs)} unique test inputs generated, but {max_num_tests} requested.")
     # Convert back to original input type if possible (eval if needed)
@@ -581,9 +601,10 @@ def generic_generate_self_consistency_tests(
         except Exception:
             val = inp
         input_values.append(val)
-    # Shuffle and sample up to max_num_tests unique inputs
+    # Shuffle and sample up to 2*max_num_tests unique inputs
     random.shuffle(input_values)
-    input_values = input_values[:max_num_tests]
+    input_values = input_values[:2 * max_num_tests]
+    print(f"[DEBUG] Input values to be used for self-consistency: {input_values}")
     # Step 2: For each input, generate initial guess and reasoning, collect consistent tests
     for input_value in input_values:
         initial_guess = generate_self_consistency_initial_guess(
@@ -593,10 +614,12 @@ def generic_generate_self_consistency_tests(
             problem_context, input_value, model, reasoning_chat_instruction, reasoning_few_shot
         )
         consistency = "CONSISTENT" if initial_guess.strip() == final_output else "INCONSISTENT"
+        print(f"[DEBUG] Input: {input_value}\n  Initial guess: {initial_guess}\n  Reasoning output: {final_output}\n  Consistency: {consistency}")
         if consistency == "CONSISTENT":
             tests.append((input_value, final_output))
         if len(tests) >= max_num_tests:
             break
+    print(f"[DEBUG] Total consistent tests generated: {len(tests)}")
     return tests
 
 
