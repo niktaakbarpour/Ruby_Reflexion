@@ -1345,9 +1345,9 @@ RB_SELF_CONSISTENCY_INPUT_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby pr
 **Instructions:**
 - Generate multiple diverse and valid inputs at a time (at least 5, if possible)
 - Ensure all inputs are valid according to the problem constraints
-- Return the inputs as a list/array in the appropriate format (array, string, number, etc.)
+- Return the inputs as a json list/array in the appropriate format (array, string, number, etc.)
 - Do not include any explanation or additional text
-- Return only the list/array of input values
+- Return only the json list/array of input values
 """
 RB_SELF_CONSISTENCY_INITIAL_GUESS_CHAT_INSTRUCTION = """You are an AI assistant tasked with generating one correct output for programming problem based on the input. Given a problem context, generate a correct output that adhere to the input format and constraints described in the problem context which includes:
 
