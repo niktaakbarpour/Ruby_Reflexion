@@ -83,7 +83,7 @@ class ModelBase():
     def __repr__(self) -> str:
         return f'{self.name}'
 
-    def generate_chat(self, messages: List[Message], max_tokens: int = 1024, temperature: float = 0.2, num_comps: int = 1) -> Union[List[str], str]:
+    def generate_chat(self, messages: List[Message], max_tokens: int = 1024, temperature: float = 0, num_comps: int = 1) -> Union[List[str], str]:
         raise NotImplementedError
 
     def generate(self, prompt: str, max_tokens: int = 1024, stop_strs: Optional[List[str]] = None, temperature: float = 0.0, num_comps=1) -> Union[List[str], str]:
@@ -129,7 +129,7 @@ class HFModelBase(ModelBase):
         self.eos_token_id = eos_token_id if eos_token_id is not None else self.tokenizer.eos_token_id
         self.is_chat = True
 
-    def generate_chat(self, messages: List[Message], max_tokens: int = 1024, temperature: float = 0.2, num_comps: int = 1) -> Union[List[str], str]:
+    def generate_chat(self, messages: List[Message], max_tokens: int = 1024, temperature: float = 0, num_comps: int = 1) -> Union[List[str], str]:
         import torch
         # NOTE: HF does not like temp of 0.0.
         if temperature < 0.0001:
