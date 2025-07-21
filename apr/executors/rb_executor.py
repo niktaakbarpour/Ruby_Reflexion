@@ -174,9 +174,9 @@ class RbExecutor:
             test_input = test["input"].strip()
             expected_output = test["output"]
             if isinstance(expected_output, list):
-                expected_output = ''.join(expected_output).strip()
+                expected_outputs = [o.strip() for o in expected_output]
             else:
-                expected_output = expected_output.strip()
+                expected_outputs = [expected_output.strip()]
 
             try:
                 result = subprocess.run(
@@ -187,14 +187,19 @@ class RbExecutor:
                     timeout=timeout,
                 )
                 actual_output = result.stdout.strip()
-                verdict, info = self._classify_failure(result, expected_output, actual_output, False)
+                if actual_output in expected_outputs:
+                    verdict, info = "SUCCESS", "Output matched"
+                else:
+                    verdict, info = self._classify_failure(result, expected_outputs, actual_output, False)
+
+                # verdict, info = self._classify_failure(result, expected_output, actual_output, False)
 
             except subprocess.TimeoutExpired:
                 verdict, info = self._classify_failure(None, expected_output, "", True)
                 actual_output = ""
                 detailed_results.append({
                     "input": test_input,
-                    "expected": expected_output,
+                    "expected": expected_outputs,
                     "actual": "",
                     "verdict": verdict,
                     "info": info,
@@ -208,7 +213,7 @@ class RbExecutor:
                 actual_output = ""
                 detailed_results.append({
                     "input": test_input,
-                    "expected": expected_output,
+                    "expected": expected_outputs,
                     "actual": "",
                     "verdict": verdict,
                     "info": info,
@@ -223,7 +228,7 @@ class RbExecutor:
 
             detailed_results.append({
                 "input": test_input,
-                "expected": expected_output,
+                "expected": expected_outputs,
                 "actual": actual_output,
                 "verdict": verdict,
                 "info": info,
