@@ -1,4 +1,5 @@
-from utils import enumerate_resume, make_printv, write_jsonl
+from utils import enumerate_resume, make_printv, write_jsonl, resume_success_count
+
 from executors import executor_factory
 from generators import generator_factory, model_factory
 
@@ -61,7 +62,7 @@ def generate_function(
         strategy,
         cur_func_impl,
         problem_context,
-        #reflections,
+        reflections,
         is_first_reflection,
         prompting,
         feedback,
@@ -77,7 +78,7 @@ def generate_function(
             strategy=strategy,
             is_first_reflection=is_first_reflection,
             prev_func_impl=cur_func_impl,
-            #reflections=reflections,
+            reflections=reflections,
             feedback=feedback,
             # inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
@@ -89,7 +90,7 @@ def generate_function(
             strategy=strategy,
             is_first_reflection=is_first_reflection,
             prev_func_impl=cur_func_impl,
-            #reflections=reflections,
+            reflections=reflections,
             feedback=feedback,
             # inferred_specificaion=inferred_specificaion,
             num_comps=num_comps
@@ -113,17 +114,17 @@ def run_single_item(
         verbose,
         # infer_spec
     ):
-    print("File simple: ", "GOING for I: {i}")
+    print("File simple: ", f"GOING for I: {i}")
 
     print_v = make_printv(verbose)
     is_first_reflection = True
     success_count = 0
-    iteration_pass_matrix = [[] for _ in range(max_iters)]
+    # iteration_pass_matrix = [[] for _ in range(max_iters)]
     iteration_unit_pass_matrix = [[] for _ in range(max_iters)]
     solved_iter = None
     ever_unit_ok = False
     is_solved = False
-    implementations, test_feedback = [], [], []
+    reflections, implementations, test_feedback = [], [], []
     cur_func_impl = item["bug_source_code"]
     is_first_reflection = True
     cur_feedback = None
@@ -173,6 +174,7 @@ def run_single_item(
     # )
     # print(f"validated_tests_i: {validated_tests}")
 
+    reflections.append("")
     func_impls = []
     batch_size = 1
     for b in range(0, n_completions, batch_size):
@@ -184,7 +186,7 @@ def run_single_item(
         cur_func_impl=item["bug_source_code"],
         problem_context=create_problem_template(item, False),
         # inferred_specificaion=inferred_specificaion,
-        #reflections=reflections,
+        reflections=reflections,
         is_first_reflection=is_first_reflection,
         prompting=prompting,
         feedback=None,
@@ -205,14 +207,17 @@ def run_single_item(
         print(f"feedback: {feedback}")
         test_feedback.append(feedback)
         iteration_pass_matrix[0].append(is_passing)
-        cur_func_impl = cur_impl
         """
+        cur_func_impl = cur_impl
+        
         if isinstance(item["hidden_unit_tests"], str):
             item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
         unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
         ever_unit_ok = ever_unit_ok or unit_ok
         print("File simple: ",f"unit_ok first: {unit_ok}")
+        print("File simple: ",f"unit_test_results first: {unit_test_results}")
+
         test_feedback.append(f"unit_tests_passed={unit_ok}")
         iteration_unit_pass_matrix[0].append(unit_ok)
         if unit_ok:
@@ -243,7 +248,7 @@ def run_single_item(
                 cur_func_impl=cur_func_impl,
                 problem_context=create_problem_template(item, False),
                 # inferred_specificaion=inferred_specificaion,
-                #reflections=reflections,
+                reflections=reflections,
                 is_first_reflection=is_first_reflection,
                 prompting=prompting,
                 feedback=cur_feedback,
@@ -252,27 +257,29 @@ def run_single_item(
             cur_func_impl = next_impls[0]
             implementations.append(cur_func_impl)
 
-            result = exe.execute(cur_func_impl, formatted_tests)
-            is_passing = result["is_passing"]
-            iteration_pass_matrix[cur_iter].append(is_passing)
-            cur_feedback = result["feedback"]
-            test_feedback.append(cur_feedback)
-            print("File simple: ",f"is_passing2: {is_passing}")
-            print("File simple: ",f"feedback2: {cur_feedback}")
+            # result = exe.execute(cur_func_impl, formatted_tests)
+            # is_passing = result["is_passing"]
+            # iteration_pass_matrix[cur_iter].append(is_passing)
+            # cur_feedback = result["feedback"]
+            # test_feedback.append(cur_feedback)
+            # print("File simple: ",f"is_passing2: {is_passing}")
+            # print("File simple: ",f"feedback2: {cur_feedback}")
 
             if isinstance(item["hidden_unit_tests"], str):
                 item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
-            unit_ok = exe.evaluate(
+            unit_ok, unit_test_results = exe.evaluate(
                 cur_func_impl,
                 item["hidden_unit_tests"],
                 timeout=10
             )
             print("File simple: ",f"unit_ok 2: {unit_ok}")
+            print("File simple:",f"unit_test_results 2: {unit_test_results}")
+
             ever_unit_ok = ever_unit_ok or unit_ok
             iteration_unit_pass_matrix[cur_iter].append(unit_ok)
 
-            if is_passing or cur_iter == max_iters - 1:
+            if cur_iter == max_iters - 1:
                 if unit_ok:
                     solved_iter = cur_iter
                     is_solved = True
@@ -285,14 +292,15 @@ def run_single_item(
         is_solved = True
 
     item["is_solved"] = is_solved
-    #item["reflections"] = reflections
+    item["reflections"] = reflections
     item["implementations"] = implementations
-    item["test_feedback"] = test_feedback
+    # item["test_feedback"] = test_feedback
     item["solution"] = cur_func_impl
     item["success_count"] = success_count
     item["solved_iteration"] = solved_iter
     item[f"pass@{pass_at_k}"] = codex_pass_at_k(n_completions, success_count, pass_at_k)
-
+    item["final_unit_ok"] = unit_ok
+    item["final_unit_test_results"] = unit_test_results
 
     print("File simple: ",f"solved_iteration: {solved_iter}")
     print("File simple: ",f"is_solvedF: {is_solved}")
@@ -300,10 +308,10 @@ def run_single_item(
     print("File simple: ",f"pass@{pass_at_k}: {codex_pass_at_k(n_completions, success_count, pass_at_k)}")
     
 
-    for iter_idx, results in enumerate(iteration_pass_matrix):
-        c = sum(results)
-        item[f"pass@{pass_at_k}_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
-        print("File simple: ",f"pass@{pass_at_k}_iter{iter_idx}: {codex_pass_at_k(n_completions, c, pass_at_k)}")
+    # for iter_idx, results in enumerate(iteration_pass_matrix):
+    #     c = sum(results)
+    #     item[f"pass@{pass_at_k}_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
+    #     print("File simple: ",f"pass@{pass_at_k}_iter{iter_idx}: {codex_pass_at_k(n_completions, c, pass_at_k)}")
 
     for iter_idx, results in enumerate(iteration_unit_pass_matrix):
         c = sum(results)
@@ -317,12 +325,14 @@ def run_simple(
         dataset: List[dict],
         model_name: str,
         language: str,
+        max_iters: int,
         pass_at_k: int,
         log_path: str,
         verbose: bool,
         is_leetcode: bool = False,
         model_path:str = None
     ) -> None:
+    prompting = "cot"
     exe = executor_factory(language, is_leet=is_leetcode)
     gen = generator_factory(language)
     model = model_factory(model_name, model_path)

@@ -58,7 +58,7 @@ def strategy_factory(strategy: str):
         return kwargs_wrapper
 
     if strategy == "simple":
-        return kwargs_wrapper_gen(run_simple, delete_keys=["expansion_factor", "max_iters"])
+        return kwargs_wrapper_gen(run_simple, delete_keys=["expansion_factor"])
     elif strategy == "reflexion":
         return kwargs_wrapper_gen(run_reflexion, delete_keys=["expansion_factor"])
     elif strategy == "first_refl_omission":
