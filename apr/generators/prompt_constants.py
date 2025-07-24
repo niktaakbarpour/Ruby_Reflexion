@@ -753,6 +753,11 @@ The pre-run execution outcome, which describes how the buggy code currently beha
 Based on this information, explain why the provided code does not work correctly in a concise natural language response. Focus only on describing the issue and do not suggest or generate a corrected implementation.
 Your response should be a short explanation (2-3 sentences) of what is wrong. Do not include code in your response."""
 
+FIRST_REFLECTION_INFER_VS_SUMMARY_CHAT_INSTRUCTION = """You are a helpful Ruby programming assistant. You will be given a code summary and an inferred specification of a programming problem. Your task is to analyze both and explain, in concise natural language, the differences between the code summary and the inferred specification.
+Describe how the user should adjust their code so the code summary aligns with the inferred specification, but do not provide or suggest any corrected code.
+Your response should be 2–3 sentences, focusing only on what is wrong. No code will be provided, only natural language descriptions.
+"""
+
 PY_SELF_REFLECTION_CHAT_INSTRUCTION = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
 RB_SELF_REFLECTION_CHAT_INSTRUCTION_TEST_OMIT = "You are a Ruby programming assistant. You will be given a problem context and a function implementation. Your goal is to write a few sentences to explain why your implementation is wrong based on program requirements. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
 PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit test results. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as guidance when you try again later. Only provide the few sentence description in your answer, not the implementation. You will be given a few examples by the user."
@@ -876,6 +881,59 @@ A pre-run execution outcome of buggy source code: WRONG_ANSWER (The code compile
 [self-reflection]:
 The provided code does not work correctly because it incorrectly calculates the coordinates for points A, B, and C based on the input values of x and y. The code attempts to determine the coordinates of points A and C based on the conditions for a right-isosceles triangle with one vertex at the origin (0,0), but it fails to correctly compute the coordinates for A and C. Additionally, the conditions for the area of the triangle and the placement of the rectangle inside the triangle are not properly handled in the code.
 
+```
+END EXAMPLES
+
+'''
+
+FIRST_REFLECTION_INFER_VS_SUMMARY_FEW_SHOT = '''Examples:
+[Code Summary]:
+Function Intent:
+    This code reads two integers x and y from input and prints four numbers forming
+    the coordinates of a rectangle or line segment, based on the signs of x and y.
+Input Assumptions:
+    - The input is a single line containing two integers separated by a space.
+Expected Behavior:
+    - If both x and y are positive, it prints "0 (x+y) (x+y) 0".
+    - If x > 0 and y < 0, it prints "0 (x-y) (x-y) 0".
+    - If y > 0 (and x ≤ 0), it prints "-(y-x) 0 0 (y-x)".
+    - Otherwise, it prints "(x+y) 0 0 (x+y)".
+Edge Cases:
+    - When x = 0 or y = 0, it falls into the third or fourth condition depending
+      on the sign, which may result in zero or negative values in the output.
+
+[Inferred Specification]:
+Function Intent:
+    The function is intended to determine the coordinates of two points A = (x1, y1)
+    and C = (x2, y2) that define a right isosceles triangle ABC (with B = (0, 0)) 
+    such that the rectangle with vertices (0, 0) and (x, y) lies entirely inside or 
+    on the boundary of this triangle. The triangle should have the smallest possible area.
+Input Assumptions:
+    - The input consists of two integers x and y, representing the coordinates of 
+      the opposite vertex of the rectangle (0, 0) and (x, y).
+    - x and y are non-zero integers, and their range is -10^9 ≤ x, y ≤ 10^9.
+Expected Behavior:
+    - The function should output four integers x1, y1, x2, y2, which are the 
+      coordinates of points A and C.
+    - The output should ensure:
+        1. x1 < x2.
+        2. The triangle formed by A, B, and C is right-angled and isosceles.
+        3. The rectangle lies entirely within or on the boundary of triangle ABC.
+        4. The area of triangle ABC is minimized.
+Edge Cases:
+    - Large positive or negative values of x and y, ensuring that the solution 
+      correctly accounts for all quadrants.
+    - When x and y have different signs (rectangle lies across quadrants).
+    - Minimal cases where |x| = 1 or |y| = 1, requiring careful selection of A and C.
+
+[self-reflection]:
+The code summary describes logic that prints coordinates based solely on the signs 
+and sums of x and y, but it does not address the problem of finding points A and C 
+that form a right isosceles triangle containing the rectangle. The inferred specification 
+requires geometric reasoning to ensure the triangle is both right-angled and minimal 
+in area while containing the rectangle, which the current code does not implement. 
+The user should adjust the logic to calculate x1, y1, x2, and y2 based on the rectangle’s 
+dimensions and orientation rather than relying on simple arithmetic with x and y.
 ```
 END EXAMPLES
 
@@ -1305,4 +1363,59 @@ Function Intent: Find the greatest common divisor of two integers.
 Input Assumptions: Two integers a and b, both ≥ 1.
 Expected Behavior: Return the largest integer that divides both a and b without remainder.
 Edge Cases: a = b, a = 1 or b = 1, a much larger than b.
+"""
+
+RB_CODE_SUMMARY_CHAT_INSTRUCTION = """You are a software assistant helping to understand what a function is doing.
+[Task]
+Given the code, describe what the code is doing.
+
+[Instructions]
+- Write a natural language summary that includes:
+    - Function Intent: What the function is supposed to accomplish
+    - Input Assumptions: What inputs are expected
+    - Expected Behavior: What the function should return or perform
+    - Edge Cases: Any special input conditions to consider
+"""
+
+RB_CODE_SUMMARY_FEW_SHOT = """[Example 1]
+Code:
+```ruby
+x,y=gets.split.map(&:to_i)
+if x > 0 and y > 0
+    puts "0 #{x+y} #{x+y} 0"
+elsif x > 0 and y < 0
+    puts "0 #{x-y} #{x-y} 0"
+elsif y > 0
+    puts "#{-(y-x)} 0 0 #{y-x}"
+else
+    puts "#{x+y} 0 0 #{x+y}"
+end
+```
+
+Code Summary:
+Function Intent: Determine the rectangle coordinates based on the quadrant of point (x, y).
+Input Assumptions: Two integers x and y from standard input.
+Expected Behavior: If (x, y) is in Q1: output 0 x+y x+y 0. If Q4, output 0 x-y x-y 0, If Q2, output -(y-x) 0 0 y-x. Else (Q3), output x+y 0 0 x+y.
+Edge Cases: Handles x=0 or y=0 via the last two branches; sums/differences may be negative.
+
+---
+
+[Example 2]
+Code:
+```ruby
+password = "secure123"
+attempt = gets.chomp
+
+if password == attempt
+  puts "Access granted"
+if password != attempt
+  puts "Access denied"
+end
+```
+
+Code Summary:
+Check if the user’s input matches the password and print access status.
+Input Assumptions: A fixed password string ("secure123"). A user input string (attempt).
+Expected Behavior: If attempt matches password, prints "Access granted". If attempt does not match, prints "Access denied".
+Edge Cases: The code has a bug: the second if should be elsif or a separate if with a closing end for the first condition, otherwise it may cause a syntax error.
 """

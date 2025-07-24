@@ -15,6 +15,7 @@ from first_refl_omission import run_first_refl_omission
 from self_refl_omission import run_self_refl_omission
 from refl_omission import run_refl_omission
 from test_gen_omission import run_test_gen_omission
+from infer_spec import run_infer_spec
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -24,7 +25,7 @@ def get_args():
     parser.add_argument("--dataset_path", type=str,
                         help="The path to the benchmark dataset", default="root")
     parser.add_argument("--strategy", type=str,
-                        help="Strategy: `simple`, `reflexion`, `first_refl_omission`, `self_refl_omission`, `refl_omission`, `test_gen_omission`")
+                        help="Strategy: `simple`, `reflexion`, `first_refl_omission`, `self_refl_omission`, `refl_omission`, `test_gen_omission`, `infer_spec`")
     parser.add_argument("--language", type=str, help="Strategy: `py` or `rs` or `rb`")
     parser.add_argument(
         "--model", type=str, help="OpenAI models only for now. For best results, use GPT-4")
@@ -69,6 +70,8 @@ def strategy_factory(strategy: str):
         return kwargs_wrapper_gen(run_refl_omission, delete_keys=["expansion_factor"])
     elif strategy == "test_gen_omission":
         return kwargs_wrapper_gen(run_test_gen_omission, delete_keys=["expansion_factor"])
+    elif strategy == "infer_spec":
+        return kwargs_wrapper_gen(run_infer_spec, delete_keys=["expansion_factor"])
     elif strategy == "reflexion-multi":
         return kwargs_wrapper_gen(run_reflexion_multi_agent, delete_keys=["expansion_factor"])
     elif strategy == "immediate-reflexion":

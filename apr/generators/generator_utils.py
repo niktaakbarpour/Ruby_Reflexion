@@ -5,6 +5,10 @@ from typing import Union, List, Optional, Callable, Tuple
 import json
 import random
 import re
+from .prompt_constants import (
+    FIRST_REFLECTION_INFER_VS_SUMMARY_CHAT_INSTRUCTION,
+    FIRST_REFLECTION_INFER_VS_SUMMARY_FEW_SHOT
+)
 
 def print_messages(system_message_text: str, user_message_text: str) -> None:
     print(f"""----------------------- SYSTEM MESSAGE -----------------------)
@@ -467,57 +471,54 @@ def generic_generate_first_reflection(
     model: ModelBase,
     self_reflection_chat_instruction: str,
     self_reflection_completion_instruction: str,
-    # inferred_specificaion:str,
     add_code_block: Callable[[str], str],
     self_reflection_few_shot: Optional[str],
-) -> str:
-    if model.is_chat:
-        system_content = self_reflection_chat_instruction
-        if self_reflection_few_shot:
-            system_content += f"\n{self_reflection_few_shot}"
-        user_content = f"[incorrect function impl]:\n{add_code_block(func)}\n\n[problem context]:\n{problem_context}\n\n[self-reflection]:"
-        print_messages(system_content, user_content)
-        messages = [
-            Message(role="system", content=system_content),
-            Message(role="user", content=user_content)
-        ]
-        response = model.generate_chat(messages=messages)
-        print(f"RESPONSE!!!!!!: {response}")
-        return response
-    return model.generate(f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:")
-
-def generic_generate_first_reflection(
-    problem_context: str,
-    func: str,
-    model: ModelBase,
-    self_reflection_chat_instruction: str,
-    self_reflection_completion_instruction: str,
-    # inferred_specificaion: str,
-    add_code_block: Callable[[str], str],
-    self_reflection_few_shot: Optional[str],
+    inferred_specificaion: Optional[str] = None,
+    code_summary: Optional[str] = None,
 ) -> Union[str, List[str]]:
+
     if model.is_chat:
-        system_content = self_reflection_chat_instruction
-        if self_reflection_few_shot:
+        if inferred_specificaion and code_summary:
+            self_reflection_chat_instruction = FIRST_REFLECTION_INFER_VS_SUMMARY_CHAT_INSTRUCTION
+            self_reflection_few_shot = FIRST_REFLECTION_INFER_VS_SUMMARY_FEW_SHOT
+            system_content = self_reflection_chat_instruction
             system_content += f"\n{self_reflection_few_shot}"
-        user_content = (
-            f"[incorrect function impl]:\n{add_code_block(func)}\n\n"
-            f"[problem context]:\n{problem_context}\n\n[self-reflection]:"
-        )
+            user_content = (
+                f"[incorrect function impl]:\n{add_code_block(func)}\n\n"
+                f"[problem context]:\n{problem_context}\n\n[self-reflection]:"
+            )
 
-        print_messages(system_content, user_content)
+            print_messages(system_content, user_content)
 
-        messages = [
-            Message(role="system", content=system_content),
-            Message(role="user", content=user_content)
-        ]
+            messages = [
+                Message(role="system", content=system_content),
+                Message(role="user", content=user_content)
+            ]
+            response = model.generate_chat(messages=messages)
+            print(f"RESPONSE!!!!!!: {response}")
+            return response
+        else:
+            system_content = self_reflection_chat_instruction
+            if self_reflection_few_shot:
+                system_content += f"\n{self_reflection_few_shot}"
+            user_content = (
+                f"[incorrect function impl]:\n{add_code_block(func)}\n\n"
+                f"[problem context]:\n{problem_context}\n\n[self-reflection]:"
+            )
 
-        response = model.generate_chat(messages=messages)
-        print(f"RESPONSE!!!!!!: {response}")
-        return response
+            print_messages(system_content, user_content)
 
-    # Non-chat model (completion-based)
-    prompt = f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:"
+            messages = [
+                Message(role="system", content=system_content),
+                Message(role="user", content=user_content)
+            ]
+
+            response = model.generate_chat(messages=messages)
+            print(f"RESPONSE!!!!!!: {response}")
+            return response
+    else:
+        # Non-chat model (completion-based)
+        prompt = f"{self_reflection_completion_instruction}\n{func}\n\nExplanation:"
     return model.generate(prompt)
 
 
@@ -531,6 +532,28 @@ def generic_infer_specifications(
         system_content = f"{infer_specifications_chat_instruction}\n{infer_specifications_few_shot}"
         user_content = (
             f"[problem context]:\n{problem_context}\n\n[inferred specifications]:"
+        )
+
+        print_messages(system_content, user_content)
+
+        messages = [
+            Message(role="system", content=system_content),
+            Message(role="user", content=user_content)
+        ]
+
+        response = model.generate_chat(messages=messages)
+        return response
+    
+def generic_generate_code_summary(
+    cur_func_impl: str,
+    model: ModelBase,
+    code_summary_chat_instruction: str,
+    code_summary_few_shot: str,
+) -> Union[str, List[str]]:
+    if model.is_chat:
+        system_content = f"{code_summary_chat_instruction}\n{code_summary_few_shot}"
+        user_content = (
+            f"[problem context]:\n{cur_func_impl}\n\n[Code Summary]:"
         )
 
         print_messages(system_content, user_content)
