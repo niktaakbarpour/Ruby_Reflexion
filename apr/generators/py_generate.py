@@ -8,6 +8,7 @@ from .generator_utils import (
     generic_generate_scot_func_impl,
     generic_validate_internal_tests,
     generic_infer_specifications,
+    generic_generate_code_summary,
 )
 from .prompt_constants import (
     RB_INFER_SPECIFICATIONS_FEW_SHOT,
@@ -45,6 +46,8 @@ from .prompt_constants import (
     RB_FIRST_REFLEXION_FEW_SHOT_ADD_FIRST_OMIT,
     RB_REFLEXION_CHAT_INSTRUCTION_SELF_OMIT,
     RB_REFLEXION_FEW_SHOT_ADD_SELF_OMIT,
+    RB_CODE_SUMMARY_FEW_SHOT,
+    RB_CODE_SUMMARY_CHAT_INSTRUCTION,
 )
 
 from .rb_parse import parse_code_block, add_code_block
@@ -79,8 +82,11 @@ class PyGenerator(Generator):
                          problem_context: str,
                          func: str,
                          model: ModelBase,
-                        #  inferred_specificaion: Optional[str]
+                         inferred_specificaion: Optional[str] = None,
+                         code_summary: Optional[str] = None,
                          ) -> str:
+        inferred_specificaion = inferred_specificaion or ""
+        code_summary = code_summary or ""
         return generic_generate_first_reflection(
             problem_context=problem_context,
             func=func,
@@ -89,7 +95,8 @@ class PyGenerator(Generator):
             self_reflection_completion_instruction=PY_SELF_REFLECTION_COMPLETION_INSTRUCTION,
             add_code_block=lambda x: add_code_block(x, "ruby"),
             self_reflection_few_shot=PY_FIRST_SELF_REFLECTION_FEW_SHOT,
-            # inferred_specificaion=inferred_specificaion,
+            inferred_specificaion=inferred_specificaion,
+            code_summary=code_summary,
         )
 
 
@@ -212,4 +219,12 @@ class PyGenerator(Generator):
             model=model,
             infer_specifications_chat_instruction=RB_INFER_SPECIFICATIONS_FEW_SHOT,
             infer_specifications_few_shot=RB_INFER_SPECIFICATIONS_CHAT_INSTRUCTION,
+        )
+
+    def code_summary(self, cur_func_impl: str, model: ModelBase) -> str:
+        return generic_generate_code_summary(
+            cur_func_impl=cur_func_impl,
+            model=model,
+            code_summary_chat_instruction=RB_CODE_SUMMARY_FEW_SHOT,
+            code_summary_few_shot=RB_CODE_SUMMARY_CHAT_INSTRUCTION,
         )
