@@ -140,10 +140,10 @@ def run_single_item(
         model=model
     )
     reflections.append(reflection)
-
+    print ("try to load json!!!!")
     inputs = json.loads(item["prob_desc_sample_inputs"])
     outputs = json.loads(item["prob_desc_sample_outputs"])
-
+    print ("success load json!!!!")
     samples = [{"input": inp + '\n', "output": out} for inp, out in zip(inputs, outputs)]
 
     tests = gen.internal_tests(

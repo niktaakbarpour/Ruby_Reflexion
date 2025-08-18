@@ -391,3 +391,58 @@ If a question does not make any sense, or is not factually coherent, explain why
     def extract_output(self, output: str) -> str:
         out = output.split("[/INST]")[-1].split("</s>")[0].strip()
         return out
+
+from typing import List, Union
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch  
+from transformers import BitsAndBytesConfig     
+
+class QwenModel(HFModelBase):
+    def __init__(self, model_path: Optional[str] = None):
+        model_name = model_path or "Qwen/Qwen2.5-Coder-7B-Instruct"
+        # Define quantization config
+        quant_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_quant_type="nf4"
+        )
+
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            device_map="auto",
+            trust_remote_code=True,
+            quantization_config=quant_config
+        )
+        tokenizer.pad_token = tokenizer.eos_token
+        super().__init__(model_name, model, tokenizer)
+
+    def prepare_prompt(self, messages: List[Message]):
+        """
+        Constructs a ChatML-style prompt from a list of Message objects
+        """
+        prompt = ""
+        for msg in messages:
+            role = msg.role.lower()
+            if role == "system":
+                prompt += f"<|im_start|>system\n{msg.content}<|im_end|>\n"
+            elif role == "user":
+                prompt += f"<|im_start|>user\n{msg.content}<|im_end|>\n"
+            elif role == "assistant":
+                prompt += f"<|im_start|>assistant\n{msg.content}<|im_end|>\n"
+        # Add final assistant tag for generation
+        prompt += "<|im_start|>assistant\n"
+        input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to(self.model.device)
+        return input_ids
+
+    def extract_output(self, output: str) -> str:
+        """
+        Removes everything after the first <|im_end|> which marks end of assistant's reply
+        """
+        # Find the last assistant message
+        parts = output.split("<|im_start|>assistant\n")
+        if len(parts) < 2:
+            return output.strip()
+        last_part = parts[-1]
+        return last_part.split("<|im_end|>")[0].strip()
