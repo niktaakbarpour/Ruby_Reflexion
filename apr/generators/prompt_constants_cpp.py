@@ -1,18 +1,18 @@
 PY_SIMPLE_COMPLETION_INSTRUCTION = "# Write the body of this function only."
-PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a C++ programming language writing assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write ONLY your full implementation in C++ (restate the function signature but DO NOT write example usage).\n\n-----"
-PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a C++ programming language writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
-USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a C++ programming language code block to write your response. For example:\n```cpp\n#include <iostream>\nint main() {\n    std::cout << \"Hello world!\" << std::endl;\n    return 0;\n}\n```"
+PY_REFLEXION_COMPLETION_INSTRUCTION = "You are a c++ programming language writing assistant. You will be given your past function implementation, a series of unit tests, and a hint to change the implementation appropriately. Write ONLY your full implementation in c++ (restate the function signature but DO NOT write example usage).\n\n-----"
+PY_SELF_REFLECTION_COMPLETION_INSTRUCTION = "You are a c++ programming language writing assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation.\n\n-----"
+USE_PYTHON_CODEBLOCK_INSTRUCTION = "Use a c++ programming language code block to write your response. For example:\n```cpp\n#include <iostream>\nint main() {\n    std::cout << \"Hello world!\" << std::endl;\n    return 0;\n}\n```"
 
-PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with C++ programming language code, NOT ENGLISH and NOT PYTHON. You will be given a buggy code implementation and its docstring by the user. Write ONLY your full correct implementation in C++ (DO NOT write example usage). In other words your task is automatic program repair."
+PY_SIMPLE_CHAT_INSTRUCTION = "You are an AI that only responds with c++ programming language code, NOT ENGLISH and NOT PYTHON. You will be given a buggy code implementation and its docstring by the user. Write ONLY your full correct implementation in c++ (DO NOT write example usage). In other words your task is automatic program repair."
 PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby programming language code. You will be given a buggy code implementation and its docstring by the user. Write your full correct implementation in Ruby."
-PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI C++ programming language assistant. You will be given your past function implementation, a series of unit tests, problem description, and a hint to change the implementation appropriately. Write your full implementation in C++ based on the hint given to you (it tells you what was wrong in previous implementation), unit test results, and problem context."
-RB_REFLEXION_CHAT_INSTRUCTION_SELF_OMIT = "You are an AI C++ programming language assistant. You will be given problem contect, your past function implementation, and a series of unit tests. Write your full correct implementation based on problem requirements in C++."
-RB_REFLEXION_CHAT_INSTRUCTION_TEST_OMIT = "You are an AI C++ programming language assistant. You will be given problem context, your past function implementation and a hint to change the implementation appropriately. Write your full implementation in C++."
-PY_FIRST_REFLEXION_CHAT_INSTRUCTION = "You are an AI C++ programming language assistant. You will be given problem context, incorrect user function implementation, and a hint to change the implementation appropriately. Write your full implementation in C++."
-RB_FIRST_REFLEXION_CHAT_INSTRUCTION_FIRST_OMIT = "You are an AI C++ programming language assistant. You will be given problem context and incorrect user function implementation. Write your full correct implementation based on problem requirements in C++."
+PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI c++ programming language assistant. You will be given your past function implementation, a series of unit tests, problem description, and a hint to change the implementation appropriately. Write your full implementation in c++ based on the hint given to you (it tells you what was wrong in previous implementation), unit test results, and problem context."
+RB_REFLEXION_CHAT_INSTRUCTION_SELF_OMIT = "You are an AI c++ programming language assistant. You will be given problem contect, your past function implementation, and a series of unit tests. Write your full correct implementation based on problem requirements in c++."
+RB_REFLEXION_CHAT_INSTRUCTION_TEST_OMIT = "You are an AI c++ programming language assistant. You will be given problem context, your past function implementation and a hint to change the implementation appropriately. Write your full implementation in c++."
+PY_FIRST_REFLEXION_CHAT_INSTRUCTION = "You are an AI c++ programming language assistant. You will be given problem context, incorrect user function implementation, and a hint to change the implementation appropriately. Write your full implementation in c++."
+RB_FIRST_REFLEXION_CHAT_INSTRUCTION_FIRST_OMIT = "You are an AI c++ programming language assistant. You will be given problem context and incorrect user function implementation. Write your full correct implementation based on problem requirements in c++."
 PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby."
 RB_SCOT_CHAT_INSTRUCTION = '''
-You are an expert C++ programming assistant.
+You are an expert c++ programming assistant.
 
 You will be given:
 - Your past function implementation,
@@ -24,18 +24,18 @@ Your task:
 - First, carefully plan the correct solution.
     - Write a rough structured plan using programming structures: **sequence**, **branch** (conditional logic), and **loop** (iteration).
     - Clearly specify the inputs, outputs, and main steps.
-- Then, write the full corrected C++ code according to your structured plan.
+- Then, write the full corrected c++ code according to your structured plan.
 
 Always follow this two-step format:
 1. Structured Plan
-2. Corrected C++ Code
+2. Corrected c++ Code
 '''
 
 RB_FIRST_SCOT_CHAT_INSTRUCTION = '''
-You are an expert C++ programming assistant.
+You are an expert c++ programming assistant.
 
 You will be given:
-- An incorrect C++ function implementation,
+- An incorrect c++ function implementation,
 - Its docstring describing the intended behavior,
 - And a hint to guide you toward the correct solution.
 
@@ -43,11 +43,11 @@ Your task:
 - First, carefully plan the correct solution.
     - Write a rough structured plan using programming structures: **sequence**, **branch** (conditional logic), and **loop** (iteration).
     - Clearly specify the inputs, outputs, and main steps.
-- Then, write the full corrected C++ code according to your structured plan.
+- Then, write the full corrected c++ code according to your structured plan.
 
 Always follow this two-step format:
 1. Structured Plan
-2. Corrected C++ Code
+2. Corrected c++ Code
 '''
 
 RB_REFLEXION_SCOT_FEW_SHOT_ADD = '''Example 1:
@@ -896,7 +896,7 @@ END EXAMPLES
 
 '''
 
-FIRST_REFLECTION_CHAT_INSTRUCTION = """You are a helpful C++ programming assistant. You are helping a user debug a C++ program. The user has written some code, but it has errors. You will help the user by analyzing problem context which contains the following information:
+FIRST_REFLECTION_CHAT_INSTRUCTION = """You are a helpful c++ programming assistant. You are helping a user debug a c++ program. The user has written some code, but it has errors. You will help the user by analyzing problem context which contains the following information:
 The buggy source code provided.
 The problem description, which explains the intended behavior of the program.
 The input format, which describes the structure, range, and constraints of inputs.
@@ -905,13 +905,13 @@ The pre-run execution outcome, which describes how the buggy code currently beha
 Based on this information, explain why the provided code does not work correctly in a concise natural language response. Focus only on describing the issue and do not suggest or generate a corrected implementation.
 Your response should be a short explanation (2-3 sentences) of what is wrong. Do not include code in your response."""
 
-FIRST_REFLECTION_INFER_VS_SUMMARY_CHAT_INSTRUCTION = """You are a helpful C++ programming assistant. You will be given a code summary and an inferred specification of a programming problem. Your task is to analyze both and explain, in concise natural language, the differences between the code summary and the inferred specification.
+FIRST_REFLECTION_INFER_VS_SUMMARY_CHAT_INSTRUCTION = """You are a helpful c++ programming assistant. You will be given a code summary and an inferred specification of a programming problem. Your task is to analyze both and explain, in concise natural language, the differences between the code summary and the inferred specification.
 Describe how the user should adjust their code so the code summary aligns with the inferred specification, but do not provide or suggest any corrected code.
 Your response should be 2–3 sentences, focusing only on what is wrong. No code will be provided, only natural language descriptions.
 """
 
-PY_SELF_REFLECTION_CHAT_INSTRUCTION = "You are a C++ programming assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
-RB_SELF_REFLECTION_CHAT_INSTRUCTION_TEST_OMIT = "You are a C++ programming assistant. You will be given a problem context and a function implementation. Your goal is to write a few sentences to explain why your implementation is wrong based on program requirements. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
+PY_SELF_REFLECTION_CHAT_INSTRUCTION = "You are a c++ programming assistant. You will be given a function implementation and a series of unit tests. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
+RB_SELF_REFLECTION_CHAT_INSTRUCTION_TEST_OMIT = "You are a c++ programming assistant. You will be given a problem context and a function implementation. Your goal is to write a few sentences to explain why your implementation is wrong based on program requirements. You will need this as a hint when you try again later. Only provide the few sentence description in your answer, not the implementation."
 PY_SELF_REFLECTION_CHAT_INSTRUCTION_V2 = "You are a Ruby programming assistant. You will be given a function implementation and a series of unit test results. Your goal is to write a few sentences to explain why your implementation is wrong as indicated by the tests. You will need this as guidance when you try again later. Only provide the few sentence description in your answer, not the implementation. You will be given a few examples by the user."
 PY_SELF_REFLECTION_FEW_SHOT = """Example 1:
 [function impl]:
@@ -1367,13 +1367,13 @@ PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI Ruby programming language
 
 In this step you should only generate sample input and output not function implemention and not test suite."""
 
-RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI C++ programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:
+RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI c++ programming language coding assistant tasked with generating high-quality test cases based on the provided problem context, which includes:
 - The problem description, which explains the intended behavior of the program,
 - The input format, which describes the structure, range, and constraints of inputs,
 - The expected output format, which specifies how the program's output should be structured, and
 - The pre-run execution outcome, which describes how the buggy code currently behaves.
 
-**Role**: As a tester, your goal is to create comprehensive and diverse test cases that evaluate the correctness and robustness of the C++ function under various scenarios.
+**Role**: As a tester, your goal is to create comprehensive and diverse test cases that evaluate the correctness and robustness of the c++ function under various scenarios.
 
 Create two test cases for each of these three categories:
 

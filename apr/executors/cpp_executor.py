@@ -108,7 +108,7 @@ class CppExecutor:
                 f.write(source_code)
 
             # Step 2: Compile the source code
-            compile_cmd = ["/arc/software/spack-2024/opt/spack/linux-rocky9-skylake_avx512/gcc-11.4.1/gcc-9.4.0-xraorchustmpt5xtpv3f7z2mw4wdkpef/bin/g++", "-std=c++17", source_file, "-o", exe_file]
+            compile_cmd = ["g++", "-std=c++17", source_file, "-o", exe_file]
             try:
                 compile_result = subprocess.run(
                     compile_cmd,

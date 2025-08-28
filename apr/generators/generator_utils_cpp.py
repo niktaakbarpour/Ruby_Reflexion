@@ -93,7 +93,7 @@ def generic_generate_func_impl(
                     f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
                     f"[problem description]:\n{problem_context}",
                     f"[hint for changing the implementation]:\n{reflections}",
-                    "Write your full improved implementation in C++:\n"
+                    "Write your full improved implementation in c++:\n"
                 ])
                 messages = [
                     Message(role="system", content=prompt),
@@ -106,7 +106,7 @@ def generic_generate_func_impl(
                     f"[problem description]:\n{problem_context}",
                     f"[unit test results from previous impl]:\n{feedback}",
                     f"[hint for changing the implementation]:\n{reflections}",
-                    "Write your full improved implementation in C++:\n"
+                    "Write your full improved implementation in c++:\n"
                 ])
                 messages = [
                     Message(role="system", content=prompt),
