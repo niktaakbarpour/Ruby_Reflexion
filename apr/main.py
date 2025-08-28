@@ -6,6 +6,7 @@ import time
 import psutil
 import pynvml
 from simple import run_simple
+from few_shot import run_few_shot
 from reflexion import run_reflexion
 from reflexion_ucs import run_reflexion_ucs
 from test_acc import run_test_acc
@@ -16,6 +17,9 @@ from self_refl_omission import run_self_refl_omission
 from refl_omission import run_refl_omission
 from test_gen_omission import run_test_gen_omission
 from infer_spec import run_infer_spec
+from reflexion_add_buggy import run_reflexion_add_buggy
+from reflexion_time_memory_remove import run_reflexion_time_memory_remove
+from reflexion_IO_remove import run_reflexion_IO_remove
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -25,7 +29,7 @@ def get_args():
     parser.add_argument("--dataset_path", type=str,
                         help="The path to the benchmark dataset", default="root")
     parser.add_argument("--strategy", type=str,
-                        help="Strategy: `simple`, `reflexion`, `first_refl_omission`, `self_refl_omission`, `refl_omission`, `test_gen_omission`, `infer_spec`")
+                        help="Strategy: `simple`, `few_shot`, `reflexion`, `first_refl_omission`, `self_refl_omission`, `refl_omission`, `test_gen_omission`, `infer_spec`, `IO_remove`, `add_buggy`, `time_memory_remove`")
     parser.add_argument("--language", type=str, help="Strategy: `py` or `rs` or `rb`")
     parser.add_argument(
         "--model", type=str, help="OpenAI models only for now. For best results, use GPT-4")
@@ -60,6 +64,8 @@ def strategy_factory(strategy: str):
 
     if strategy == "simple":
         return kwargs_wrapper_gen(run_simple, delete_keys=["expansion_factor"])
+    elif strategy == "few_shot":
+        return kwargs_wrapper_gen(run_few_shot, delete_keys=["expansion_factor"])
     elif strategy == "reflexion":
         return kwargs_wrapper_gen(run_reflexion, delete_keys=["expansion_factor"])
     elif strategy == "first_refl_omission":
@@ -72,6 +78,12 @@ def strategy_factory(strategy: str):
         return kwargs_wrapper_gen(run_test_gen_omission, delete_keys=["expansion_factor"])
     elif strategy == "infer_spec":
         return kwargs_wrapper_gen(run_infer_spec, delete_keys=["expansion_factor"])
+    elif strategy == "add_buggy":
+        return kwargs_wrapper_gen(run_reflexion_add_buggy, delete_keys=["expansion_factor"])
+    elif strategy == "time_memory_remove":
+        return kwargs_wrapper_gen(run_reflexion_time_memory_remove, delete_keys=["expansion_factor"])
+    elif strategy == "IO_remove":
+        return kwargs_wrapper_gen(run_reflexion_IO_remove, delete_keys=["expansion_factor"])
     elif strategy == "reflexion-multi":
         return kwargs_wrapper_gen(run_reflexion_multi_agent, delete_keys=["expansion_factor"])
     elif strategy == "immediate-reflexion":

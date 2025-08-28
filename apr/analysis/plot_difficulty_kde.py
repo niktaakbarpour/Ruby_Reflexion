@@ -1,46 +1,45 @@
 import json
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Load your JSON file
-with open('C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/edge_first_edgeIO_CoTIO_CoT.jsonl', 'r', encoding='utf-8') as f:
-    data = [json.loads(line) for line in f]
+# --- Config ---
+jsonl_path = "../results/ds.jsonl"  # Change as needed
+bin_width = 250
+min_difficulty = 750
+max_difficulty = 2500
 
-# Load into a DataFrame
-df = pd.DataFrame(data)
+# --- Read data ---
+records = []
+with open(jsonl_path, 'r', encoding='utf-8') as f:
+    for line in f:
+        entry = json.loads(line)
+        difficulty = entry.get("difficulty")
+        pass_value = entry.get("pass@1")
+        if difficulty is None or pass_value is None:
+            continue
+        records.append({
+            "difficulty": difficulty,
+            "pass@1": int(pass_value == 1.0)
+        })
 
-# Plot KDE histogram: difficulty distribution by is_solved
-plt.figure(figsize=(10, 6))
-sns.histplot(df[df['is_solved']]['difficulty'], color='blue', label='Solved', kde=True, stat="density", bins=30)
-sns.histplot(df[~df['is_solved']]['difficulty'], color='red', label='Unsolved', kde=True, stat="density", bins=30)
-plt.title('Difficulty Distribution: Solved vs. Unsolved')
-plt.xlabel('Difficulty')
-plt.ylabel('Density')
-plt.legend()
+df = pd.DataFrame(records)
+
+# --- Bin difficulties ---
+bins = pd.interval_range(start=min_difficulty, end=max_difficulty + bin_width, freq=bin_width, closed='left')
+df["difficulty_bin"] = pd.cut(df["difficulty"], bins=bins)
+
+# --- Count pass/fail per bin ---
+df["status"] = df["pass@1"].map({1: "Pass", 0: "Fail"})
+grouped = df.groupby(["difficulty_bin", "status"]).size().unstack(fill_value=0)
+
+# --- Plot ---
+ax = grouped.plot(kind="bar", figsize=(10, 6), color=["salmon", "seagreen"])
+# plt.title("Pass@1 vs Difficulty")
+plt.xlabel("Difficulty")
+plt.ylabel("Number of Samples")
+plt.xticks(rotation=45)
+plt.grid(axis="y", linestyle=":", alpha=0.7)
+plt.legend(title="Pass@1")
 plt.tight_layout()
-plt.show()
-# plt.savefig("kde.pdf", format='pdf')
-
-# import json
-# import pandas as pd
-# import seaborn as sns
-# import matplotlib.pyplot as plt
-
-# # Load your JSONL dataset
-# with open('C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/first_edgeIO_CoTIO_CoT.jsonl', 'r', encoding='utf-8') as f:
-#     data = [json.loads(line) for line in f]
-
-# df = pd.DataFrame(data)
-
-# # Plot histogram with raw counts
-# plt.figure(figsize=(12, 6))
-# sns.histplot(df[df['is_solved']]['difficulty'], color='blue', label='Solved', kde=False, stat="count", bins=30)
-# sns.histplot(df[~df['is_solved']]['difficulty'], color='red', label='Unsolved', kde=False, stat="count", bins=30)
-
-# plt.title('Difficulty Distribution: Solved vs. Unsolved (Raw Counts)')
-# plt.xlabel('Difficulty')
-# plt.ylabel('Number of Problems')
-# plt.legend()
-# plt.tight_layout()
+plt.savefig("pass1_vs_difficulty.png", dpi=300)
 # plt.show()

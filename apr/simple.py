@@ -217,8 +217,6 @@ def run_single_item(
         ever_unit_ok = ever_unit_ok or unit_ok
         print("File simple: ",f"unit_ok first: {unit_ok}")
         print("File simple: ",f"unit_test_results first: {unit_test_results}")
-
-        test_feedback.append(f"unit_tests_passed={unit_ok}")
         iteration_unit_pass_matrix[0].append(unit_ok)
         if unit_ok:
             solved_iter = 0
