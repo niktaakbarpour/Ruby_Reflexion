@@ -2,7 +2,7 @@ from .py_generate import PyGenerator
 from .rs_generate import RsGenerator
 from .cpp_generate import CppGenerator
 from .generator_types import Generator
-from .model import CodeLlama, ModelBase, GPT4, GPT35, StarChat, GPTDavinci, DeepSeekCoder, QwenModel
+from .model import CodeLlama, ModelBase, GPT4, GPT35, GPTDavinci, DeepSeekCoder, QwenModel
 
 
 def generator_factory(lang: str) -> Generator:
