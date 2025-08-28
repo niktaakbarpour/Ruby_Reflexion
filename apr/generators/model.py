@@ -129,85 +129,48 @@ class HFModelBase(ModelBase):
         self.eos_token_id = eos_token_id if eos_token_id is not None else self.tokenizer.eos_token_id
         self.is_chat = True
 
-    def generate_chat(self, messages: List[Message], max_tokens: int = 1024, temperature: float = 0, num_comps: int = 1) -> Union[List[str], str]:
+    def generate_chat(
+        self,
+        messages: List[Message],
+        max_tokens: int = 1024,
+        temperature: float = 0.0,
+        num_comps: int = 1,
+    ) -> Union[List[str], str]:
         import torch
-        # NOTE: HF does not like temp of 0.0.
-        if temperature < 0.0001:
-            temperature = 0.0001
 
-        prompt = self.prepare_prompt(messages)
+        # HF sampling can't do temp=0.0 cleanly
+        if temperature < 1e-4:
+            temperature = 1e-4
 
-        outputs = self.model.generate(
-            prompt,
-            max_new_tokens=min(
-                max_tokens, self.model.config.max_position_embeddings),
-            use_cache=True,
+        input_ids = self.prepare_prompt(messages)  # shape: [batch=1, seq_len]
+        input_len = input_ids.shape[1]
+
+        gen = self.model.generate(
+            input_ids=input_ids,
+            attention_mask=torch.ones_like(input_ids),
+            max_new_tokens=max_tokens,            # don't cap by max_position_embeddings
             do_sample=True,
             temperature=temperature,
             top_p=0.95,
             eos_token_id=self.eos_token_id,
+            pad_token_id=self.tokenizer.eos_token_id,
             num_return_sequences=num_comps,
+            use_cache=True,
         )
 
-        if isinstance(outputs, torch.Tensor):
-            outputs = outputs.tolist()  # Convert tensor to list of token IDs
+        # Keep only newly generated tokens (strip the prompt)
+        gen_only = gen[:, input_len:]
 
-        # Decode outputs
-        outs = self.tokenizer.batch_decode(outputs, skip_special_tokens=False)
+        outs = self.tokenizer.batch_decode(gen_only, skip_special_tokens=False)
 
-        # Ensure `outs` is a list of strings
-        assert isinstance(outs, list), f"Expected outs to be a list, got {type(outs)}"
-        for i, out in enumerate(outs):
-            assert isinstance(out, str), f"Expected out to be a string, got {type(out)}"
-
-        # If you need additional processing, call extract_output only if necessary
-        # Assuming extract_output applies further processing on decoded strings:
-        outs = [self.extract_output(out) for out in outs]
-
-        # Return the decoded output(s)
-        if len(outs) == 1:
-            return outs[0]  # Return a single string
-        else:
-            return outs  # Return a list of strings
+        outs = [self.extract_output(o) for o in outs]
+        return outs[0] if num_comps == 1 else outs
 
     def prepare_prompt(self, messages: List[Message]):
         raise NotImplementedError
 
     def extract_output(self, output: str) -> str:
         raise NotImplementedError
-
-
-class StarChat(HFModelBase):
-    def __init__(self):
-        import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-        model = AutoModelForCausalLM.from_pretrained(
-            "HuggingFaceH4/starchat-beta",
-            torch_dtype=torch.bfloat16,
-            device_map="auto",
-        )
-        tokenizer = AutoTokenizer.from_pretrained(
-            "HuggingFaceH4/starchat-beta",
-        )
-        super().__init__("starchat", model, tokenizer, eos_token_id=49155)
-
-
-
-    def prepare_prompt(self, messages: List[Message]):
-        prompt = ""
-        for i, message in enumerate(messages):
-            prompt += f"<|{message.role}|>\n{message.content}\n<|end|>\n"
-            if i == len(messages) - 1:
-                prompt += "<|assistant|>\n"
-
-        return self.tokenizer.encode(prompt, return_tensors="pt").to(self.model.device)
-
-    def extract_output(self, output: str) -> str:
-        out = output.split("<|assistant|>")[1]
-        if out.endswith("<|end|>"):
-            out = out[:-len("<|end|>")]
-
-        return out
 
 class DeepSeekCoder(HFModelBase):
     import torch
@@ -242,90 +205,20 @@ class DeepSeekCoder(HFModelBase):
 
         super().__init__("deepseek-ai/deepseek-coder-6.7b-instruct", model, tokenizer)
 
+    
     def prepare_prompt(self, messages: List[Message]):
-
-        bos_token = "<|begin▁of▁sentence|>"
-        eos_token = "<|end▁of▁sentence|>"
-        prompt = bos_token
-
-        for message in messages:
-            if message.role == "user":
-                prompt += f"User: {message.content}\n\n"
-            elif message.role == "assistant":
-                prompt += f"Assistant: {message.content}{eos_token}"
-            elif message.role == "system":
-                prompt += f"{message.content}\n\n"
-
-        prompt += "Assistant:"
-        
-        return self.tokenizer.encode(prompt, return_tensors="pt").to(self.model.device)
-
-    def extract_output(self, output: str) -> str:
-
-        out = output.split("Assistant: ", 1)[-1]  # Get everything after "Assistant: "
-        eos_token = "<｜end▁of▁sentence｜>"
-        if out.endswith(eos_token):
-            out = out[:-len(eos_token)]  # Remove EOS token if present
-        return out.strip()
-class DeepSeekR1(HFModelBase):
-    def __init__(self, model_path=None):
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-        import torch
-
-        model_id = model_path or "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
-
-        # Check if CUDA is available
-        use_cuda = torch.cuda.is_available()
-
-        # Initialize quantization_config as None
-        quantization_config = None
-
-        # Try to import BitsAndBytesConfig only if CUDA is available
-        if use_cuda:
-            try:
-                from transformers import BitsAndBytesConfig
-                quantization_config = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    bnb_4bit_quant_type="nf4",
-                )
-            except ImportError:
-                print("bitsandbytes is not installed. Running in full precision.")
-
-        else:
-            print("CUDA not available. Running in full precision (CPU mode).")
-
-        # Load model
-        model = AutoModelForCausalLM.from_pretrained(
-            model_id,
-            torch_dtype=torch.bfloat16 if use_cuda else torch.float32,
-            device_map="auto" if use_cuda else None,
-            quantization_config=quantization_config,
-            trust_remote_code=True
-        )
-
-        # Load tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(
-            model_id,
-            trust_remote_code=True
-        )
-
-        super().__init__(model_id, model, tokenizer)
-
-    def prepare_prompt(self, messages: List[Message]):
-        """
-        Use tokenizer's built-in chat formatting for DeepSeek V3
-        """
-        from dataclasses import asdict
-        formatted = [asdict(m) for m in messages]
 
         return self.tokenizer.apply_chat_template(
-            formatted,
+            [{"role": m.role, "content": m.content} for m in messages],
             add_generation_prompt=True,
             return_tensors="pt"
         ).to(self.model.device)
 
+    # import re
+    # SPECIAL_TOKENS_RE = re.compile(r"(?:<\|EOT\|>|<\|end▁of▁sentence\|>|</s>)")
     def extract_output(self, output: str) -> str:
-        return output.strip()
+        extracted_output = output.replace("<｜end▁of▁sentence｜>","")
+        return output.replace("<｜end▁of▁sentence｜>","")
 
 class CodeLlama(HFModelBase):
     B_INST, E_INST = "[INST]", "[/INST]"

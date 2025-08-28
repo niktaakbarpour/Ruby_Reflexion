@@ -1,21 +1,69 @@
 import re
 from typing import Optional
 
-
 def parse_code_block(string: str, lang: str) -> Optional[str]:
-    code_pattern = fr"```{lang}\n(.*?)\n```"
-    match = re.search(code_pattern, string, re.DOTALL)
+    import re
 
-    if match:
-        return match.group(1)
+    if isinstance(string, list):
+        string = string[0] if string else ""
+    text = str(string)
 
-    generic_code_pattern = r"```\n(.*?)\n```"
-    match = re.search(generic_code_pattern, string, re.DOTALL)
+    lines = text.splitlines()
+    blocks = []
 
-    if match:
-        return match.group(1)
+    open_re = re.compile(r'^[ \t]*(```|~~~)[ \t]*([^\n`]*)[ \t]*$')
 
-    return parse_first_func(string, lang)
+    i = 0
+    while i < len(lines):
+        m = open_re.match(lines[i])
+        if not m:
+            # DEBUG: show any line that *looks* like a fence but didn’t match
+            if '```' in lines[i] or '~~~' in lines[i]:
+                print("OPEN didn’t match:", repr(lines[i]))
+            i += 1
+            continue
+
+        fence, info = m.group(1), (m.group(2) or "")
+        fence_char = fence[0]
+        close_re = re.compile(rf'^[ \t]*{re.escape(fence)}[ \t]*$')
+
+        j = i + 1
+        while j < len(lines) and not close_re.match(lines[j]):
+            # DEBUG for closing failures
+            if (('```' in lines[j] or '~~~' in lines[j]) and
+                not close_re.match(lines[j])):
+                print("CLOSE didn’t match:", repr(lines[j]), "expected:", fence)
+            j += 1
+
+        if j >= len(lines):
+            block = "\n".join(lines[i+1:]).strip()
+            if block:
+                blocks.append((info, block))
+            break
+
+        block = "\n".join(lines[i+1:j]).rstrip("\r\n")
+        blocks.append((info, block))
+        i = j + 1
+
+    print("FOUND blocks:", [(repr(info), len(b)) for info,b in blocks])  # DEBUG
+
+    def info_has_lang(s: str) -> bool:
+        tokens = re.split(r"[^\w#+-]+", s.lower())
+        return lang.lower() in tokens
+
+    chosen = None
+    for info, block in blocks:
+        if info_has_lang(info):
+            chosen = block
+            break
+    if not chosen and blocks:
+        chosen = max(blocks, key=lambda ib: len(ib[1]))[1]
+
+    if chosen:
+        return chosen.strip()
+    return parse_first_func(text, lang)
+
+
 
 
 def parse_first_func(code: str, lang: str) -> Optional[str]:
@@ -29,6 +77,7 @@ def parse_first_func(code: str, lang: str) -> Optional[str]:
     for i, line in enumerate(code_lines):
         stripped_line = line.strip()
         if stripped_line.startswith("def "):
+            print(f"stripped_line: {stripped_line}")
             if def_i == -1:
                 def_i = i
             else:

@@ -140,8 +140,14 @@ class PyGenerator(Generator):
             reflexion_completion_instruction=PY_REFLEXION_COMPLETION_INSTRUCTION,
             simple_completion_instruction=PY_SIMPLE_COMPLETION_INSTRUCTION,
             code_block_instruction=USE_PYTHON_CODEBLOCK_INSTRUCTION,
-            parse_code_block=lambda x: parse_code_block(x, "ruby"),
-            add_code_block=lambda x: add_code_block(x, "ruby"),
+            parse_code_block=lambda *args, **kwargs: parse_code_block(
+            kwargs.get("string") or kwargs.get("text") or kwargs.get("code") or (args[-1] if args else ""),
+            "ruby",
+            ),
+            add_code_block=lambda *args, **kwargs: add_code_block(
+            kwargs.get("string") or kwargs.get("text") or kwargs.get("code") or (args[-1] if args else ""),
+            "ruby",
+            ),
         )
 
     def scot_func_impl(
@@ -183,7 +189,7 @@ class PyGenerator(Generator):
                        problem_context: str,
                     #    inferred_specificaion:str,
                        model: ModelBase,
-                       max_num_tests: int = 7) -> List[str]:
+                       max_num_tests: int = 6) -> List[str]:
         return generic_generate_internal_tests(
             problem_context=problem_context,
             model=model,
@@ -200,7 +206,7 @@ class PyGenerator(Generator):
                                 problem_context: str,
                                 func: str,
                                 model: ModelBase,
-                                max_num_tests: int = 5
+                                max_num_tests: int = 6
                                 ) -> List[str]:
         return generic_validate_internal_tests(
             tests=tests,
