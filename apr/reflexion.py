@@ -118,10 +118,12 @@ def finalize_item(is_solved, item, reflections, implementations, test_feedback, 
     for iter_idx, results in enumerate(iteration_pass_matrix):
         c = sum(results)
         item[f"pass@{pass_at_k}_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
+        print(f"pass@{pass_at_k}_iter{iter_idx}: {codex_pass_at_k(n_completions, c, pass_at_k)}")
 
     for iter_idx, results in enumerate(iteration_unit_pass_matrix):
         c = sum(results)
         item[f"pass@{pass_at_k}_unit_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
+        print(f"pass@{pass_at_k}_unit_iter{iter_idx}: {codex_pass_at_k(n_completions, c, pass_at_k)}")
 
     print(f"solved_iteration: {solved_iter}")
     print(f"is_solved: {item['is_solved']}")
