@@ -54,6 +54,103 @@ def extract_json_fuzzy(output: str):
     raise ValueError("No valid JSON array found in model output.")
 
 
+import json
+import re
+from typing import List, Dict
+
+def _slice_json_array_payload(text: str) -> str:
+    # Prefer a fenced block
+    m = re.search(r"```json\s*(.*?)```", text, flags=re.S | re.I)
+    payload = m.group(1) if m else text
+
+    # Find the first '[' (start of array)
+    start = payload.find('[')
+    if start == -1:
+        raise ValueError("No '[' found for JSON array.")
+    return payload[start:]  # from '[' onward
+
+def extract_first_n_tests(text: str, n: int) -> List[Dict[str, str]]:
+    """
+    Extract up to N objects from the first JSON array present in text.
+    Robust to extra items and truncated tails.
+    Returns exactly up to N items; if fewer than N are found, returns what it found.
+    """
+    arr_text = _slice_json_array_payload(text)
+
+    # Walk the text to collect balanced {...} objects at top array level.
+    i = 0
+    in_string = False
+    escape = False
+    depth = 0
+    objs: List[str] = []
+    current_obj_start = None
+
+    # Skip the initial '['
+    if not arr_text or arr_text[0] != '[':
+        raise ValueError("JSON array does not start with '['.")
+    i = 1
+
+    while i < len(arr_text) and len(objs) < n:
+        ch = arr_text[i]
+
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == '\\':
+                escape = True
+            elif ch == '"':
+                in_string = False
+            i += 1
+            continue
+
+        # not in string
+        if ch == '"':
+            in_string = True
+            i += 1
+            continue
+
+        if ch == '{':
+            if depth == 0:
+                current_obj_start = i
+            depth += 1
+            i += 1
+            continue
+
+        if ch == '}':
+            depth -= 1
+            if depth == 0 and current_obj_start is not None:
+                # We have a complete object substring
+                obj_str = arr_text[current_obj_start:i+1]
+                objs.append(obj_str)
+                current_obj_start = None
+            i += 1
+            continue
+
+        # End of array?
+        if ch == ']' and depth == 0:
+            break
+
+        # Otherwise move on (commas, spaces, etc.)
+        i += 1
+
+    # Now parse objects we collected
+    results: List[Dict[str, str]] = []
+    for obj_str in objs[:n]:
+        try:
+            obj = json.loads(obj_str)
+            if isinstance(obj, dict) and "input" in obj and "output" in obj:
+                results.append({
+                    "input": str(obj["input"]),
+                    "output": str(obj["output"])
+                })
+        except json.JSONDecodeError:
+            # Ignore malformed objects (can happen if we somehow sliced poorly)
+            continue
+
+    return results[:n]
+
+
+
 def generic_generate_func_impl(
     problem_context: str,
     model: ModelBase,
@@ -124,138 +221,151 @@ def generic_generate_func_impl(
         elif strategy == "test_gen_omission":
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}\n\n{first_reflexion_few_shot}"
-                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{reflections}"
-                
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    f"[hint for changing the implementation]:\n{reflections}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
                 messages = [
                     Message(role="system", content=prompt),
-                    Message(role="user", content=message),
-                    Message(role="assistant", content=reflections),
-                    Message(role="user", content=(
-                        "Before writing the improved implementation, please answer:\n"
-                        "1. What specific changes are you going to make to the code based on the reflection?\n"
-                        "2. How exactly will this change address the issue?\n\n"
-                        "Then, write your full improved implementation in Ruby.\n"
-                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                    ))
+                    Message(role="user", content=user_content),
                 ]
             else:
                 prompt = f"{reflexion_chat_instruction_test_omit}\n{code_block_instruction}\n\n{reflexion_few_shot_test_omit}"
-                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    f"[hint for changing the implementation]:\n{reflections}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
                 messages = [
                     Message(role="system", content=prompt),
-                    Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),
-                    Message(role="user", content=f"[problem description]:\n{problem_context}"),
-                    Message(role="assistant", content=f"[reflection on previous impl]:\n{reflections}"),
-                    Message(role="user", content=(
-                        "Before writing the improved implementation, please answer:\n"
-                        "1. What specific changes are you going to make to the code based on the reflection?\n"
-                        "2. How exactly will this change address the issue?\n\n"
-                        "Then, write your full improved implementation in Ruby.\n"
-                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                    ))
+                    Message(role="user", content=user_content),
                 ]
         elif strategy == "first_refl_omission":
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction_first_omit}\n{code_block_instruction}\n\n{first_reflexion_few_shot_first_omit}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
+                print(f"prompt1: {prompt}")
+
+                print(f"user_content1: {user_content}")
+
                 messages = [
                     Message(role="system", content=prompt),
-                    Message(role="user", content=message),
-                    Message(role="user", content=(
-                        "Before writing the improved implementation, please answer:\n"
-                        "1. What specific changes are you going to make to the code?\n"
-                        "2. How exactly will this change address the issue?\n\n"
-                        "Then, write your full improved implementation in Ruby.\n"
-                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                    ))
+                    Message(role="user", content=user_content),
                 ]
             else:
                 prompt = f"{reflexion_chat_instruction}\n{code_block_instruction}\n\n{reflexion_few_shot}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    f"[unit test results from previous impl]:\n{feedback}",
+                    f"[hint for changing the implementation]:\n{reflections}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
+                print(f"prompt2: {prompt}")
+
+                print(f"user_content2: {user_content}")
+
                 messages = [
                     Message(role="system", content=prompt),
-                    Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),
-                    Message(role="user", content=f"[problem description]:\n{problem_context}"),
-                    Message(role="assistant", content=f"[unit test results from previous impl]:\n{feedback}\n\n[reflection on previous impl]:\n{reflections}"),
-                    Message(role="user", content=(
-                        "Before writing the improved implementation, please answer:\n"
-                        "1. What specific changes are you going to make to the code based on the reflection?\n"
-                        "2. How exactly will this change address the issue?\n\n"
-                        "Then, write your full improved implementation in Ruby.\n"
-                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                    ))
+                    Message(role="user", content=user_content),
                 ]
+
         elif strategy == "self_refl_omission":
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction}\n{code_block_instruction}\n\n{first_reflexion_few_shot}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}\n\n[reflection on previous impl]:\n{reflections}"
-                
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    f"[hint for changing the implementation]:\n{reflections}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
                 messages = [
                     Message(role="system", content=prompt),
-                    Message(role="user", content=message),
-                    Message(role="assistant", content=reflections),
-                    Message(role="user", content=(
-                        "Before writing the improved implementation, please answer:\n"
-                        "1. What specific changes are you going to make to the code based on the reflection?\n"
-                        "2. How exactly will this change address the issue?\n\n"
-                        "Then, write your full improved implementation in Ruby.\n"
-                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                    ))
+                    Message(role="user", content=user_content),
                 ]
             else:
                 prompt = f"{reflexion_chat_instruction_self_omit}\n{code_block_instruction}\n\n{reflexion_few_shot_self_omit}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    f"[unit test results from previous impl]:\n{feedback}",
+                    f"[hint for changing the implementation]:\n{reflections}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
                 messages = [
                     Message(role="system", content=prompt),
-                    Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),
-                    Message(role="user", content=f"[problem description]:\n{problem_context}"),
-                    Message(role="assistant", content=f"[unit test results from previous impl]:\n{feedback}"),
-                    Message(role="user", content=(
-                        "Before writing the improved implementation, please answer:\n"
-                        "1. What specific changes are you going to make to the code?\n"
-                        "2. How exactly will this change address the issue?\n\n"
-                        "Then, write your full improved implementation in Ruby.\n"
-                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                    ))
+                    Message(role="user", content=user_content),
                 ]
+
         elif strategy == "refl_omission":
             if is_first_reflection:
                 prompt = f"{first_reflexion_chat_instruction_first_omit}\n{code_block_instruction}\n\n{first_reflexion_few_shot_first_omit}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
                 messages = [
                     Message(role="system", content=prompt),
-                    Message(role="user", content=message),
-                    Message(role="user", content=(
-                        "Before writing the improved implementation, please answer:\n"
-                        "1. What specific changes are you going to make to the code?\n"
-                        "2. How exactly will this change address the issue?\n\n"
-                        "Then, write your full improved implementation in Ruby.\n"
-                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                    ))
+                    Message(role="user", content=user_content),
                 ]
+                print(f"generator messages: {messages}")
             else:
                 prompt = f"{reflexion_chat_instruction_self_omit}\n{code_block_instruction}\n\n{reflexion_few_shot_self_omit}"
                 message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
-                
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    f"[unit test results from previous impl]:\n{feedback}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
                 messages = [
                     Message(role="system", content=prompt),
-                    Message(role="assistant", content=f"[previous impl]:\n{add_code_block(prev_func_impl)}"),
-                    Message(role="user", content=f"[problem description]:\n{problem_context}"),
-                    Message(role="assistant", content=f"[unit test results from previous impl]:\n{feedback}"),
-                    Message(role="user", content=(
-                        "Before writing the improved implementation, please answer:\n"
-                        "1. What specific changes are you going to make to the code?\n"
-                        "2. How exactly will this change address the issue?\n\n"
-                        "Then, write your full improved implementation in Ruby.\n"
-                        "Ensure that your code actually reflects the reasoning above and addresses the problem."
-                    ))
+                    Message(role="user", content=user_content),
+                ]
+
+        elif strategy == "few_shot":
+            if is_first_reflection:
+                prompt = f"{first_reflexion_chat_instruction_first_omit}\n{code_block_instruction}\n\n{first_reflexion_few_shot_first_omit}"
+                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
+                messages = [
+                    Message(role="system", content=prompt),
+                    Message(role="user", content=user_content),
+                ]
+                print(f"generator messages: {messages}")
+            else:
+                prompt = f"{reflexion_chat_instruction_self_omit}\n{code_block_instruction}\n\n{reflexion_few_shot_self_omit}"
+                message = f"[previous impl]:\n{add_code_block(prev_func_impl)}\n\n[problem context]:\n{problem_context}"
+                user_content = "\n\n".join([
+                    f"[previous implementation]:\n{add_code_block(prev_func_impl)}",
+                    f"[problem description]:\n{problem_context}",
+                    f"[unit test results from previous impl]:\n{feedback}",
+                    "Write your full improved implementation in Ruby:\n"
+                ])
+                messages = [
+                    Message(role="system", content=prompt),
+                    Message(role="user", content=user_content),
                 ]
         func_bodies = model.generate_chat(messages=messages, num_comps=num_comps, temperature=temperature)
+        print(f"generator func_bodies: {func_bodies}")
+
     else:
         if strategy == "reflexion":
             prompt = f"{reflexion_completion_instruction}\n{add_code_block(prev_func_impl)}\n\nunit tests:\n{feedback}\n\nhint:\n{reflections}\n\n# improved implementation\n{code_block_instruction}"
@@ -264,14 +374,25 @@ def generic_generate_func_impl(
         func_bodies = model.generate(prompt, num_comps=num_comps, temperature=temperature)
 
     if num_comps == 1:
+        # normalize to string
+        if isinstance(func_bodies, list):
+            func_bodies = func_bodies[0] if func_bodies else ""
+
         assert isinstance(func_bodies, str)
+
+        for idx, ln in enumerate(str(func_bodies).splitlines()):
+            if "```" in ln or "~~~" in ln:
+                print(idx, repr(ln))
+
+
         parsed = parse_code_block(func_bodies)
-        print_generated_func_body(parsed)
+        print("parsed:", parsed)
         return parsed
     else:
         parsed = [parse_code_block(body) for body in func_bodies]
         print_generated_func_body("\n\n".join(parsed))
         return parsed
+        
 
 def generic_generate_scot_func_impl(
     *args, **kwargs
@@ -310,29 +431,20 @@ def generic_generate_internal_tests(
             print(f"outputs2: {outputs}")
     else:
         prompt = f"{test_generation_completion_instruction}\nunit tests:"
-        outputs = model.generate(prompt, max_tokens=1024)
+        outputs = model.generate(prompt, max_tokens=1024, temperature=0.1)
         if isinstance(outputs, str):
             outputs = [outputs]
 
     all_tests = []
     for output in outputs:
-        try:
-            unit_tests = extract_json_fuzzy(output)
-            print(f"unit_tests1: {unit_tests}")
-        except (json.JSONDecodeError, ValueError) as e:
-            print(f"Test generation failed: {e}")
-            all_tests.append([])
-            continue
+        # extract first N tests even if model kept talking or truncated the tail
+        tests = extract_first_n_tests(output, max_num_tests)
+        print(f"extracted_tests: {tests}")
+        # If you still want random sampling within those, do it here;
+        # but typically we want exactly N, so just take them as-is:
+        pairs = [(t["input"], t["output"]) for t in tests]
+        all_tests.append(pairs)
 
-        if isinstance(unit_tests, list):
-            print(f"unit_tests2: {unit_tests}")
-            extracted = sample_n_random([
-                (t["input"], t["output"])
-                for t in unit_tests if isinstance(t, dict) and "input" in t and "output" in t
-            ], max_num_tests)
-            all_tests.append(extracted)
-        else:
-            all_tests.append([])
     print(f"all_tests: {all_tests}")
     return all_tests[0]
 

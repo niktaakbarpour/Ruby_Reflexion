@@ -8,7 +8,7 @@ PY_SIMPLE_CHAT_INSTRUCTION_V2 = "You are an AI that only responds with only Ruby
 PY_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given your past function implementation, a series of unit tests, problem description, and a hint to change the implementation appropriately. Write your full implementation in Ruby based on the hint given to you (it tells you what was wrong in previous implementation), unit test results, and problem context."
 RB_REFLEXION_CHAT_INSTRUCTION_SELF_OMIT = "You are an AI Ruby programming language assistant. You will be given problem contect, your past function implementation, and a series of unit tests. Write your full correct implementation based on problem requirements in Ruby."
 RB_REFLEXION_CHAT_INSTRUCTION_TEST_OMIT = "You are an AI Ruby programming language assistant. You will be given problem docstring, your past function implementation and a hint to change the implementation appropriately. Write your full implementation in Ruby."
-PY_FIRST_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given problem docstring, incorrect user function implementation, and a hint to change the implementation appropriately. Write your full implementation in Ruby."
+PY_FIRST_REFLEXION_CHAT_INSTRUCTION = "You are an AI Ruby programming language assistant. You will be given problem docstring, incorrect user function implementation, and a hint to change the implementation appropriately. Write your full implementation in Ruby. Important: only generate the code and not any natural language and not any justifications. Just wrute the code!"
 RB_FIRST_REFLEXION_CHAT_INSTRUCTION_FIRST_OMIT = "You are an AI Ruby programming language assistant. You will be given problem context and incorrect user function implementation. Write your full correct implementation based on problem requirements in Ruby."
 PY_REFLEXION_CHAT_INSTRUCTION_V2 = "You are an AI Ruby programming language assistant. You will be given your previous implementation of a function, a series of unit tests results, and your self-reflection on your previous implementation. Write your full implementation in Ruby."
 RB_SCOT_CHAT_INSTRUCTION = '''
@@ -1194,7 +1194,7 @@ RB_TEST_GENERATION_EDGE_CHAT_INSTRUCTION = """You are an AI Ruby programming lan
 
 **Role**: As a tester, your goal is to create comprehensive and diverse test cases that evaluate the correctness and robustness of the Ruby function under various scenarios.
 
-Create two test cases for each of these three categories:
+Create two test cases for each of these three categories. It is important to generate only SIX test cases in total:
 
 **1. Basic Test Cases**:
 - **Objective**: Verify the function’s fundamental correctness under standard conditions.
@@ -1209,6 +1209,7 @@ Create two test cases for each of these three categories:
 - Ensure the function handles high-volume data without crashing or slowing down.
 
 **Instructions**:
+- Exactly generate 6 test cases (2 test cases for each category)
 - Generate all test cases as a list of dictionaries, each containing an \"input\" and an \"output\".
 - Do NOT include the function implementation or a full test suite. Only return test inputs and expected outputs.
 - Return the test cases as valid JSON array.

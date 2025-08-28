@@ -98,6 +98,37 @@ def generate_function(
         return out
     else:
         return [out]
+    
+
+def finalize_item(is_solved, item, reflections, implementations, test_feedback, cur_func_impl,
+                  success_count, solved_iter, pass_at_k, n_completions,
+                  unit_ok, unit_test_results, iteration_pass_matrix, iteration_unit_pass_matrix):
+    """Helper to update item and return results."""
+    item["is_solved"] = is_solved
+    item["reflections"] = reflections
+    item["implementations"] = implementations
+    item["test_feedback"] = test_feedback
+    item["solution"] = cur_func_impl
+    item["success_count"] = success_count
+    item["solved_iteration"] = solved_iter
+    item[f"pass@{pass_at_k}"] = codex_pass_at_k(n_completions, success_count, pass_at_k)
+    item["final_unit_ok"] = unit_ok
+    item["final_unit_test_results"] = unit_test_results
+
+    for iter_idx, results in enumerate(iteration_pass_matrix):
+        c = sum(results)
+        item[f"pass@{pass_at_k}_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
+
+    for iter_idx, results in enumerate(iteration_unit_pass_matrix):
+        c = sum(results)
+        item[f"pass@{pass_at_k}_unit_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
+
+    print(f"solved_iteration: {solved_iter}")
+    print(f"is_solved: {item['is_solved']}")
+    print(f"success_count: {success_count}")
+    print(f"pass@{pass_at_k}: {item[f'pass@{pass_at_k}']}")
+
+    return item, item[f"pass@{pass_at_k}"]
 
 
 def run_single_item(
@@ -127,6 +158,9 @@ def run_single_item(
     cur_func_impl = item["bug_source_code"]
     cur_feedback = None
 
+    if isinstance(item["hidden_unit_tests"], str):
+        item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
+
     # if infer_spec:
     #     inferred_specificaion = gen.infer_specification(
     #         problem_context=create_problem_template(item, False),
@@ -150,7 +184,7 @@ def run_single_item(
         problem_context=create_problem_template(item, False),
         # inferred_specificaion=inferred_specificaion,
         model=model,
-        max_num_tests=7,
+        max_num_tests=6,
         samples=samples,
     )
     print(f"tests_i: {tests}")
@@ -208,9 +242,8 @@ def run_single_item(
         iteration_pass_matrix[0].append(is_passing)
         cur_func_impl = cur_impl
 
-        if isinstance(item["hidden_unit_tests"], str):
-            item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
-
+        unit_ok = False
+        unit_test_results = []
         unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
         ever_unit_ok = ever_unit_ok or unit_ok
         print(f"unit_test_results first: {unit_test_results}")
@@ -218,8 +251,13 @@ def run_single_item(
         iteration_unit_pass_matrix[0].append(unit_ok)
         if unit_ok and is_passing:
             solved_iter = 0
+            success_count += 1
             is_solved = True
-            break
+            return finalize_item(is_solved, item, reflections, implementations, test_feedback,
+                                 cur_func_impl, success_count, solved_iter,
+                                 pass_at_k, n_completions,
+                                 unit_ok, unit_test_results,
+                                 iteration_pass_matrix, iteration_unit_pass_matrix)
 
         cur_iter = 1
         cur_feedback = test_feedback
@@ -261,56 +299,46 @@ def run_single_item(
             print(f"is_passing2: {is_passing}")
             print(f"feedback2: {cur_feedback}")
 
-            if isinstance(item["hidden_unit_tests"], str):
-                item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
+            # if isinstance(item["hidden_unit_tests"], str):
+            #     item["hidden_unit_tests"] = json.loads(item["hidden_unit_tests"])
 
+            unit_ok = False
+            unit_test_results = []
+
+            # if is_passing or cur_iter == max_iters - 1:
             unit_ok, unit_test_results = exe.evaluate(cur_func_impl, item["hidden_unit_tests"], timeout=10)
             print(f"unit_ok 2: {unit_ok}")
             print(f"unit_test_results 2: {unit_test_results}")
             ever_unit_ok = ever_unit_ok or unit_ok
             iteration_unit_pass_matrix[cur_iter].append(unit_ok)
 
-            if is_passing or cur_iter == max_iters - 1:
-                if unit_ok:
-                    solved_iter = cur_iter
-                    is_solved = True
-                break
+            if (is_passing or cur_iter == max_iters - 1) and unit_ok:
+                solved_iter = cur_iter
+                is_solved = True
+                success_count += 1
+                return finalize_item(is_solved, item, reflections, implementations, test_feedback,
+                                     cur_func_impl, success_count, solved_iter,
+                                     pass_at_k, n_completions,
+                                     unit_ok, unit_test_results,
+                                     iteration_pass_matrix, iteration_unit_pass_matrix)
 
             cur_iter += 1
 
-    if ever_unit_ok:
-        success_count += 1
-        is_solved = True
-
-    item["is_solved"] = is_solved
-    item["reflections"] = reflections
-    item["implementations"] = implementations
-    item["test_feedback"] = test_feedback
-    item["solution"] = cur_func_impl
-    item["success_count"] = success_count
-    item["solved_iteration"] = solved_iter
-    item[f"pass@{pass_at_k}"] = codex_pass_at_k(n_completions, success_count, pass_at_k)
-    item["final_unit_ok"] = unit_ok
-    item["final_unit_test_results"] = unit_test_results
-
-    print(f"solved_iteration: {solved_iter}")
-    print(f"is_solved: {is_solved}")
-    print(f"success_count: {success_count}")
-    print(f"pass@{pass_at_k}: {codex_pass_at_k(n_completions, success_count, pass_at_k)}")
+    # if ever_unit_ok:
+    #     is_solved = True
+    #     success_count += 1
+    #     solved_iter = solved_iter if solved_iter is not None else max_iters - 1
+    #     return finalize_item(is_solved, item, reflections, implementations, test_feedback,
+    #                          cur_func_impl, success_count, solved_iter,
+    #                          pass_at_k, n_completions,
+    #                          unit_ok, unit_test_results,
+    #                          iteration_pass_matrix, iteration_unit_pass_matrix)
     
-
-    for iter_idx, results in enumerate(iteration_pass_matrix):
-        c = sum(results)
-        item[f"pass@{pass_at_k}_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
-        print(f"pass@{pass_at_k}_iter{iter_idx}: {codex_pass_at_k(n_completions, c, pass_at_k)}")
-
-    for iter_idx, results in enumerate(iteration_unit_pass_matrix):
-        c = sum(results)
-        item[f"pass@{pass_at_k}_unit_iter{iter_idx}"] = codex_pass_at_k(n_completions, c, pass_at_k)
-        print(f"pass@{pass_at_k}_unit_iter{iter_idx}: {codex_pass_at_k(n_completions, c, pass_at_k)}")
-
-    return item, item[f"pass@{pass_at_k}"]
-
+    return finalize_item(is_solved, item, reflections, implementations, test_feedback,
+                        cur_func_impl, success_count, solved_iter,
+                        pass_at_k, n_completions,
+                        unit_ok, unit_test_results,
+                        iteration_pass_matrix, iteration_unit_pass_matrix)
 
 
 def run_reflexion(

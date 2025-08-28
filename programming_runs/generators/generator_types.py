@@ -28,6 +28,6 @@ class Generator:
             self,
             func_sig: str,
             model: ModelBase,
-            max_num_tests: int = 5
+            max_num_tests: int = 6
     ) -> List[str]:
         ...
