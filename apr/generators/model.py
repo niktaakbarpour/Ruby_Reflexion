@@ -1,5 +1,8 @@
+from vllm import LLM, CompletionConfig, SamplingParams
 from typing import List, Union, Optional, Literal
 import dataclasses
+import os
+from pathlib import Path
 
 from tenacity import (
     retry,
@@ -241,91 +244,105 @@ class DeepSeekCoder(HFModelBase):
         )
 
         super().__init__("deepseek-ai/deepseek-coder-6.7b-instruct", model, tokenizer)
+class DeepSeekR1(ModelBase):
+    def __init__(
+        self,
+        model_path: Optional[str] = None,
+        tensor_parallel_size: int = 1,   # 7B fits on 1×A100-40GB; set 2 if you allocate 2 GPUs
+        gpu_memory_utilization: float = 0.9,
+        max_model_len: int = 4096,
+        dtype: str = "bfloat16",
+    ):
+        self.name = "deepseek-r1-distill-qwen-7b"
+        self.is_chat = True
 
-    def prepare_prompt(self, messages: List[Message]):
+        base_path = (
+            model_path
+            or os.environ.get("MODEL_PATH")
+            or os.environ.get("DEEPSEEK_MODEL_PATH")
+            or os.environ.get("SLURM_TMPDIR")
+        )
+        if base_path is None:
+            raise ValueError("Provide model_path or set MODEL_PATH/DEEPSEEK_MODEL_PATH/SLURM_TMPDIR.")
 
-        bos_token = "<|begin▁of▁sentence|>"
-        eos_token = "<|end▁of▁sentence|>"
-        prompt = bos_token
+        actual_model_path = self.find_model_directory(base_path)
 
-        for message in messages:
-            if message.role == "user":
-                prompt += f"User: {message.content}\n\n"
-            elif message.role == "assistant":
-                prompt += f"Assistant: {message.content}{eos_token}"
-            elif message.role == "system":
-                prompt += f"{message.content}\n\n"
-
-        prompt += "Assistant:"
-        
-        return self.tokenizer.encode(prompt, return_tensors="pt").to(self.model.device)
-
-    def extract_output(self, output: str) -> str:
-
-        out = output.split("Assistant: ", 1)[-1]  # Get everything after "Assistant: "
-        eos_token = "<｜end▁of▁sentence｜>"
-        if out.endswith(eos_token):
-            out = out[:-len(eos_token)]  # Remove EOS token if present
-        return out.strip()
-class DeepSeekR1(HFModelBase):
-    def __init__(self, model_path=None):
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-        import torch
-
-        model_id = model_path or "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
-
-        # Check if CUDA is available
-        use_cuda = torch.cuda.is_available()
-
-        # Initialize quantization_config as None
-        quantization_config = None
-
-        # Try to import BitsAndBytesConfig only if CUDA is available
-        if use_cuda:
-            try:
-                from transformers import BitsAndBytesConfig
-                quantization_config = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    bnb_4bit_quant_type="nf4",
-                )
-            except ImportError:
-                print("bitsandbytes is not installed. Running in full precision.")
-
-        else:
-            print("CUDA not available. Running in full precision (CPU mode).")
-
-        # Load model
-        model = AutoModelForCausalLM.from_pretrained(
-            model_id,
-            torch_dtype=torch.bfloat16 if use_cuda else torch.float32,
-            device_map="auto" if use_cuda else None,
-            quantization_config=quantization_config,
-            trust_remote_code=True
+        self.llm = LLM(
+            model=actual_model_path,
+            tensor_parallel_size=tensor_parallel_size,
+            gpu_memory_utilization=gpu_memory_utilization,
+            max_model_len=max_model_len,
+            dtype=dtype,
+            trust_remote_code=True,
+            enforce_eager=True,
+            disable_log_stats=True,
         )
 
-        # Load tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(
-            model_id,
-            trust_remote_code=True
+    @staticmethod
+    def find_model_directory(model_path: str) -> str:
+        p = Path(model_path)
+        if (p / "config.json").exists():
+            return str(p)
+        snapshots_dir = p / "snapshots"
+        if snapshots_dir.exists():
+            snapshot_dirs = [d for d in snapshots_dir.iterdir() if d.is_dir()]
+            if snapshot_dirs:
+                actual_path = snapshot_dirs[0]
+                if (actual_path / "config.json").exists():
+                    return str(actual_path)
+        raise ValueError(
+            f"Could not find valid model directory in {model_path}. "
+            f"Expected either config.json directly or in snapshots subdirectory."
         )
 
-        super().__init__(model_id, model, tokenizer)
+    def _default_stop(self) -> List[str]:
+        return ["<|User|>", "<|Assistant|>", "\n\nUser:", "\n\nAssistant:"]
 
-    def prepare_prompt(self, messages: List[Message]):
-        """
-        Use tokenizer's built-in chat formatting for DeepSeek V3
-        """
-        from dataclasses import asdict
-        formatted = [asdict(m) for m in messages]
+    def generate(
+        self,
+        prompt: str,
+        max_tokens: int = 512,
+        stop_strs: Optional[List[str]] = None,
+        temperature: float = 0.6,
+        num_comps: int = 1,
+    ) -> Union[List[str], str]:
+        sampling_params = SamplingParams(
+            temperature=temperature,
+            top_p=0.95,
+            max_tokens=max_tokens,
+            stop=stop_strs or self._default_stop(),
+            n=num_comps,
+        )
+        results = self.llm.generate([prompt], sampling_params)
+        texts = [o.text for o in results[0].outputs]
+        return texts[0] if num_comps == 1 else texts
 
-        return self.tokenizer.apply_chat_template(
-            formatted,
-            add_generation_prompt=True,
-            return_tensors="pt"
-        ).to(self.model.device)
+    def generate_chat(
+        self,
+        messages: List[Message],
+        max_tokens: int = 512,
+        temperature: float = 0.6,
+        num_comps: int = 1,
+    ) -> Union[List[str], str]:
+        assert messages and messages[-1].role == "user", "Last message must be from user"
 
-    def extract_output(self, output: str) -> str:
-        return output.strip()
+        parts: List[str] = []
+        for m in messages:
+            if m.role == "user":
+                parts.append(f"<|User|>{m.content}")
+            elif m.role == "assistant":
+                parts.append(f"<|Assistant|>{m.content}")
+            elif m.role == "system":
+                parts.append(f"{m.content}\n")
+
+        prompt = "".join(parts) + "<|Assistant|>"
+        return self.generate(
+            prompt,
+            max_tokens=max_tokens,
+            stop_strs=self._default_stop(),
+            temperature=temperature,
+            num_comps=num_comps,
+        )
 
 class CodeLlama(HFModelBase):
     B_INST, E_INST = "[INST]", "[/INST]"
