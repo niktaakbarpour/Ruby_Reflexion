@@ -1,5 +1,8 @@
 from typing import List, Union, Optional, Literal
 import dataclasses
+from vllm import LLM, CompletionConfig, SamplingParams
+import os
+from pathlib import Path
 
 from tenacity import (
     retry,
@@ -219,6 +222,106 @@ class DeepSeekCoder(HFModelBase):
     def extract_output(self, output: str) -> str:
         extracted_output = output.replace("<｜end▁of▁sentence｜>","")
         return output.replace("<｜end▁of▁sentence｜>","")
+
+class DeepSeekR1(ModelBase):
+    def __init__(
+        self,
+        model_path: Optional[str] = None,
+        tensor_parallel_size: int = 1,   # 7B fits on 1×A100-40GB; set 2 if you allocate 2 GPUs
+        gpu_memory_utilization: float = 0.9,
+        max_model_len: int = 4096,
+        dtype: str = "bfloat16",
+    ):
+        self.name = "deepseek-r1-distill-qwen-7b"
+        self.is_chat = True
+
+        base_path = (
+            model_path
+            or os.environ.get("MODEL_PATH")
+            or os.environ.get("DEEPSEEK_MODEL_PATH")
+            or os.environ.get("SLURM_TMPDIR")
+        )
+        if base_path is None:
+            raise ValueError("Provide model_path or set MODEL_PATH/DEEPSEEK_MODEL_PATH/SLURM_TMPDIR.")
+
+        actual_model_path = self.find_model_directory(base_path)
+
+        self.llm = LLM(
+            model=actual_model_path,
+            tensor_parallel_size=tensor_parallel_size,
+            gpu_memory_utilization=gpu_memory_utilization,
+            max_model_len=max_model_len,
+            dtype=dtype,
+            trust_remote_code=True,
+            enforce_eager=True,
+            disable_log_stats=True,
+        )
+
+    @staticmethod
+    def find_model_directory(model_path: str) -> str:
+        p = Path(model_path)
+        if (p / "config.json").exists():
+            return str(p)
+        snapshots_dir = p / "snapshots"
+        if snapshots_dir.exists():
+            snapshot_dirs = [d for d in snapshots_dir.iterdir() if d.is_dir()]
+            if snapshot_dirs:
+                actual_path = snapshot_dirs[0]
+                if (actual_path / "config.json").exists():
+                    return str(actual_path)
+        raise ValueError(
+            f"Could not find valid model directory in {model_path}. "
+            f"Expected either config.json directly or in snapshots subdirectory."
+        )
+
+    def _default_stop(self) -> List[str]:
+        return ["<|User|>", "<|Assistant|>", "\n\nUser:", "\n\nAssistant:"]
+
+    def generate(
+        self,
+        prompt: str,
+        max_tokens: int = 512,
+        stop_strs: Optional[List[str]] = None,
+        temperature: float = 0.6,
+        num_comps: int = 1,
+    ) -> Union[List[str], str]:
+        sampling_params = SamplingParams(
+            temperature=temperature,
+            top_p=0.95,
+            max_tokens=max_tokens,
+            stop=stop_strs or self._default_stop(),
+            n=num_comps,
+        )
+        results = self.llm.generate([prompt], sampling_params)
+        texts = [o.text for o in results[0].outputs]
+        return texts[0] if num_comps == 1 else texts
+
+    def generate_chat(
+        self,
+        messages: List[Message],
+        max_tokens: int = 512,
+        temperature: float = 0.6,
+        num_comps: int = 1,
+    ) -> Union[List[str], str]:
+        assert messages and messages[-1].role == "user", "Last message must be from user"
+
+        parts: List[str] = []
+        for m in messages:
+            if m.role == "user":
+                parts.append(f"<|User|>{m.content}")
+            elif m.role == "assistant":
+                parts.append(f"<|Assistant|>{m.content}")
+            elif m.role == "system":
+                parts.append(f"{m.content}\n")
+
+        prompt = "".join(parts) + "<|Assistant|>"
+        return self.generate(
+            prompt,
+            max_tokens=max_tokens,
+            stop_strs=self._default_stop(),
+            temperature=temperature,
+            num_comps=num_comps,
+        )
 
 class CodeLlama(HFModelBase):
     B_INST, E_INST = "[INST]", "[/INST]"
