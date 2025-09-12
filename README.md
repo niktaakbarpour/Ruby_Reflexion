@@ -30,11 +30,6 @@ This repository implements a **reflection-augmented multi-agent pipeline** for *
 
 ## Quick Start
 
-### Prerequisites
-
-* Python ≥ 3.10 (recommended)
-* (Optional) GPU with CUDA for faster runs
-
 ### Setup
 
 ```bash
@@ -179,6 +174,16 @@ python ramp/baselines/self-planning/implementation.py --base-dir <result directo
 bash ramp/baselines/self-collaboration/run.sh
 bash ramp/baselines/self-collaboration/evaluate.sh
 ```
+
+### Notes on Baselines
+
+* For baselines, we relied on the replication package of LANTERN but made two modifications:
+
+  * Changed the code to compute Pass@1 instead of the default metric.
+  * Configured it to use a local model rather than external API keys.
+
+* For Pass@1 calculation, we used the field ```bug_code_uid``` to identify unique buggy programs.
+
 
 ### Dataset & Model Configuration
 
