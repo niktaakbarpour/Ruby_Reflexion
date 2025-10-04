@@ -1,137 +1,54 @@
-# # # import json
-# # # import pandas as pd
-# # # import matplotlib.pyplot as plt
-
-# # # # Load data
-# # # with open('C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/first_edgeIO_CoTIO_CoT.jsonl', 'r', encoding='utf-8') as f:
-# # #     data = [json.loads(line) for line in f]
-
-# # # df = pd.DataFrame(data)
-
-# # # # Define difficulty bins
-# # # bins = [0, 1200, 1400, 1600, 1800, 2000, 3000]
-# # # labels = ['<1200', '1200–1400', '1400–1600', '1600–1800', '1800–2000', '2000+']
-# # # df['difficulty_bin'] = pd.cut(df['difficulty'], bins=bins, labels=labels, right=False)
-
-# # # # Count solved vs unsolved per bin
-# # # bar_data = df.groupby(['difficulty_bin', 'is_solved']).size().unstack(fill_value=0)
-
-# # # # Choose hex colors for bars: one for 'False' (unsolved), one for 'True' (solved)
-# # # custom_colors = ['#cb4335', '#117a65']  # red-orange for False, greenish-teal for True
-
-# # # # Plot grouped bar chart with custom colors
-# # # ax = bar_data.plot(kind='bar', figsize=(10, 6), color=custom_colors)
-
-# # # plt.xlabel('Difficulty Range')
-# # # plt.ylabel('Number of Problems')
-# # # plt.legend(title='is_solved', labels=['False', 'True'])
-# # # plt.xticks(rotation=45)
-# # # plt.tight_layout()
-# # # plt.savefig("difficulty.png", format='png')
-# # # plt.show()
-
-# # import json
-# # import pandas as pd
-# # import matplotlib.pyplot as plt
-
-# # # --- CONFIGURATION ---
-# # jsonl_path = "../results/ds.jsonl"  # Change to your actual file
-# # difficulty_min = 750
-# # difficulty_max = 2500
-# # bin_width = 250
-
-# # # --- READ AND TRANSFORM DATA ---
-# # verdict_data = []
-
-# # with open(jsonl_path, 'r', encoding='utf-8') as f:
-# #     for line in f:
-# #         item = json.loads(line)
-# #         difficulty = item.get("difficulty", None)
-# #         if difficulty is None or not (difficulty_min <= difficulty <= difficulty_max):
-# #             continue
-
-# #         test_results = item.get("final_unit_test_results", [])
-# #         for test in test_results:
-# #             verdict = test.get("verdict", "UNKNOWN")
-# #             verdict_data.append({
-# #                 "difficulty": difficulty,
-# #                 "verdict": verdict
-# #             })
-
-# # # --- BUILD DATAFRAME ---
-# # df = pd.DataFrame(verdict_data)
-
-# # # Bin difficulty into intervals
-# # bins = pd.interval_range(start=difficulty_min, end=difficulty_max + bin_width, freq=bin_width, closed="left")
-# # df["difficulty_bin"] = pd.cut(df["difficulty"], bins=bins)
-
-# # # Count verdicts per difficulty bin
-# # grouped = df.groupby(["difficulty_bin", "verdict"]).size().unstack(fill_value=0)
-
-# # # Ensure all known verdicts are included as columns
-# # all_verdicts = ["SUCCESS", "RUNTIME ERROR", "TIME_LIMIT_EXCEEDED", "COMPILATION_ERROR", "MEMORY_LIMIT_EXCEEDED", "UNKNOWN"]
-# # grouped = grouped.reindex(columns=all_verdicts, fill_value=0)
-
-# # # --- PLOT ---
-# # plt.figure(figsize=(12, 6))
-# # grouped.plot(kind="bar", stacked=True, colormap="tab20", width=0.9)
-
-# # plt.xlabel("Difficulty Level")
-# # plt.ylabel("Number of Test Cases")
-# # plt.title("Distribution of Test Case Verdicts by Difficulty Level")
-# # plt.xticks(rotation=45)
-# # plt.grid(axis='y', linestyle=':', alpha=0.7)
-# # plt.tight_layout()
-# # plt.legend(title="Test Verdict", loc="upper right")
-# # # plt.savefig("verdict_distribution_by_difficulty.png", dpi=300)
-# # plt.show()
-
-
 import json
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 
-# Path to your JSONL file
-jsonl_path = "../results/ds_fixed.jsonl"  # Change this if needed
+# Plots solved vs. unsolved counts by difficulty bin from a JSONL dataset and overlays a line showing the total number of problems per bin.
 
-unique_verdicts = set()
+# Load data
+with open('', 'r', encoding='utf-8') as f:
+    data = [json.loads(line) for line in f]
 
-with open(jsonl_path, "r", encoding="utf-8") as f:
-    for line in f:
-        obj = json.loads(line)
-        test_results = obj.get("final_unit_test_results", [])
-        for test in test_results:
-            verdict = test.get("verdict", "UNKNOWN")
-            unique_verdicts.add(verdict)
+df = pd.DataFrame(data)
 
-print("Unique verdicts found in dataset:")
-for v in sorted(unique_verdicts):
-    print("-", v)
+# Define difficulty bins
+bins = [0, 1200, 1400, 1600, 1800, 2000, 3000]
+labels = ['<1200', '1200–1400', '1400–1600', '1600–1800', '1800–2000', '2000+']
+df['difficulty_bin'] = pd.cut(df['difficulty'], bins=bins, labels=labels, right=False)
 
-# import json
+# Count solved vs unsolved per bin
+bar_data = df.groupby(['difficulty_bin', 'is_solved']).size().unstack(fill_value=0)
 
-# input_path = "../results/ds.jsonl"          # CHANGE to your input file
-# output_path = "../results/ds_fixed.jsonl"   # Output path
+# Compute total per bin
+total_counts = df.groupby('difficulty_bin').size()
 
-# def should_fix(test):
-#     return (
-#         test.get("actual", "") == "" and
-#         test.get("verdict") == "RUNTIME ERROR" and
-#         not test.get("passed", False) and
-#         any(e.strip() != "" for e in test.get("expected", []))
-#     )
+# Choose hex colors for bars: one for 'False' (unsolved), one for 'True' (solved)
+custom_colors = ['#cb4335', '#117a65']
 
-# with open(input_path, "r", encoding="utf-8") as infile, open(output_path, "w", encoding="utf-8") as outfile:
-#     for line in infile:
-#         entry = json.loads(line)
+# Plot grouped bar chart
+ax = bar_data.plot(kind='bar', figsize=(10, 6), color=custom_colors, alpha=0.8)
 
-#         test_results = entry.get("final_unit_test_results", [])
-#         for test in test_results:
-#             if should_fix(test):
-#                 test["verdict"] = "WRONG ANSWER"
-#                 test["info"] = "Empty actual output with non-empty expected output"
-        
-#         # Write the updated entry
-#         json.dump(entry, outfile)
-#         outfile.write("\n")
+# Overlay line chart for total questions per difficulty
+line = ax.plot(range(len(total_counts)), total_counts.values,
+               marker='o', linestyle='-', color='#3c5c8f', linewidth=2, label='Total')
 
-# print(f"Fixed file written to: {output_path}")
+# --- Add labels above line chart dots ---
+for x, y in enumerate(total_counts.values):
+    ax.annotate(f'{int(y)}',
+                (x+0.1, y-0.1),
+                ha='center', va='bottom', fontsize=12, xytext=(0, 4), textcoords='offset points')
+
+# Labeling
+plt.xlabel('Difficulty Range')
+plt.ylabel('Number of Problems')
+
+# Force integer ticks
+ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+
+plt.legend(title='', labels=['Total number of questions', 'Solved', 'Total'])
+plt.xticks(rotation=45)
+plt.grid(axis='y', linestyle=':', alpha=0.7)
+plt.tight_layout()
+# plt.savefig("difficulty_with_total.png", format='png')
+plt.show()
 

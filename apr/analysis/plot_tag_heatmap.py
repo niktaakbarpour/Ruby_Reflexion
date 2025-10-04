@@ -3,8 +3,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# This script loads JSONL results, expands the tags list so each tag is counted separately, tallies solved vs. unsolved cases per tag, and visualizes the counts as an annotated heatmap.
+
 # Load JSONL file
-with open('C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/edge_first_edgeIO_CoTIO_CoT.jsonl', 'r', encoding='utf-8') as f:
+with open('', 'r', encoding='utf-8') as f:
     data = [json.loads(line) for line in f]
 
 df = pd.DataFrame(data)

@@ -1,0 +1,54 @@
+[engine preflight] PATH=/mnt/shims:/usr/local/bin:/usr/bin:/bin
+[engine preflight] go           : MISSING
+[engine preflight] node         : MISSING
+[engine preflight] kotlinc      : MISSING
+[engine preflight] rustc        : MISSING
+[engine preflight] cargo        : MISSING
+[engine preflight] gcc          : /usr/bin/gcc
+[engine preflight] g++          : /usr/bin/g++
+[engine preflight] clang++-14   : /usr/bin/clang++-14
+[engine preflight] csc          : /usr/bin/csc
+[engine preflight] mono         : /usr/bin/mono
+[engine preflight] ruby         : /usr/bin/ruby
+[engine preflight] php          : /usr/bin/php
+[engine preflight] pypy3        : /usr/bin/pypy3
+[engine preflight] python3      : /usr/bin/python3
+[engine preflight] javac        : /usr/bin/javac
+[engine preflight] java         : /usr/bin/java
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 
+Created 

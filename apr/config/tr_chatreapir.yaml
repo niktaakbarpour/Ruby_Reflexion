@@ -1,0 +1,35 @@
+base_dir: /project/def-fard/niktakbr/chat_repair/result
+dataset_path: /project/def-fard/niktakbr/filtered_10_percent_dataset
+dry_run: 0
+gen:
+  nattempt: 1
+  nsample: 1
+  temperature: 1.0
+hist_top_k: 15
+langs:
+- C
+- C#
+- C++
+- Go
+- Java
+- Javascript
+- Kotlin
+- PHP
+- Python
+- Ruby
+- Rust
+log_dir: logs
+name: chat_repair
+num_proc: 1
+repair:
+  mode: ultimate2
+result:
+  k: 1
+state:
+  action: back_translate
+  it: 11
+termination:
+  max_it: 12
+translate:
+  mode: copy
+unfixed_k: 0

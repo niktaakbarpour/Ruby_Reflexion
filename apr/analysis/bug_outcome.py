@@ -4,8 +4,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
+# This script reads execution results from a JSONL file, counts how bug outcomes transition before vs. after RAMP, and visualizes the transitions in a heatmap annotated with totals (T), unchanged (U), and changed (C) counts.
 # Load data
-jsonl_path = "../results/ds.jsonl"  # <-- update with your actual path
+jsonl_path = ""  # <-- update with your actual path
 data = []
 with open(jsonl_path, 'r', encoding='utf-8') as f:
     for line in f:

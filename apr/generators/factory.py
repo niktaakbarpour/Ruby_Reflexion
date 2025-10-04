@@ -1,7 +1,8 @@
-from .py_generate import PyGenerator
+from .rb_generate import PyGenerator
 from .rs_generate import RsGenerator
+from .cpp_generate import CppGenerator
 from .generator_types import Generator
-from .model import CodeLlama, ModelBase, GPT4, GPT35, GPTDavinci, DeepSeekCoder
+from .model import CodeLlama, ModelBase, GPT4, GPT35, GPTDavinci, DeepSeekCoder, QwenModel
 
 
 def generator_factory(lang: str) -> Generator:
@@ -11,6 +12,8 @@ def generator_factory(lang: str) -> Generator:
         return PyGenerator()
     elif lang == "rs" or lang == "rust":
         return RsGenerator()
+    elif lang == "cpp" or lang == "c++":
+        return CppGenerator()
     else:
         raise ValueError(f"Invalid language for generator: {lang}")
 
@@ -37,6 +40,11 @@ def model_factory(model_name: str, model_path:str = None) -> ModelBase:
         if model_path is not None:
             kwargs["model_path"] = model_path
         return CodeLlama(**kwargs)
+    elif model_name == "Qwen/Qwen2.5-Coder-7B-Instruct":
+        kwargs = {}
+        if model_path is not None:
+            kwargs["model_path"] = model_path
+        return QwenModel(**kwargs)
     elif model_name.startswith("text-davinci"):
         return GPTDavinci(model_name)
     else:

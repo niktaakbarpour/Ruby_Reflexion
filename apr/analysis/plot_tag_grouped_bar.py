@@ -3,8 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# This script loads JSONL results, expands the tags field so each tag is counted separately, tallies solved vs. unsolved problems per tag, and plots the distribution as a grouped bar chart.
+
 # Load your JSONL data
-with open('C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/edge_first_edgeIO_CoTIO_CoT.jsonl', 'r', encoding='utf-8') as f:
+with open('', 'r', encoding='utf-8') as f:
     data = [json.loads(line) for line in f]
 
 df = pd.DataFrame(data)
@@ -36,5 +38,5 @@ plt.xlabel('Tag')
 plt.xticks(rotation=90)
 plt.legend(title='is_solved')
 plt.tight_layout()
-plt.savefig("tags_seaborn.png", format='png')
+# plt.savefig("tags_seaborn.png", format='png')
 plt.show()

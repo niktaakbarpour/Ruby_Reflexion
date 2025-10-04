@@ -3,8 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Creates a boxplot of problem difficulty (Ruby only), categorizing each case as Initially Fixed, Fixed by RAMP, or Remain Unfixed based on pass@1_unit_iter results across iterations.
+
 # --- Config ---
-jsonl_path = "../results/ds.jsonl"  # Change as needed
+jsonl_path = ""  # Change as needed
 num_iters = 11
 
 # --- Collect labeled difficulty data ---
@@ -50,7 +52,7 @@ sns.boxplot(
 plt.xlabel("Programming Language")
 plt.ylabel("Difficulty")
 # plt.title("Repair Success by Difficulty (Ruby Only)")
-plt.legend(title="", loc="upper right")
+plt.legend(title="", loc="upper left")
 plt.tight_layout()
-plt.savefig("ramp_boxplot_ruby_only.png", dpi=300)
-# plt.show()
+# plt.savefig("ramp_boxplot_ruby_only.png", dpi=300)
+plt.show()

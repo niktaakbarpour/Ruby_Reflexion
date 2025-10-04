@@ -1,0 +1,11 @@
+python main.py \
+  --run_name "cpp" \
+  --root_dir "root" \
+  --dataset_path ./benchmarks/dataset_cpp3.jsonl \
+  --strategy "reflexion" \
+  --language "cpp" \
+  --model "deepseek-ai/deepseek-coder-6.7b-instruct" \
+  --model_path "" \
+  --pass_at_k "1" \
+  --max_iters "11" \
+  --verbose | tee ./logs/reflexion_deepseek

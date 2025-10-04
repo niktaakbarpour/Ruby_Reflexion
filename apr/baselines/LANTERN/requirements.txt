@@ -1,0 +1,174 @@
+# accelerate==0.18.0+computecanada
+aiohappyeyeballs
+aiohttp
+aiosignal
+altair
+annotated-types
+anyio
+astor
+asttokens
+async-timeout
+attrs
+base58
+bitsandbytes
+black
+blinker
+Bottleneck
+Brotli
+cachetools
+certifi
+charset-normalizer
+click==8.1.3
+comm
+contourpy
+cycler
+datasets==2.18.0+computecanada
+debugpy
+# decompyle3
+decorator
+dill
+distro
+exceptiongroup
+executing
+filelock
+flake8
+fonttools
+frozenlist
+fsspec
+gitdb
+GitPython
+# gmpy2
+h11
+httpcore
+httpx
+huggingface-hub
+idna
+importlib_metadata
+importlib_resources
+inflate64
+iniconfig
+ipykernel
+ipython
+isort
+# javalang
+jedi
+Jinja2
+# jiter
+joblib
+jsonlines
+jsonschema
+jsonschema-specifications
+jupyter_client
+jupyter_core
+kiwisolver
+kneed
+Levenshtein
+MarkupSafe
+matplotlib
+matplotlib-inline
+matplotlib-venn
+mccabe
+
+mpmath
+multidict
+multiprocess
+multivolumefile
+mypy-extensions
+narwhals
+nest_asyncio
+networkx
+numexpr
+numpy==1.24.4
+openai
+packaging
+pandas
+parso
+pathspec
+pexpect
+pickleshare
+# pillow==9.5.0
+pip
+pkgutil_resolve_name
+platformdirs
+plotly
+pluggy
+ply
+prompt_toolkit
+# promptsource
+protobuf
+psutil
+ptyprocess
+pure_eval
+py7zr
+# pyarrow
+pyarrow-hotfix
+pybcj
+pycodestyle
+pycparser
+pycryptodomex
+pydantic
+pydantic_core
+pydeck
+pyflakes
+Pygments
+pyparsing
+pyppmd
+# PyQt5
+# PyQt5-sip
+PySocks
+pytest
+python-dateutil
+pytz
+PyYAML
+pyzmq
+pyzstd
+RapidFuzz
+referencing
+regex
+requests
+rpds-py
+safetensors
+scikit-learn
+scipy
+seaborn
+setuptools
+# sip
+six
+smmap
+sniffio
+# spark-parser
+stack-data
+# streamlit==1.28.2+computecanada
+sympy
+tenacity
+texttable
+threadpoolctl
+tokenizers
+toml
+tomli
+torch
+torchaudio
+torchvision
+tornado
+tqdm
+traitlets
+transformers
+# tree-sitter
+# triton
+typing_extensions
+tzdata
+tzlocal
+# uncompyle6
+# unicodedata2
+urllib3
+validators
+# venn
+# watchdog==2.1.2
+wcwidth
+wheel
+# xdis
+xxhash
+yarl
+zipp
+# zss
+

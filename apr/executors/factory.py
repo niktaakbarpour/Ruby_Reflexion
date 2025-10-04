@@ -1,6 +1,7 @@
 from .py_executor import PyExecutor
 from .rs_executor import RsExecutor
 from .rb_executor import RbExecutor
+from .cpp_executor import CppExecutor
 from .executor_types import Executor
 from .leet_executor import LeetExecutor
 
@@ -17,6 +18,8 @@ def executor_factory(lang: str, is_leet: bool = False) -> Executor:
             return PyExecutor()
     elif lang == "rb" or lang == "ruby":
         return RbExecutor()
+    elif lang == "cpp" or lang == "c++":
+        return CppExecutor()
     elif lang == "rs" or lang == "rust":
         if is_leet:
             from .leetcode_env.leetcode_env.leetcode_types import ProgrammingLanguage

@@ -1,0 +1,586 @@
+INFO:    User not listed in /etc/subuid, trying root-mapped namespace
+INFO:    Using fakeroot command combined with root-mapped namespace
+WARNING: While bind mounting '/lustre09/project:/project': destination is already in the mount point list
+WARNING: While bind mounting '/lustre10/scratch:/scratch': destination is already in the mount point list
++ (( i=0 ))
++ (( i<37 ))
++ I_GID=1586
++ I_UID=1586
++ groupadd -g 1586 runner1586
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1586
+id: 'runner1586': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1587
++ I_UID=1587
++ groupadd -g 1587 runner1587
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1587
+id: 'runner1587': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1588
++ I_UID=1588
++ groupadd -g 1588 runner1588
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1588
+id: 'runner1588': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1589
++ I_UID=1589
++ groupadd -g 1589 runner1589
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1589
+id: 'runner1589': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1590
++ I_UID=1590
++ groupadd -g 1590 runner1590
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1590
+id: 'runner1590': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1591
++ I_UID=1591
++ groupadd -g 1591 runner1591
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1591
+id: 'runner1591': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1592
++ I_UID=1592
++ groupadd -g 1592 runner1592
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1592
+id: 'runner1592': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1593
++ I_UID=1593
++ groupadd -g 1593 runner1593
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1593
+id: 'runner1593': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1594
++ I_UID=1594
++ groupadd -g 1594 runner1594
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1594
+id: 'runner1594': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1595
++ I_UID=1595
++ groupadd -g 1595 runner1595
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1595
+id: 'runner1595': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1596
++ I_UID=1596
++ groupadd -g 1596 runner1596
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1596
+id: 'runner1596': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1597
++ I_UID=1597
++ groupadd -g 1597 runner1597
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1597
+id: 'runner1597': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1598
++ I_UID=1598
++ groupadd -g 1598 runner1598
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1598
+id: 'runner1598': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1599
++ I_UID=1599
++ groupadd -g 1599 runner1599
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1599
+id: 'runner1599': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1600
++ I_UID=1600
++ groupadd -g 1600 runner1600
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1600
+id: 'runner1600': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1601
++ I_UID=1601
++ groupadd -g 1601 runner1601
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1601
+id: 'runner1601': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1602
++ I_UID=1602
++ groupadd -g 1602 runner1602
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1602
+id: 'runner1602': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1603
++ I_UID=1603
++ groupadd -g 1603 runner1603
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1603
+id: 'runner1603': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1604
++ I_UID=1604
++ groupadd -g 1604 runner1604
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1604
+id: 'runner1604': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1605
++ I_UID=1605
++ groupadd -g 1605 runner1605
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1605
+id: 'runner1605': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1606
++ I_UID=1606
++ groupadd -g 1606 runner1606
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1606
+id: 'runner1606': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1607
++ I_UID=1607
++ groupadd -g 1607 runner1607
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1607
+id: 'runner1607': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1608
++ I_UID=1608
++ groupadd -g 1608 runner1608
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1608
+id: 'runner1608': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1609
++ I_UID=1609
++ groupadd -g 1609 runner1609
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1609
+id: 'runner1609': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1610
++ I_UID=1610
++ groupadd -g 1610 runner1610
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1610
+id: 'runner1610': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1611
++ I_UID=1611
++ groupadd -g 1611 runner1611
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1611
+id: 'runner1611': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1612
++ I_UID=1612
++ groupadd -g 1612 runner1612
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1612
+id: 'runner1612': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1613
++ I_UID=1613
++ groupadd -g 1613 runner1613
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1613
+id: 'runner1613': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1614
++ I_UID=1614
++ groupadd -g 1614 runner1614
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1614
+id: 'runner1614': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1615
++ I_UID=1615
++ groupadd -g 1615 runner1615
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1615
+id: 'runner1615': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1616
++ I_UID=1616
++ groupadd -g 1616 runner1616
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1616
+id: 'runner1616': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1617
++ I_UID=1617
++ groupadd -g 1617 runner1617
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1617
+id: 'runner1617': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1618
++ I_UID=1618
++ groupadd -g 1618 runner1618
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1618
+id: 'runner1618': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1619
++ I_UID=1619
++ groupadd -g 1619 runner1619
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1619
+id: 'runner1619': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1620
++ I_UID=1620
++ groupadd -g 1620 runner1620
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1620
+id: 'runner1620': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1621
++ I_UID=1621
++ groupadd -g 1621 runner1621
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1621
+id: 'runner1621': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ I_GID=1622
++ I_UID=1622
++ groupadd -g 1622 runner1622
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1622
+id: 'runner1622': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<37 ))
++ gunicorn -w 37 --bind 0.0.0.0:5000 --timeout 0 --log-level info wsgi:app
+[2025-08-29 20:28:32 +0000] [105] [INFO] Starting gunicorn 23.0.0
+[2025-08-29 20:28:32 +0000] [105] [INFO] Init worker cfg db.
+[2025-08-29 20:28:32 +0000] [105] [INFO] Listening at: http://0.0.0.0:5000 (105)
+[2025-08-29 20:28:32 +0000] [105] [INFO] Using worker: sync
+[2025-08-29 20:28:32 +0000] [106] [INFO] Booting worker with pid: 106
+[2025-08-29 20:28:32 +0000] [107] [INFO] Booting worker with pid: 107
+[2025-08-29 20:28:32 +0000] [108] [INFO] Booting worker with pid: 108
+[2025-08-29 20:28:32 +0000] [109] [INFO] Booting worker with pid: 109
+[2025-08-29 20:28:32 +0000] [110] [INFO] Booting worker with pid: 110
+[2025-08-29 20:28:32 +0000] [111] [INFO] Booting worker with pid: 111
+[2025-08-29 20:28:32 +0000] [112] [INFO] Booting worker with pid: 112
+[2025-08-29 20:28:32 +0000] [113] [INFO] Booting worker with pid: 113
+[2025-08-29 20:28:32 +0000] [114] [INFO] Booting worker with pid: 114
+[2025-08-29 20:28:32 +0000] [115] [INFO] Booting worker with pid: 115
+[2025-08-29 20:28:32 +0000] [116] [INFO] Booting worker with pid: 116
+[2025-08-29 20:28:32 +0000] [117] [INFO] Booting worker with pid: 117
+[2025-08-29 20:28:32 +0000] [118] [INFO] Booting worker with pid: 118
+[2025-08-29 20:28:32 +0000] [119] [INFO] Booting worker with pid: 119
+[2025-08-29 20:28:33 +0000] [120] [INFO] Booting worker with pid: 120
+[2025-08-29 20:28:33 +0000] [121] [INFO] Booting worker with pid: 121
+[2025-08-29 20:28:33 +0000] [122] [INFO] Booting worker with pid: 122
+[2025-08-29 20:28:33 +0000] [123] [INFO] Booting worker with pid: 123
+[2025-08-29 20:28:33 +0000] [124] [INFO] Booting worker with pid: 124
+[2025-08-29 20:28:33 +0000] [125] [INFO] Booting worker with pid: 125
+[2025-08-29 20:28:33 +0000] [126] [INFO] Booting worker with pid: 126
+[2025-08-29 20:28:33 +0000] [127] [INFO] Booting worker with pid: 127
+[2025-08-29 20:28:33 +0000] [128] [INFO] Booting worker with pid: 128
+[2025-08-29 20:28:33 +0000] [129] [INFO] Booting worker with pid: 129
+[2025-08-29 20:28:33 +0000] [130] [INFO] Booting worker with pid: 130
+[2025-08-29 20:28:33 +0000] [131] [INFO] Booting worker with pid: 131
+[2025-08-29 20:28:33 +0000] [132] [INFO] Booting worker with pid: 132
+[2025-08-29 20:28:33 +0000] [133] [INFO] Booting worker with pid: 133
+[2025-08-29 20:28:33 +0000] [134] [INFO] Booting worker with pid: 134
+[2025-08-29 20:28:33 +0000] [135] [INFO] Booting worker with pid: 135
+[2025-08-29 20:28:33 +0000] [136] [INFO] Booting worker with pid: 136
+[2025-08-29 20:28:34 +0000] [137] [INFO] Booting worker with pid: 137
+[2025-08-29 20:28:34 +0000] [138] [INFO] Booting worker with pid: 138
+[2025-08-29 20:28:34 +0000] [139] [INFO] Booting worker with pid: 139
+[2025-08-29 20:28:34 +0000] [140] [INFO] Booting worker with pid: 140
+[2025-08-29 20:28:34 +0000] [141] [INFO] Booting worker with pid: 141
+[2025-08-29 20:28:34 +0000] [142] [INFO] Booting worker with pid: 142
+[2025-08-29 20:28:36 +0000] [110] [INFO] Assigned gid=1586, uid=1586 to pid=110
+[2025-08-29 20:28:36 +0000] [107] [INFO] Assigned gid=1587, uid=1587 to pid=107
+[2025-08-29 20:28:36 +0000] [113] [INFO] Assigned gid=1588, uid=1588 to pid=113
+[2025-08-29 20:28:36 +0000] [108] [INFO] Assigned gid=1589, uid=1589 to pid=108
+[2025-08-29 20:28:36 +0000] [109] [INFO] Assigned gid=1590, uid=1590 to pid=109
+[2025-08-29 20:28:36 +0000] [106] [INFO] Assigned gid=1591, uid=1591 to pid=106
+[2025-08-29 20:28:36 +0000] [114] [INFO] Assigned gid=1591, uid=1591 to pid=114
+[2025-08-29 20:28:36 +0000] [111] [INFO] Assigned gid=1592, uid=1592 to pid=111
+[2025-08-29 20:28:36 +0000] [112] [INFO] Assigned gid=1593, uid=1593 to pid=112
+[2025-08-29 20:28:36 +0000] [106] [ERROR] Exception in worker process
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 608, in spawn_worker
+    worker.init_process()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/workers/base.py", line 135, in init_process
+    self.load_wsgi()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/workers/base.py", line 147, in load_wsgi
+    self.wsgi = self.app.wsgi()
+                ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/base.py", line 66, in wsgi
+    self.callable = self.load()
+                    ^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/wsgiapp.py", line 57, in load
+    return self.load_wsgiapp()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+    return util.import_app(self.app_uri)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/util.py", line 370, in import_app
+    mod = importlib.import_module(module)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/mnt/execution_engine/wsgi.py", line 1, in <module>
+    from app import app
+  File "/mnt/execution_engine/app.py", line 36, in <module>
+    pid, idx, gid, uid = map(int, line.strip().split(","))
+    ^^^^^^^^^^^^^^^^^^
+ValueError: not enough values to unpack (expected 4, got 1)
+[2025-08-29 20:28:36 +0000] [106] [INFO] Worker exiting (pid: 106)
+[2025-08-29 20:28:36 +0000] [115] [INFO] Assigned gid=1594, uid=1594 to pid=115
+[2025-08-29 20:28:37 +0000] [117] [INFO] Assigned gid=1595, uid=1595 to pid=117
+[2025-08-29 20:28:37 +0000] [116] [INFO] Assigned gid=1596, uid=1596 to pid=116
+[2025-08-29 20:28:37 +0000] [118] [INFO] Assigned gid=1597, uid=1597 to pid=118
+[2025-08-29 20:28:37 +0000] [119] [INFO] Assigned gid=1598, uid=1598 to pid=119
+[2025-08-29 20:28:37 +0000] [120] [INFO] Assigned gid=1599, uid=1599 to pid=120
+[2025-08-29 20:28:37 +0000] [106] [INFO] Assigned gid=1599, uid=1599 to pid=106
+[2025-08-29 20:28:37 +0000] [121] [INFO] Assigned gid=1600, uid=1600 to pid=121
+[2025-08-29 20:28:37 +0000] [122] [INFO] Assigned gid=1601, uid=1601 to pid=122
+[2025-08-29 20:28:37 +0000] [106] [INFO] Stopping execution_engine
+[2025-08-29 20:28:37 +0000] [123] [INFO] Assigned gid=1602, uid=1602 to pid=123
+[2025-08-29 20:28:37 +0000] [124] [INFO] Assigned gid=1603, uid=1603 to pid=124
+[2025-08-29 20:28:37 +0000] [125] [INFO] Assigned gid=1604, uid=1604 to pid=125
+[2025-08-29 20:28:37 +0000] [127] [INFO] Assigned gid=1605, uid=1605 to pid=127
+[2025-08-29 20:28:37 +0000] [126] [INFO] Assigned gid=1606, uid=1606 to pid=126
+[2025-08-29 20:28:37 +0000] [130] [INFO] Assigned gid=1607, uid=1607 to pid=130
+[2025-08-29 20:28:37 +0000] [128] [INFO] Assigned gid=1608, uid=1608 to pid=128
+[2025-08-29 20:28:37 +0000] [129] [INFO] Assigned gid=1609, uid=1609 to pid=129
+[2025-08-29 20:28:37 +0000] [131] [INFO] Assigned gid=1610, uid=1610 to pid=131
+[2025-08-29 20:28:38 +0000] [133] [INFO] Assigned gid=1611, uid=1611 to pid=133
+[2025-08-29 20:28:37 +0000] [132] [INFO] Assigned gid=1606, uid=1606 to pid=132
+[2025-08-29 20:28:38 +0000] [134] [INFO] Assigned gid=1612, uid=1612 to pid=134
+[2025-08-29 20:28:38 +0000] [132] [ERROR] Exception in worker process
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 608, in spawn_worker
+    worker.init_process()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/workers/base.py", line 135, in init_process
+    self.load_wsgi()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/workers/base.py", line 147, in load_wsgi
+    self.wsgi = self.app.wsgi()
+                ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/base.py", line 66, in wsgi
+    self.callable = self.load()
+                    ^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/wsgiapp.py", line 57, in load
+    return self.load_wsgiapp()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+    return util.import_app(self.app_uri)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/util.py", line 370, in import_app
+    mod = importlib.import_module(module)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/mnt/execution_engine/wsgi.py", line 1, in <module>
+    from app import app
+  File "/mnt/execution_engine/app.py", line 36, in <module>
+    pid, idx, gid, uid = map(int, line.strip().split(","))
+    ^^^^^^^^^^^^^^^^^^
+ValueError: invalid literal for int() with base 10: ''
+[2025-08-29 20:28:38 +0000] [132] [INFO] Worker exiting (pid: 132)
+[2025-08-29 20:28:38 +0000] [135] [INFO] Assigned gid=1613, uid=1613 to pid=135
+[2025-08-29 20:28:38 +0000] [105] [ERROR] Worker (pid:106) exited with code 3
+[2025-08-29 20:28:38 +0000] [136] [INFO] Assigned gid=1614, uid=1614 to pid=136
+[2025-08-29 20:28:38 +0000] [138] [INFO] Assigned gid=1615, uid=1615 to pid=138
+[2025-08-29 20:28:38 +0000] [137] [INFO] Assigned gid=1616, uid=1616 to pid=137
+[2025-08-29 20:28:38 +0000] [140] [INFO] Assigned gid=1617, uid=1617 to pid=140
+[2025-08-29 20:28:38 +0000] [139] [INFO] Assigned gid=1618, uid=1618 to pid=139
+[2025-08-29 20:28:38 +0000] [141] [INFO] Assigned gid=1619, uid=1619 to pid=141
+[2025-08-29 20:28:38 +0000] [142] [INFO] Assigned gid=1620, uid=1620 to pid=142
+[2025-08-29 20:28:38 +0000] [132] [INFO] Assigned gid=1621, uid=1621 to pid=132
+[2025-08-29 20:28:38 +0000] [132] [INFO] Stopping execution_engine
+[2025-08-29 20:28:38 +0000] [105] [ERROR] Worker (pid:132) exited with code 3
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 208, in run
+    self.sleep()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 359, in sleep
+    ready = select.select([self.PIPE[0]], [], [], 1.0)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 241, in handle_chld
+    self.reap_workers()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 529, in reap_workers
+    raise HaltServer(reason, self.WORKER_BOOT_ERROR)
+gunicorn.errors.HaltServer: <HaltServer 'Worker failed to boot.' 3>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 661, in kill_worker
+    os.kill(pid, sig)
+ProcessLookupError: [Errno 3] No such process
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/bin/gunicorn", line 8, in <module>
+    sys.exit(run())
+             ^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/wsgiapp.py", line 66, in run
+    WSGIApplication("%(prog)s [OPTIONS] [APP_MODULE]", prog=prog).run()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/base.py", line 235, in run
+    super().run()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/base.py", line 71, in run
+    Arbiter(self).run()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 228, in run
+    self.halt(reason=inst.reason, exit_status=inst.exit_status)
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 341, in halt
+    self.stop()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 392, in stop
+    self.kill_workers(sig)
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 651, in kill_workers
+    self.kill_worker(pid, sig)
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 667, in kill_worker
+    self.cfg.worker_exit(self, worker)
+  File "/mnt/execution_engine/gunicorn.conf.py", line 40, in worker_exit
+    worker_abort(worker)
+  File "/mnt/execution_engine/gunicorn.conf.py", line 31, in worker_abort
+    worker.wsgi = worker.app.wsgi()
+                  ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/base.py", line 66, in wsgi
+    self.callable = self.load()
+                    ^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/wsgiapp.py", line 57, in load
+    return self.load_wsgiapp()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+    return util.import_app(self.app_uri)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/util.py", line 370, in import_app
+    mod = importlib.import_module(module)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/mnt/execution_engine/wsgi.py", line 1, in <module>
+    from app import app
+  File "/mnt/execution_engine/app.py", line 10, in <module>
+    from flask import Flask, request
+  File "/usr/local/lib/python3.11/dist-packages/flask/__init__.py", line 6, in <module>
+    from .app import Flask as Flask
+  File "/usr/local/lib/python3.11/dist-packages/flask/app.py", line 20, in <module>
+    from werkzeug.routing import BuildError
+  File "/usr/local/lib/python3.11/dist-packages/werkzeug/routing/__init__.py", line 124, in <module>
+    from .map import Map as Map
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1032, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1130, in get_data
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 241, in handle_chld
+    self.reap_workers()
+  File "/usr/local/lib/python3.11/dist-packages/gunicorn/arbiter.py", line 529, in reap_workers
+    raise HaltServer(reason, self.WORKER_BOOT_ERROR)
+gunicorn.errors.HaltServer: <HaltServer 'Worker failed to boot.' 3>

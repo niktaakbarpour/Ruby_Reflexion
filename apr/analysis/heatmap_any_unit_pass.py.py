@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+# Loads a JSONL file, computes for each bug_exec_outcome the percentage of records with any pass@1_unit_iter* == 1.0, and saves/displays a horizontal bar (bullet) chart of those percentages.
 def load_records(path):
     """Stream JSONL records."""
     with open(path, "r", encoding="utf-8") as f:
@@ -77,8 +77,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Bullet chart of percentages where any pass@1_unit_iter{i} == 1.0, grouped by bug_exec_outcome."
     )
-    parser.add_argument("--input", default="c:/Users/niktakbr/Desktop/Ruby_Reflexion/apr/results/ds.jsonl", help="Path to JSONL file")
-    parser.add_argument("--save", default="c:/Users/niktakbr/Desktop/Ruby_Reflexion/apr/analysis/pasa1_over_outcomes.png", help="Optional path to save the figure (e.g., out.png)")
+    parser.add_argument("--input", default="", help="Path to JSONL file")
+    parser.add_argument("--save", default="", help="Optional path to save the figure (e.g., out.png)")
     parser.add_argument("--no-show", action="store_true", help="Do not display the figure window")
     args = parser.parse_args()
 

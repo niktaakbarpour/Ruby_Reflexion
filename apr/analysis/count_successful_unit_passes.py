@@ -1,6 +1,6 @@
 import json
-
-file_path = "../results/self_refl_omit_edge_pass_at1_iter11.jsonl"  # Replace with your actual file name
+# Counts how many records in the JSONL file achieved at least one pass@1_unit_iter[i] == 1.0 (for iterations 0–10) and reports both the raw count and its fraction of 343.
+file_path = ""  # Replace with your actual file name
 count = 0
 
 with open(file_path, "r", encoding="utf-8") as f:

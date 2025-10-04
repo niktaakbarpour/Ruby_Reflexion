@@ -5,21 +5,21 @@ from immediate_reflexion import run_immediate_reflexion
 import time
 import psutil
 import pynvml
-from simple import run_simple
-from few_shot import run_few_shot
-from reflexion import run_reflexion
+from apr.strategies.simple import run_simple
+from apr.strategies.few_shot import run_few_shot
+from apr.strategies.reflexion import run_reflexion
 from reflexion_ucs import run_reflexion_ucs
 from test_acc import run_test_acc
 from utils import read_jsonl, read_jsonl_gz
 from run_reflexion_multi_agent import run_reflexion_multi_agent
-from first_refl_omission import run_first_refl_omission
-from self_refl_omission import run_self_refl_omission
-from refl_omission import run_refl_omission
-from test_gen_omission import run_test_gen_omission
-from infer_spec import run_infer_spec
-from reflexion_add_buggy import run_reflexion_add_buggy
-from reflexion_time_memory_remove import run_reflexion_time_memory_remove
-from reflexion_IO_remove import run_reflexion_IO_remove
+from apr.strategies.first_refl_omission import run_first_refl_omission
+from apr.strategies.self_refl_omission import run_self_refl_omission
+from apr.strategies.refl_omission import run_refl_omission
+from apr.strategies.test_gen_omission import run_test_gen_omission
+from apr.strategies.infer_spec import run_infer_spec
+from apr.prompts.reflexion_add_buggy import run_reflexion_add_buggy
+from apr.prompts.reflexion_time_memory_remove import run_reflexion_time_memory_remove
+from apr.prompts.reflexion_IO_remove import run_reflexion_IO_remove
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -46,10 +46,6 @@ def get_args():
     parser.add_argument("--verbose", action='store_true',
                         help="To print live logs")
     parser.add_argument("--model_path", type=str, help="Downloaded models path.")
-    # parser.add_argument("--infer_spec", type=bool, help="Do infer specifications or not.")
-    # TODO: implement this
-    # parser.add_argument("--is_resume", action='store_true', help="To resume run")
-    # parser.add_argument("--resume_dir", type=str, help="If resume, the logging directory", default="")
     args = parser.parse_args()
     return args
 
@@ -174,5 +170,3 @@ pass@k: {args.pass_at_k}
 if __name__ == "__main__":
     args = get_args()
     main(args)
-
-# 'root/reflexion_deepseek_/rbugr-tiny._reflexion_3_deepseek-ai/deepseek-coder-6.7b-instruct_pass_at_k_3_rb.jsonl'

@@ -1,0 +1,23 @@
+INFO:    User not listed in /etc/subuid, trying root-mapped namespace
+INFO:    Using fakeroot command combined with root-mapped namespace
+WARNING: While bind mounting '/lustre09/project:/project': destination is already in the mount point list
+WARNING: While bind mounting '/lustre10/scratch:/scratch': destination is already in the mount point list
++ (( i=0 ))
++ (( i<1 ))
++ I_GID=1586
++ I_UID=1586
++ groupadd -g 1586 runner1586
+start_engine.sh: line 6: groupadd: command not found
+++ id runner1586
+id: 'runner1586': no such user
++ echo 'Created '
++ (( i++  ))
++ (( i<1 ))
++ gunicorn -w 1 --bind 0.0.0.0:5000 --timeout 0 --log-level info wsgi:app
+[2025-09-02 06:28:09 +0000] [32] [INFO] Starting gunicorn 23.0.0
+[2025-09-02 06:28:09 +0000] [32] [INFO] Init worker cfg db.
+[2025-09-02 06:28:09 +0000] [32] [INFO] Listening at: http://0.0.0.0:5000 (32)
+[2025-09-02 06:28:09 +0000] [32] [INFO] Using worker: sync
+[2025-09-02 06:28:09 +0000] [33] [INFO] Booting worker with pid: 33
+[2025-09-02 06:28:11 +0000] [33] [INFO] Assigned gid=1586, uid=1586 to pid=33
+[2025-09-02 06:28:12 +0000] [33] [INFO] api/all_runtimes:  time: 5.0245e-05s

@@ -1,6 +1,7 @@
 import json
 import os
 
+# This script converts a JSONL dataset of bug-fix attempts into ExecEval-compatible JSON files, wrapping the selected implementation in a Ruby code block, attaching unit test results, and saving each record to the output directory.
 def convert_jsonl_to_execeval_format(input_path, output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
@@ -109,4 +110,4 @@ def convert_jsonl_to_execeval_format(input_path, output_dir):
     print(f"✅ Total entries: {total}, Converted: {written}, Skipped: {total - written}")
 
 # Example usage:
-convert_jsonl_to_execeval_format("../results/ds.jsonl", "repair/")
+convert_jsonl_to_execeval_format("", "repair/")

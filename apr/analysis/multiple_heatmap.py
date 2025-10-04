@@ -4,12 +4,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import os
 
+# Loads JSONL results for multiple prompting techniques, computes the proportion of solved cases per bug_exec_outcome for each prompt, and visualizes the comparison as a heatmap.
+
 # Map each prompt to its JSONL file path
 prompt_files = {
-    "Reflexion": "C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/edge_first_edgeIO_CoTIO_CoT.jsonl",
-    "SCOT": "C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/first_edgeIO_CoTIO_CoT.jsonl",
-    # "HoarePrompt": "C:/Users/niktakbr/Desktop/Ruby_Reflexion/results/hoareprompt.jsonl",
-    # Add more prompts here if needed
+    "Reflexion": "",
+    "SCOT": "",
 }
 
 records = []
